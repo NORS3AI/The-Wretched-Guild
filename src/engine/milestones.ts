@@ -7,7 +7,7 @@
 import type { EncounterDef, EncOutcome } from './encounters';
 import type { RunState } from './types';
 import { completeAdvance } from './ranks';
-import { sway, ethicsBand, moralsBand } from './alignment';
+import { sway, killEvil, ethicsBand, moralsBand } from './alignment';
 import { pushLog } from './helpers';
 import { riskRoll } from './checks';
 import { damage } from './survival';
@@ -129,7 +129,8 @@ const trial: EncounterDef = {
           gate: (r) => moralsBand(r.alignment) === 'Evil' || ethicsBand(r.alignment) === 'Chaotic',
           gateHint: 'Only the Evil or Chaotic have the stomach for this',
           resolve: (_g, run) => {
-            sway(run, -1, -1);
+            sway(run, -1, 0);
+            killEvil(run); // a ruthless killing: Evil +1–3
             run.factions.shadow = Math.min(100, run.factions.shadow + 8);
             run.heat = Math.min(100, run.heat + 15);
             return rise(run, 'rite_trial', 'A rival is found cold in his bed. No one can prove your hand — but everyone knows. You rise, feared.');

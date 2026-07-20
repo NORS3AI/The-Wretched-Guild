@@ -419,9 +419,11 @@ console.log('The Wretched Guild — engine tests\n');
 
   g.run.hp = 6;
   g.run.needs.water = 40;
+  g.run.needs.food = 50;
   dispatch(g, { type: 'eatItem', id: 'herbs' });
-  assert(g.run.hp > 6, `eating healing herbs restores a little health (6 -> ${g.run.hp})`);
-  assert(g.run.needs.water > 40, `eating healing herbs restores a little water (40 -> ${g.run.needs.water})`);
+  assert(Math.abs(g.run.hp - 6.5) < 1e-9, `healing herbs mend half a quarter-heart (6 -> ${g.run.hp})`);
+  assert(g.run.needs.food === 70, `healing herbs restore 20% food (50 -> ${g.run.needs.food})`);
+  assert(g.run.needs.water === 45, `healing herbs restore 5% water (40 -> ${g.run.needs.water})`);
   assert(!g.run.pockets.some((p) => p && p.item === 'herbs'), 'the herbs are consumed');
 }
 
@@ -592,14 +594,14 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.contractAvailable = true;
   g.run.contractTargetId = 'contract_taxman';
   dispatch(g, { type: 'acceptContract' });
-  const moralsBefore = g.run.alignment.morals;
   const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
   const bribeIdx = approach.choices.findIndex((c) => c.tag === '[20 coppers]');
   g.run.coin = 100;
-  dispatch(g, { type: 'chooseEncounter', index: bribeIdx }); // → deed
-  dispatch(g, { type: 'chooseEncounter', index: 1 }); // blade — kill → escape
-  const drop = moralsBefore - g.run.alignment.morals;
-  assert(drop > 0 && drop < 1.0, `a single killing is a slow burn, not a lurch (Δmorals ${drop.toFixed(2)})`);
+  dispatch(g, { type: 'chooseEncounter', index: bribeIdx }); // → deed (a bribe: slow burn)
+  const moralsAfterBribe = g.run.alignment.morals;
+  dispatch(g, { type: 'chooseEncounter', index: 1 }); // blade — a killing (Evil +1–3)
+  const kill = moralsAfterBribe - g.run.alignment.morals;
+  assert(kill >= 0.9 && kill <= 3.1, `a killing grows Evil hard, by ~1–3 (Δmorals ${kill.toFixed(2)})`);
   assert(g.run.contractFates['contract_taxman'] === 'dead', 'killing a mark records it dead');
 
   // dead marks are never offered again
@@ -877,6 +879,42 @@ console.log('The Wretched Guild — engine tests\n');
   assert(ACTIVITIES.find((a) => a.id === 'pickpocket')!.earns === '1–5c', 'Pick Pockets shows its earnings');
   const leaks = ACTIVITIES.filter((a) => /\b(Brawn|Wits|Charm|Stealth|Piety|Luck|skill)\b/i.test(a.blurb));
   assert(leaks.length === 0, `no activity blurb reveals what it trains (leaks: ${leaks.map((a) => a.id).join(', ')})`);
+}
+
+// 26) A killing shifts Evil hard (1–3), while lesser wicked choices stay a slow
+//     burn (0.1–0.4) — and working an owned enterprise out-earns idle income.
+{
+  // killing: the blade at the deed node drops morals by ~1–3
+  const g = newGame();
+  g.run.contractAvailable = true;
+  g.run.contractTargetId = 'contract_taxman';
+  g.run.coin = 100;
+  dispatch(g, { type: 'acceptContract' });
+  const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
+  const bribeIdx = approach.choices.findIndex((c) => c.tag === '[20 coppers]');
+  dispatch(g, { type: 'chooseEncounter', index: bribeIdx }); // → deed (a bribe: slow burn)
+  const moralsAfterBribe = g.run.alignment.morals;
+  dispatch(g, { type: 'chooseEncounter', index: 1 }); // blade — a killing
+  const evilFromKill = moralsAfterBribe - g.run.alignment.morals;
+  assert(evilFromKill >= 0.9 && evilFromKill <= 3.1, `a killing grows Evil by ~1–3 (Δ ${evilFromKill.toFixed(2)})`);
+
+  // the bribe alone (a lesser wicked choice) is a slow burn
+  const g2 = newGame();
+  g2.run.contractAvailable = true;
+  g2.run.contractTargetId = 'contract_taxman';
+  g2.run.coin = 100;
+  dispatch(g2, { type: 'acceptContract' });
+  const m0 = g2.run.alignment.morals;
+  dispatch(g2, { type: 'chooseEncounter', index: bribeIdx });
+  const bribeEvil = m0 - g2.run.alignment.morals;
+  assert(bribeEvil > 0 && bribeEvil < 0.5, `a bribe is only a slow-burn nudge (Δ ${bribeEvil.toFixed(2)})`);
+
+  // working an owned enterprise reports more coin/tick than idle alone
+  const { workCoinPerTick, businessById } = await import('../src/engine/businesses');
+  const stall = businessById('market_stall')!;
+  assert(workCoinPerTick(stall, 0) === 0, 'an unowned stall pays nothing to work');
+  assert(workCoinPerTick(stall, 1) > 0, 'working an owned stall adds coin/tick on top of idle income');
+  assert(workCoinPerTick(stall, 2) > workCoinPerTick(stall, 1), 'a higher-level stall pays more per tick worked');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

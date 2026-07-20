@@ -12,7 +12,7 @@
 import type { GameState, RunState } from './types';
 import type { EncounterDef, EncOutcome } from './encounters';
 import { riskRoll } from './checks';
-import { sway, ethicsBand } from './alignment';
+import { sway, killEvil, ethicsBand } from './alignment';
 import { pushLog, trainAttr, gainStanding } from './helpers';
 import { damage } from './survival';
 import { nextInt } from './rng';
@@ -481,7 +481,8 @@ export function makeContract(t: ContractTarget): EncounterDef {
             gate: (r) => r.attrs.stealth >= 5,
             gateHint: 'Requires Stealth 5',
             resolve: (_game, run) => {
-              sway(run, -1, -1); // quiet murder
+              sway(run, -1, 0); // stealthy trespass — a touch of Chaos
+              killEvil(run); // …but a murder is a murder: Evil +1–3
               markFate(run, t.id, 'dead');
               return {
                 text: `A few drops where ${P.s} will drink them. ${P.S} will not wake, tonight or ever. It is done, clean and cold.`,
@@ -492,7 +493,8 @@ export function makeContract(t: ContractTarget): EncounterDef {
           {
             label: 'A blade, quick and certain',
             resolve: (_game, run) => {
-              sway(run, -1, -1);
+              sway(run, -1, 0);
+              killEvil(run); // a blade across the throat: Evil +1–3
               run.heat = Math.min(100, run.heat + 6);
               markFate(run, t.id, 'dead');
               return {
@@ -507,7 +509,8 @@ export function makeContract(t: ContractTarget): EncounterDef {
             gate: (r) => ethicsBand(r.alignment) === 'Lawful',
             gateHint: 'Only the Lawful can wield the law as a mask',
             resolve: (_game, run) => {
-              sway(run, 1, -1); // cruelty dressed as order — the Frollo route
+              sway(run, 1, 0); // cruelty dressed as order — the Frollo route (Lawful)
+              killEvil(run); // condemning them to die in a gaol is still a killing
               markFate(run, t.id, 'dead');
               return {
                 text: `You wake ${P.o} with a forged sheriff's warrant and march ${P.o} out in irons — into a gaol from which no appeal returns. The law itself becomes your knife.`,
@@ -538,13 +541,14 @@ export function makeContract(t: ContractTarget): EncounterDef {
           {
             label: `Cut ${P.o} down and run`,
             resolve: (game, run) => {
-              sway(run, -1, -1);
+              sway(run, -1, 0);
               run.heat = Math.min(100, run.heat + 14);
               const roll = riskRoll(run, run.attrs.brawn, 10);
               if (roll.tier === 'disaster') {
                 damage(game, run, 2, 'beaten to death by a cornered mark');
                 if (!run.alive) return { text: `${t.name}'s wild blow catches your temple and the world goes black. ${P.S} stands over your body, shaking.`, next: null };
               }
+              killEvil(run); // cutting them down: Evil +1–3
               markFate(run, t.id, 'dead');
               return {
                 text: 'You close the distance and finish it, taking a blow across the shoulder for your trouble. The deed is done, loudly.',

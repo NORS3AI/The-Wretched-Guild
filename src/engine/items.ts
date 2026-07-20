@@ -28,7 +28,7 @@ export const ITEMS: Record<string, ItemDef> = {
   cooked_fish: { id: 'cooked_fish', name: 'Cooked River Fish', kind: 'food', food: 35, water: 5, value: 7, blurb: 'Fried golden in oil. A proper meal.' },
   burnt_fish: { id: 'burnt_fish', name: 'Burnt River Fish', kind: 'food', food: 10, value: 1, blurb: 'Charred to a cinder. Barely food at all.' },
   game: { id: 'game', name: 'Snared Game', kind: 'food', food: 46, value: 14, blurb: 'A rabbit or hare, cleanly taken.' },
-  herbs: { id: 'herbs', name: 'Healing Herbs', kind: 'herb', heal: 1, water: 15, value: 10, blurb: 'Feverfew and comfrey — eat them to soothe wounds and wet the throat.' },
+  herbs: { id: 'herbs', name: 'Healing Herbs', kind: 'herb', food: 20, water: 5, heal: 0.5, value: 10, blurb: 'Feverfew and comfrey — eat them to fill the belly a little, wet the throat, and soothe wounds.' },
   firewood: { id: 'firewood', name: 'Bundle of Firewood', kind: 'goods', value: 5, blurb: 'Deadfall gathered from the wood.' },
   scrap: { id: 'scrap', name: 'Salvaged Scrap', kind: 'goods', value: 7, blurb: 'Bent nails, rags, a cracked buckle — worth a copper to someone.' },
   cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish or bake a potato.' },

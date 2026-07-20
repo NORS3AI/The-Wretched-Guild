@@ -63,6 +63,13 @@ export function sway(run: RunState, ethicsDir: number, moralsDir: number): void 
   );
 }
 
+/** Taking a life is no ordinary wickedness — it moves your Evil (morals) by a
+ *  raw 1–3, far more than the slow-burn nudge of a lesser choice. (The choice's
+ *  Lawful/Chaotic lean is still applied separately with sway().) */
+export function killEvil(run: RunState): void {
+  shiftAlignment(run, 0, -(1 + nextFloat(run) * 2)); // −1 to −3 morals
+}
+
 function resist(current: number, delta: number): number {
   if (delta === 0) return 0;
   const sameDir = Math.sign(current) === Math.sign(delta);

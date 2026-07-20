@@ -6,7 +6,7 @@ import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS, MAX_POUCHES, syncCapacity } from './items';
-import { ownedLevel, workMultiplier, BUSINESSES, type BusinessDef } from './businesses';
+import { ownedLevel, workMultiplier, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
 import { churchOpen, illicitPrime } from './time';
 import { driftBearing, shiftAlignment } from './alignment';
@@ -278,7 +278,7 @@ function makeWorkActivity(def: BusinessDef): ActivityDef {
     name: `${def.workVerb} the ${def.name}`,
     path: 'Enterprise',
     blurb: `Put in a shift at your ${def.name}. Yield scales with its level (×2, ×2.5, ×3 …).`,
-    ticks: 7,
+    ticks: WORK_TICKS,
     trains: def.workTrains,
     complete(run) {
       const lvl = ownedLevel(run, def.id);

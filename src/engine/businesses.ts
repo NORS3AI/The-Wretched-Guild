@@ -194,6 +194,17 @@ export function workMultiplier(level: number): number {
   return level >= 1 ? 1.5 + 0.5 * level : 1;
 }
 
+/** Ticks a single "work the enterprise" cycle takes. */
+export const WORK_TICKS = 7;
+
+/** Average coin per tick earned while actively working an enterprise, so the UI
+ *  can show the boost over passive income. */
+export function workCoinPerTick(def: BusinessDef, level: number): number {
+  if (level < 1) return 0;
+  const avgBase = (def.workYield[0] + def.workYield[1]) / 2;
+  return (avgBase * workMultiplier(level)) / WORK_TICKS;
+}
+
 export function canInvest(run: RunState, def: BusinessDef): boolean {
   const level = ownedLevel(run, def.id);
   if (level >= def.maxLevel) return false;

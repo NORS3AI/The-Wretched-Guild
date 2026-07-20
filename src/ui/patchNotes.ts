@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '6:30 PM MST',
+    title: 'Blood, Bread & the Working Wage',
+    changes: [
+      'Working an enterprise you own now shows the coin/tick it pays while you work it — the gold "working" figure adds your labour on top of the passive idle income.',
+      'Healing Herbs now restore 20% food and 5% water, and mend half a quarter-heart.',
+      'Taking a life weighs heavier on the soul: a killing now grows your Evil by a full 1–3, where lesser wicked choices remain a slow-burn 0.1–0.4 nudge.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '6:05 PM MST',
     title: 'Two Clocks & a Tidier Ledger',
     changes: [

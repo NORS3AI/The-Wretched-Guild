@@ -7,6 +7,7 @@
     totalIncomePerTick,
     visibleBusinesses,
     workMultiplier,
+    workCoinPerTick,
   } from '../engine/businesses';
   import { factionById } from '../engine/factions';
 
@@ -47,6 +48,11 @@
             {#if b.illicit}<span class="illicit-tag">illicit · raises Heat</span>{/if}
             {#if level > 0}
               <span class="earning">+{(b.incomePerLevel * level).toFixed(2)}/tick idle</span>
+              {#if working}
+                <span class="earning working" title="Passive income plus your labour">
+                  +{(b.incomePerLevel * level + workCoinPerTick(b, level)).toFixed(2)}/tick working
+                </span>
+              {/if}
             {/if}
           </div>
           <p class="biz-blurb">{b.blurb}</p>
@@ -156,6 +162,10 @@
   .earning {
     font-size: 0.7rem;
     color: var(--green);
+  }
+  .earning.working {
+    color: var(--gold-bright);
+    font-weight: 600;
   }
   .biz-blurb {
     margin: 0;

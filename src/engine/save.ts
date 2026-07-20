@@ -58,6 +58,13 @@ function migrate(data: unknown): GameState {
     if (!g.run.businesses) g.run.businesses = {};
     g.version = 3;
   }
+  // v3 → v4: the Guild roster and recruit pool were added.
+  if (g.version < 4) {
+    if (!g.run.members) g.run.members = [];
+    if (!g.run.recruits) g.run.recruits = [];
+    if (typeof g.run.guildUnpaidTicks !== 'number') g.run.guildUnpaidTicks = 0;
+    g.version = 4;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

@@ -169,7 +169,55 @@ console.log('The Wretched Guild — engine tests\n');
   assert(fined, 'sustained max Heat draws the watch (a fine or raid occurs)');
 }
 
-// 11) Determinism — same seed + same commands reproduce identical state.
+// 11) The Guild: locked until rank 3, then recruit, assign, and earn — with
+//     member alignment gating what work they'll take.
+{
+  const g = newGame();
+  // locked below rank 3
+  advanceTick(g);
+  assert(g.run.recruits.length === 0, 'no candidates appear before rank 3');
+
+  g.run.rank = 4;
+  advanceTick(g); // ensureRecruits fills the pool
+  assert(g.run.recruits.length === 3, 'candidates appear once the Guild is unlocked');
+
+  // hand-craft a Lawful Good friar and confirm they refuse shadow work
+  const friar = { id: 'test-friar', name: 'Brother Test', archetype: 'Friar', skill: 10, alignment: { ethics: 60, morals: 60 }, job: null, upkeep: 0.1, heat: 0 };
+  g.run.members.push(friar as any);
+  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'thieve' });
+  assert(friar.job === null, 'a Lawful Good friar refuses to thieve (member alignment gate)');
+  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'alms' });
+  assert(friar.job === 'alms', 'the friar will do church almswork');
+
+  // the assigned member earns for the Guild treasury
+  g.run.coin = 100;
+  const before = g.run.coin;
+  for (let i = 0; i < 50; i++) advanceTick(g);
+  // net of the friar's small upkeep, almswork should still add coin + church standing
+  assert(g.run.factions.church > 0, `the friar builds the Guild's Church standing (${g.run.factions.church.toFixed(1)})`);
+  assert(before !== g.run.coin, 'the treasury changes as the member works and is paid');
+}
+
+// 12) Roster capacity is gated by rank, and hiring respects it.
+{
+  const g = newGame();
+  g.run.rank = 3; // cap = 1 + floor(2/2) = 2
+  g.run.coin = 100000;
+  advanceTick(g);
+  let hired = 0;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const r = g.run.recruits[0];
+    if (!r) break;
+    const ok = g.run.members.length;
+    dispatch(g, { type: 'recruitMember', id: r.id });
+    if (g.run.members.length > ok) hired++;
+    advanceTick(g);
+  }
+  assert(g.run.members.length <= 2, `roster respects the rank-3 cap of 2 (has ${g.run.members.length})`);
+  assert(hired >= 1, 'at least one hire succeeded');
+}
+
+// 13) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {
     const g = newGame();

@@ -62,6 +62,10 @@ export const actions = {
   chooseEncounter: (index: number) => run({ type: 'chooseEncounter', index }),
   seekAdvancement: () => run({ type: 'seekAdvancement' }),
   investBusiness: (id: string) => run({ type: 'investBusiness', id }),
+  recruitMember: (id: string) => run({ type: 'recruitMember', id }),
+  dismissMember: (id: string) => run({ type: 'dismissMember', id }),
+  assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
+  rerollRecruits: () => run({ type: 'rerollRecruits' }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),
 

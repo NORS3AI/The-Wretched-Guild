@@ -13,6 +13,7 @@ import { META_UNLOCKS } from './unlocks';
 import { canJoinShadow } from './alignment';
 import { advancement, rankTitle } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
+import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { chance, nextInt } from './rng';
 
 export const TICKS_PER_DAY = 24;
@@ -46,6 +47,9 @@ export function advanceTick(game: GameState): void {
 
   // owned ventures earn passively (§11)
   processBusinesses(run);
+
+  // the Guild works in parallel (§12)
+  processGuild(game, run);
 
   // idle activity
   if (run.activity) {
@@ -127,6 +131,10 @@ export type Command =
   | { type: 'chooseEncounter'; index: number }
   | { type: 'seekAdvancement' }
   | { type: 'investBusiness'; id: string }
+  | { type: 'recruitMember'; id: string }
+  | { type: 'dismissMember'; id: string }
+  | { type: 'assignMember'; memberId: string; jobId: string | null }
+  | { type: 'rerollRecruits' }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string };
 
@@ -174,6 +182,38 @@ export function dispatch(game: GameState, cmd: Command): void {
         const verb = level === 0 ? 'acquire' : 'expand';
         pushLog(run, `You ${verb} the ${def.name} (level ${run.businesses[def.id]}).`, 'good');
       }
+      break;
+    }
+
+    case 'recruitMember': {
+      if (!run.alive) break;
+      const recruit = run.recruits.find((r) => r.id === cmd.id);
+      const name = recruit?.name;
+      if (hireRecruit(run, cmd.id) && name) {
+        pushLog(run, `${name} takes the Guild's coin and swears to its cause.`, 'good');
+        ensureRecruits(run);
+      }
+      break;
+    }
+
+    case 'dismissMember': {
+      if (!run.alive) break;
+      const m = run.members.find((x) => x.id === cmd.id);
+      if (m && dismissMember(run, cmd.id)) {
+        pushLog(run, `${m.name} is cast out of the Guild.`, 'plain');
+      }
+      break;
+    }
+
+    case 'assignMember': {
+      if (!run.alive) break;
+      assignMemberJob(run, cmd.memberId, cmd.jobId);
+      break;
+    }
+
+    case 'rerollRecruits': {
+      if (!run.alive) break;
+      rerollRecruits(run);
       break;
     }
 

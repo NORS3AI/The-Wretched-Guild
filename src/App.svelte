@@ -5,6 +5,7 @@
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
+  import GuildPanel from './ui/GuildPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
@@ -32,6 +33,7 @@
       <div class="col">
         <ActivitiesPanel />
         <BusinessesPanel />
+        <GuildPanel />
       </div>
     {/if}
   </section>

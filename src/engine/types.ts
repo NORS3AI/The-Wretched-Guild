@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -32,6 +32,19 @@ export interface ActiveActivity {
 }
 
 /** A live, in-progress interactive encounter (§8 of the design doc). */
+/** A recruited wretch who works for the Guild in parallel (§12). Their own
+ *  alignment decides which jobs they will accept. */
+export interface Member {
+  id: string;
+  name: string;
+  archetype: string;
+  skill: number; // 1..40 primary competence, grows with work
+  alignment: Alignment;
+  job: string | null; // assigned MemberJob id
+  upkeep: number; // coin/tick wage
+  heat: number; // their own notoriety, feeds risk
+}
+
 export interface EncounterRuntime {
   defId: string;
   nodeId: string;
@@ -64,6 +77,11 @@ export interface RunState {
   factions: Record<FactionId, number>;
   /** owned ventures by id → level (§11) */
   businesses: Record<string, number>;
+  /** the Guild roster and the current pool of candidates (§12) */
+  members: Member[];
+  recruits: Member[];
+  /** consecutive ticks the roster has gone underpaid */
+  guildUnpaidTicks: number;
 
   activity: ActiveActivity | null;
   encounter: EncounterRuntime | null;

@@ -8,7 +8,7 @@ beyond it to the secret seat of the Master of the World.
 > **Design blueprint:** see [`GAME_DESIGN.md`](./GAME_DESIGN.md) for the full
 > vision, systems, alignment model, and roadmap.
 
-## What's playable now (M0–M3)
+## What's playable now (M0–M4)
 
 - **Two modes of play.** An *idle layer* (Beg, Honest Labour, Pick Pockets, Serve
   at the Chapel, Work a Market Stall, Lay Low) that accrues coin, attributes, and
@@ -26,7 +26,12 @@ beyond it to the secret seat of the Master of the World.
   Fencing Den, Craftsman's Shop, Smuggler's Wharf, Trade House — that earn
   **passive income** each tick. Illicit ones pay more but raise **Heat**, and the
   **watch** eventually raids or fines a notorious character.
-- **Permadeath & the Guild.** Death ends the run; a persistent Guild banks
+- **The Guild (doer → director).** From rank 3, recruit wretches — each with
+  their **own alignment** that dictates what work they'll take (a Lawful Good
+  friar won't thieve; a Chaotic brute won't do almswork). Assign them to jobs
+  that run in parallel, pay their wages, and manage their Heat and mortality —
+  unpaid or captured members leave the roster.
+- **Permadeath & Legacy.** Death ends the run; a persistent Guild banks
   **Legacy** (more for climbing higher) to spend on permanent unlocks.
 - **Pause / fast-forward / offline** time, and **autosave** to browser storage
   through a single swappable `storage` seam — everything stays client-side.

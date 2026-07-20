@@ -12,6 +12,8 @@ import { nextFloat } from './rng';
 import { META_UNLOCKS } from './unlocks';
 import { canJoinShadow } from './alignment';
 import { advancement, rankTitle } from './ranks';
+import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
+import { chance, nextInt } from './rng';
 
 export const TICKS_PER_DAY = 24;
 export const DAYS_PER_YEAR = 12;
@@ -42,6 +44,9 @@ export function advanceTick(game: GameState): void {
     }
   }
 
+  // owned ventures earn passively (§11)
+  processBusinesses(run);
+
   // idle activity
   if (run.activity) {
     const def = activityById(run.activity.id);
@@ -58,6 +63,9 @@ export function advanceTick(game: GameState): void {
     }
   }
 
+  // the law answers accumulated notoriety (§10)
+  if (lawEnforcement(game, run)) return;
+
   // contract offers
   if (!run.contractAvailable) {
     run.contractCooldown--;
@@ -66,6 +74,35 @@ export function advanceTick(game: GameState): void {
       pushLog(run, 'A hooded factor of the Shadow Guild is asking for you. There is work.', 'system');
     }
   }
+}
+
+/** High Heat draws the watch. They fine you, cool your notoriety, and — if your
+ *  affairs are dirty — smash a venture. Returns true only if it proves lethal. */
+function lawEnforcement(game: GameState, run: RunState): boolean {
+  if (run.heat < 75) return false;
+  const p = (run.heat - 75) / 480; // ~0 at 75, ~0.05 at 100
+  if (!chance(run, p)) return false;
+
+  // knock down a random illicit venture, if any
+  const dirty = BUSINESSES.filter((b) => b.illicit && ownedLevel(run, b.id) > 0);
+  if (dirty.length && chance(run, 0.5)) {
+    const target = dirty[nextInt(run, 0, dirty.length - 1)];
+    run.businesses[target.id] = ownedLevel(run, target.id) - 1;
+    run.heat = Math.max(0, run.heat - 35);
+    pushLog(run, `The watch raids your ${target.name}. It is broken up and you scatter into the night.`, 'bad');
+    return false;
+  }
+
+  const fine = Math.min(Math.max(0, run.coin), 12 + Math.floor(run.heat));
+  run.coin -= fine;
+  run.heat = Math.max(0, run.heat - 30);
+  run.health -= nextInt(run, 0, 6);
+  if (run.health <= 0) {
+    die(game, run, 'beaten to death by the watch');
+    return true;
+  }
+  pushLog(run, `The watch corners you — ${fine} coin buys your freedom, and a few bruises.`, 'bad');
+  return false;
 }
 
 /** Yearly mortality roll: illness always looms; old age makes it a certainty.
@@ -89,6 +126,7 @@ export type Command =
   | { type: 'acceptContract' }
   | { type: 'chooseEncounter'; index: number }
   | { type: 'seekAdvancement' }
+  | { type: 'investBusiness'; id: string }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string };
 
@@ -124,6 +162,18 @@ export function dispatch(game: GameState, cmd: Command): void {
       if (!adv.eligible || adv.nextRank === null) break;
       run.rank = adv.nextRank;
       pushLog(run, `You rise in the world. You are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
+      break;
+    }
+
+    case 'investBusiness': {
+      if (!run.alive) break;
+      const def = BUSINESSES.find((b) => b.id === cmd.id);
+      if (!def) break;
+      const level = ownedLevel(run, def.id);
+      if (invest(run, cmd.id)) {
+        const verb = level === 0 ? 'acquire' : 'expand';
+        pushLog(run, `You ${verb} the ${def.name} (level ${run.businesses[def.id]}).`, 'good');
+      }
       break;
     }
 

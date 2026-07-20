@@ -124,7 +124,52 @@ console.log('The Wretched Guild — engine tests\n');
   assert(highLegacy > lowLegacy, `climbing the ladder is rewarded on death (${lowLegacy} -> ${highLegacy})`);
 }
 
-// 8) Determinism — same seed + same commands reproduce identical state.
+// 8) Businesses: buying earns passive income; illicit ventures raise Heat; the
+//    law eventually answers high Heat.
+{
+  const g = newGame();
+  g.run.coin = 100;
+  dispatch(g, { type: 'investBusiness', id: 'market_stall' });
+  assert(g.run.businesses['market_stall'] === 1, 'a Market Stall is acquired');
+  const coinAfterBuy = g.run.coin;
+  for (let i = 0; i < 100; i++) advanceTick(g);
+  assert(g.run.coin > coinAfterBuy, `the stall earns passive income (${coinAfterBuy.toFixed(1)} -> ${g.run.coin.toFixed(1)})`);
+
+  // an illicit venture requires standing + rank; set them and confirm Heat rises
+  const h = newGame();
+  h.run.coin = 500;
+  h.run.rank = 3;
+  h.run.factions.shadow = 20;
+  dispatch(h, { type: 'investBusiness', id: 'fencing_den' });
+  assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once rank + shadow standing are met');
+  const heatBefore = h.run.heat;
+  for (let i = 0; i < 200; i++) advanceTick(h);
+  assert(h.run.heat > heatBefore, `the illicit den raises Heat over time (${heatBefore} -> ${h.run.heat.toFixed(1)})`);
+}
+
+// 9) Business requirements gate acquisition (rank + standing).
+{
+  const g = newGame();
+  g.run.coin = 9999;
+  dispatch(g, { type: 'investBusiness', id: 'trade_house' }); // needs rank 8 + standing 45
+  assert(!g.run.businesses['trade_house'], 'a Trade House is barred without the rank and standing to hold it');
+}
+
+// 10) The watch fines a high-Heat character (law enforcement bites).
+{
+  const g = newGame();
+  g.run.coin = 200;
+  g.run.heat = 100;
+  let fined = false;
+  const coin0 = g.run.coin;
+  for (let i = 0; i < 400 && g.run.alive; i++) {
+    advanceTick(g);
+    if (g.run.coin < coin0 || g.run.heat < 100) { fined = true; break; }
+  }
+  assert(fined, 'sustained max Heat draws the watch (a fine or raid occurs)');
+}
+
+// 11) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {
     const g = newGame();

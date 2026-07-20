@@ -27,7 +27,7 @@
   </div>
   <div class="stat">
     <span class="label">Coin</span>
-    <span class="val gold">{$game.run.coin}</span>
+    <span class="val gold">{Math.floor($game.run.coin)}</span>
   </div>
   <div class="stat">
     <span class="label">Heat</span>

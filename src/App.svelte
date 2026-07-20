@@ -4,6 +4,7 @@
   import CharacterPanel from './ui/CharacterPanel.svelte';
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
+  import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
@@ -28,7 +29,10 @@
     {#if $game.run.encounter}
       <EncounterView />
     {:else}
-      <ActivitiesPanel />
+      <div class="col">
+        <ActivitiesPanel />
+        <BusinessesPanel />
+      </div>
     {/if}
   </section>
 

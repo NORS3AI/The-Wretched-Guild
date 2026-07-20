@@ -31,7 +31,7 @@
         <div class="req" class:met={adv.coinMet}>
           <span class="tick">{adv.coinMet ? '✓' : '○'}</span>
           <span>Coin</span>
-          <span class="req-val">{run.coin} / {adv.req.minCoin}</span>
+          <span class="req-val">{Math.floor(run.coin)} / {adv.req.minCoin}</span>
         </div>
         <div class="req" class:met={adv.standingMet}>
           <span class="tick">{adv.standingMet ? '✓' : '○'}</span>

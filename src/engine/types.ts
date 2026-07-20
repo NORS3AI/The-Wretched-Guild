@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -62,6 +62,8 @@ export interface RunState {
   rank: number;
   /** standing with each faction (§9) */
   factions: Record<FactionId, number>;
+  /** owned ventures by id → level (§11) */
+  businesses: Record<string, number>;
 
   activity: ActiveActivity | null;
   encounter: EncounterRuntime | null;

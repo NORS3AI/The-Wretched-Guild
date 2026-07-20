@@ -8,22 +8,28 @@ beyond it to the secret seat of the Master of the World.
 > **Design blueprint:** see [`GAME_DESIGN.md`](./GAME_DESIGN.md) for the full
 > vision, systems, alignment model, and roadmap.
 
-## What's here now (vertical slice — M0/M1)
+## What's playable now (M0–M3)
 
-A playable proof of the core loop:
-
-- **Two modes of play.** An *idle layer* (Beg, Honest Labour, Pick Pockets, Lay
-  Low) that accrues coin and trains attributes over ticks — and an *interactive
-  layer*: a hand-played RPG-choice **contract** ("A Debt in Coin and Blood") with
-  gated choices, a risk roll, and a real death vector.
+- **Two modes of play.** An *idle layer* (Beg, Honest Labour, Pick Pockets, Serve
+  at the Chapel, Work a Market Stall, Lay Low) that accrues coin, attributes, and
+  faction standing over ticks — and an *interactive layer*: a hand-played
+  RPG-choice **contract** ("A Debt in Coin and Blood") with gated choices, a risk
+  roll, and a real death vector.
 - **Emergent alignment.** A hidden Law↔Chaos / Good↔Evil compass that drifts from
-  your choices. One contract choice — the forged-warrant "arrest" — is gated to
-  the **Lawful** (the Frollo route), demonstrating alignment-gated play.
+  your choices. The forged-warrant "arrest" is gated to the **Lawful** (the Frollo
+  route); the Shadow Guild refuses the Lawful Good; the Church admits no Chaotic.
+- **Factions & the rank ladder.** Five factions, each gated by alignment. Climb a
+  100-rung ladder (first 15 rungs live) gated on coin + standing, with your
+  **title themed by the path you chose** — a Cutpurse and an Almstaker stand on
+  the same rung.
+- **Economy & businesses.** Buy and upgrade ventures — Market Stall, Alehouse,
+  Fencing Den, Craftsman's Shop, Smuggler's Wharf, Trade House — that earn
+  **passive income** each tick. Illicit ones pay more but raise **Heat**, and the
+  **watch** eventually raids or fines a notorious character.
 - **Permadeath & the Guild.** Death ends the run; a persistent Guild banks
-  **Legacy** to spend on permanent unlocks that shape every future life.
+  **Legacy** (more for climbing higher) to spend on permanent unlocks.
 - **Pause / fast-forward / offline** time, and **autosave** to browser storage
-  through a single swappable `storage` seam (clean architecture — everything
-  stays client-side in the browser).
+  through a single swappable `storage` seam — everything stays client-side.
 
 ## Tech
 

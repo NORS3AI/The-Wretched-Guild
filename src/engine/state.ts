@@ -47,6 +47,7 @@ export function newRun(meta: MetaState): RunState {
     alignment: { ethics: 0, morals: 0 },
     rank: 1,
     factions: emptyStanding(),
+    businesses: {},
     activity: null,
     encounter: null,
     contractAvailable: false,

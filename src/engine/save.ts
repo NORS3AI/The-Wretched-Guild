@@ -53,6 +53,11 @@ function migrate(data: unknown): GameState {
     if (g.meta && typeof g.meta.bestRank !== 'number') g.meta.bestRank = 1;
     g.version = 2;
   }
+  // v2 → v3: owned businesses were added to the run.
+  if (g.version < 3) {
+    if (!g.run.businesses) g.run.businesses = {};
+    g.version = 3;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

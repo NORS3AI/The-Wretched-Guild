@@ -6,8 +6,17 @@
     <meta name="description" content="A medieval rags-to-regicide systems sim. Beg, steal, and scheme your way from the gutter to the throne — and beyond." />
     <title>The Wretched Guild</title>
   </head>
-  <body>
+  <body style="margin:0;background:#14100c;color:#e8dcc4;font-family:Georgia,serif;">
     <div id="app"></div>
+    <div id="loading" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;padding:24px;">
+      <div style="font-size:1.4rem;color:#e8c34a;">The Wretched Guild</div>
+      <div style="color:#a99b80;">Loading the gutter…</div>
+    </div>
+    <noscript>
+      <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;">
+        This game needs JavaScript enabled to play.
+      </div>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

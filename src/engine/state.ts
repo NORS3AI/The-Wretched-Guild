@@ -11,7 +11,6 @@ export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appea
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
 export const MERCHANT_FIRST_VISIT = 60; // ticks before a wandering merchant first appears
 export const MERCHANT_COOLDOWN = 120; // ticks between merchant visits
-export const MERCHANT_STAY = 10; // hours a visiting merchant lingers in town
 
 export function newMeta(): MetaState {
   return {
@@ -90,7 +89,7 @@ export function newRun(meta: MetaState): RunState {
     contractCooldown: CONTRACT_FIRST_OFFER,
     contractsOffered: 0,
     contractFates: {},
-    merchantUntil: 0,
+    merchantHere: false,
     merchantCooldown: MERCHANT_FIRST_VISIT,
     legacyThisRun: 0,
   };

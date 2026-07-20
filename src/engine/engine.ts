@@ -21,7 +21,7 @@ import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from '.
 import { chance, nextInt } from './rng';
 import { shopOpen } from './time';
 import { buyCarryUpgrade, type CarryKind } from './merchant';
-import { MERCHANT_COOLDOWN, MERCHANT_STAY } from './state';
+import { MERCHANT_COOLDOWN } from './state';
 
 export { TICKS_PER_DAY, DAYS_PER_YEAR, TICKS_PER_YEAR } from './timeconst';
 import { TICKS_PER_DAY, TICKS_PER_YEAR } from './timeconst';
@@ -108,11 +108,11 @@ export function advanceTick(game: GameState): void {
   }
 
   // a wandering merchant rolls into town now and then (arriving by daylight) and
-  // lingers a while, selling ways to carry more.
-  if (run.merchantUntil <= run.tick) {
+  // stays until the player waves them off (see the dismissMerchant command).
+  if (!run.merchantHere) {
     run.merchantCooldown--;
     if (run.merchantCooldown <= 0 && shopOpen(run)) {
-      run.merchantUntil = run.tick + MERCHANT_STAY;
+      run.merchantHere = true;
       run.merchantCooldown = MERCHANT_COOLDOWN;
       pushLog(run, 'A wandering merchant rolls into the square with pouches, packs, and beasts of burden for sale.', 'system');
     }
@@ -183,7 +183,8 @@ export type Command =
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string }
   | { type: 'buyItem'; id: string }
-  | { type: 'buyCarry'; kind: CarryKind };
+  | { type: 'buyCarry'; kind: CarryKind }
+  | { type: 'dismissMerchant' };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -387,8 +388,16 @@ export function dispatch(game: GameState, cmd: Command): void {
 
     case 'buyCarry': {
       if (!run.alive) break;
-      if (run.merchantUntil <= run.tick) break; // the merchant has moved on
+      if (!run.merchantHere) break; // the merchant has moved on
       buyCarryUpgrade(run, cmd.kind);
+      break;
+    }
+
+    case 'dismissMerchant': {
+      if (!run.merchantHere) break;
+      run.merchantHere = false;
+      run.merchantCooldown = MERCHANT_COOLDOWN; // they'll wander back another day
+      pushLog(run, 'The wandering merchant packs up and rolls on to the next town.', 'plain');
       break;
     }
 

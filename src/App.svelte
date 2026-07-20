@@ -47,7 +47,7 @@
       <EncounterView />
     {:else}
       <div class="col">
-        {#if $game.run.merchantUntil > $game.run.tick}
+        {#if $game.run.merchantHere}
           <MerchantPanel />
         {/if}
         <ActivitiesPanel />

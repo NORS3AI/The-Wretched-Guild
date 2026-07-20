@@ -7,13 +7,12 @@
   const game = gameStore;
   $: run = $game.run;
   $: offers = carryOffers(run);
-  $: hoursLeft = Math.max(0, run.merchantUntil - run.tick);
 </script>
 
 <div class="panel merchant">
   <div class="panel-title">
     The Wandering Merchant
-    <span class="leaving faint">leaves in ~{hoursLeft}h</span>
+    <button class="leave" onclick={() => actions.dismissMerchant()}>Leave →</button>
   </div>
   <div class="body">
     <p class="muted intro">
@@ -25,26 +24,28 @@
       {#each offers as offer}
         {@const buyable = canBuyCarry(run, offer)}
         <div class="offer" class:maxed={offer.maxed}>
-          <div class="offer-head">
-            <span class="offer-name">{offer.name}</span>
-            {#if !offer.maxed}<span class="offer-slots">+{offer.slots} slots</span>{/if}
+          <div class="offer-main">
+            <div class="offer-name">
+              {offer.name}
+              {#if !offer.maxed}<span class="offer-slots">+{offer.slots} slots</span>{/if}
+            </div>
+            <p class="offer-desc faint">{offer.desc}</p>
           </div>
-          <p class="offer-desc faint">{offer.desc}</p>
-          {#if offer.maxed}
-            <span class="offer-max">Nothing more of this kind to sell.</span>
-          {:else}
-            <div class="offer-foot">
-              <span class="req">
+          <div class="offer-buy">
+            {#if offer.maxed}
+              <span class="offer-max">All bought.</span>
+            {:else}
+              <div class="req">
                 <span class="cost" class:short={run.coin < offer.cost}>{offer.cost}c</span>
                 <span class="faction" class:short={run.factions[offer.faction] < offer.factionReq}>
-                  · {factionById(offer.faction).name} {offer.factionReq}
+                  {factionById(offer.faction).name} {offer.factionReq}
                 </span>
-              </span>
+              </div>
               <button class="btn primary buy" disabled={!buyable} onclick={() => actions.buyCarry(offer.kind)}>
                 Buy
               </button>
-            </div>
-          {/if}
+            {/if}
+          </div>
         </div>
       {/each}
     </div>
@@ -58,12 +59,24 @@
   .merchant .panel-title {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
   }
-  .leaving {
+  .leave {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--ink-dim);
     font-size: 0.66rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: none;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .leave:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
   }
   .body {
     padding: 14px;
@@ -75,36 +88,35 @@
     font-style: italic;
   }
   .offers {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-  }
-  @media (max-width: 720px) {
-    .offers {
-      grid-template-columns: 1fr;
-    }
-  }
-  .offer {
-    border: 1px solid var(--border-light);
-    border-radius: 5px;
-    padding: 10px 11px;
-    background: var(--bg-panel-2);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+  }
+  .offer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    padding: 10px 12px;
+    background: var(--bg-panel-2);
   }
   .offer.maxed {
     opacity: 0.55;
   }
-  .offer-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 6px;
+  .offer-main {
+    flex: 1 1 220px;
+    min-width: 0;
   }
   .offer-name {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
   }
   .offer-slots {
     font-size: 0.72rem;
@@ -112,20 +124,27 @@
     white-space: nowrap;
   }
   .offer-desc {
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     line-height: 1.4;
-    margin: 0;
-    flex: 1;
+    margin: 3px 0 0;
   }
-  .offer-foot {
+  .offer-buy {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    flex-shrink: 0;
   }
   .req {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.35;
     font-size: 0.74rem;
     color: var(--ink-dim);
+    white-space: nowrap;
+  }
+  .cost {
+    color: var(--gold);
   }
   .cost.short,
   .faction.short {
@@ -137,6 +156,6 @@
     color: var(--ink-faint);
   }
   .buy {
-    padding: 5px 14px;
+    padding: 6px 18px;
   }
 </style>

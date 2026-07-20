@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -146,8 +146,8 @@ export interface RunState {
   /** the fate of each mark this life: killed marks never return, spared can */
   contractFates: Record<string, 'dead' | 'spared'>;
 
-  /** a wandering merchant is in town until this tick (0 = not here) */
-  merchantUntil: number;
+  /** a wandering merchant is in town (stays until the player waves them off) */
+  merchantHere: boolean;
   /** ticks until the wandering merchant next comes to town */
   merchantCooldown: number;
 

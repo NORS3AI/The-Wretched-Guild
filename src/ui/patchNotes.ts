@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '5:35 PM MST',
+    title: 'A Proper Day & a Patient Merchant',
+    changes: [
+      'The day/night cycle now runs at a believable pace: one in-game day is 6 real minutes at 1× (one hour every 15 seconds). The clock and shop hours turn accordingly, and faster speeds skip through smoothly.',
+      'The wandering merchant now stays in town until you send them off with the new Leave button — no more vanishing on a timer. They wander back another day.',
+      'Rebuilt the wandering-merchant panel so it lays out cleanly on desktop, tablet, and phone (a tidy stacked list instead of cramped columns).',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '5:10 PM MST',
     title: 'Infinite Legacy & Steady Hands on Glass',
     changes: [

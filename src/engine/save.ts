@@ -156,6 +156,15 @@ function migrate(data: unknown): GameState {
     }
     g.version = 14;
   }
+  // v14 → v15: the wandering merchant now stays until dismissed (flag, not timer).
+  if (g.version < 15) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.merchantHere !== 'boolean') {
+      r.merchantHere = typeof r.merchantUntil === 'number' && (r.merchantUntil as number) > (r.tick as number);
+    }
+    if (typeof r.merchantCooldown !== 'number') r.merchantCooldown = 60;
+    g.version = 15;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

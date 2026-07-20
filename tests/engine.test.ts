@@ -801,5 +801,35 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.meta.legacy === metaLegacy, 'no double-banking of Legacy on the new life');
 }
 
+// 23) A full in-game day is six real minutes at 1× (24 ticks × 15 s).
+{
+  const { TICKS_PER_DAY, REAL_MS_PER_TICK, REAL_MS_PER_DAY } = await import('../src/engine/timeconst');
+  assert(TICKS_PER_DAY === 24, 'a day is 24 ticks (one per hour)');
+  assert(REAL_MS_PER_TICK === 15000, 'one tick (hour) is 15 real seconds at 1×');
+  assert(REAL_MS_PER_DAY === 360000, 'a full day is 6 real minutes (360,000 ms) at 1×');
+}
+
+// 24) The wandering merchant stays until dismissed, then wanders back later.
+{
+  const g = newGame();
+  // fast-forward (kept fed) until the merchant arrives
+  let guard = 0;
+  while (!g.run.merchantHere && guard++ < 100000) ff(g, 1);
+  assert(g.run.merchantHere, 'a wandering merchant eventually arrives');
+
+  // it does NOT leave on its own over time
+  ff(g, 500);
+  assert(g.run.merchantHere, 'the merchant lingers indefinitely (no auto-departure)');
+
+  // dismissing sends them off
+  dispatch(g, { type: 'dismissMerchant' });
+  assert(!g.run.merchantHere, 'clicking Leave sends the merchant away');
+
+  // and they come back another day
+  guard = 0;
+  while (!g.run.merchantHere && guard++ < 100000) ff(g, 1);
+  assert(g.run.merchantHere, 'the merchant wanders back later');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

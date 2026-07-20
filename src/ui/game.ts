@@ -27,9 +27,13 @@ function checkFlash(): void {
   }
 }
 
-// The loop fires every REAL_MS_PER_TICK (0.5s) and processes `speed` ticks each
-// time, so 1× is a lively ~2 ticks/sec and 10× rips through downtime.
-const TICK_MS = REAL_MS_PER_TICK;
+// The render loop repaints a few times a second; game-ticks advance on a real-
+// time accumulator (one tick per REAL_MS_PER_TICK of speed-scaled time). This
+// keeps the clock and bars smooth at every speed — at 1× a tick lands every 15s
+// (a 6-minute day), and 10× skips through it smoothly rather than in big chunks.
+const RENDER_MS = 500;
+const MAX_TICKS_PER_FRAME = 200; // safety clamp
+let tickAcc = 0;
 
 let game: GameState = loadGame();
 
@@ -53,18 +57,28 @@ setInterval(() => {
   try {
     if (!game.paused && game.run.alive && !game.run.encounter) {
       const wasAlive = game.run.alive;
-      const steps = Math.max(1, Math.min(50, game.speed | 0));
-      for (let i = 0; i < steps; i++) {
+      // bank this frame's worth of speed-scaled real time, then spend it a
+      // whole tick at a time.
+      tickAcc += RENDER_MS * Math.max(1, game.speed | 0);
+      let did = 0;
+      while (tickAcc >= REAL_MS_PER_TICK && did < MAX_TICKS_PER_FRAME) {
+        tickAcc -= REAL_MS_PER_TICK;
         advanceTick(game);
-        if (!game.run.alive || game.run.encounter) break;
+        did++;
+        if (!game.run.alive || game.run.encounter) {
+          tickAcc = 0; // don't carry time across a death or an open encounter
+          break;
+        }
       }
-      notify();
-      checkFlash();
-      // death banks this life's Legacy/Tokens into meta — persist it at once so a
-      // reload on the death screen can't lose the just-earned prestige.
-      if (wasAlive && !game.run.alive) saveGame(game);
+      if (did > 0) {
+        notify();
+        checkFlash();
+        // death banks this life's Legacy/Tokens into meta — persist it at once so
+        // a reload on the death screen can't lose the just-earned prestige.
+        if (wasAlive && !game.run.alive) saveGame(game);
+      }
     }
-    saveAcc += TICK_MS;
+    saveAcc += RENDER_MS;
     if (saveAcc >= 5000) {
       saveAcc = 0;
       saveGame(game);
@@ -77,7 +91,7 @@ setInterval(() => {
   } finally {
     ticking = false;
   }
-}, TICK_MS);
+}, RENDER_MS);
 
 // Background progress: anchor on hide/exit, and simulate elapsed time on return.
 if (typeof window !== 'undefined') {
@@ -134,6 +148,7 @@ export const actions = {
   sellItem: (id: string) => run({ type: 'sellItem', id }),
   buyItem: (id: string) => run({ type: 'buyItem', id }),
   buyCarry: (kind: 'pocket' | 'pouch' | 'container') => run({ type: 'buyCarry', kind }),
+  dismissMerchant: () => run({ type: 'dismissMerchant' }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),
 

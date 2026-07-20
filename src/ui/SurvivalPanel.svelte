@@ -2,7 +2,7 @@
   import { gameStore, actions } from './game';
   import { DEEDS } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
-  import { itemDef } from '../engine/items';
+  import { itemDef, isEdible } from '../engine/items';
 
   const game = gameStore;
   $: run = $game.run;
@@ -62,14 +62,25 @@
       {/each}
     </div>
 
-    <!-- inventory -->
-    <div class="section-label">Pockets</div>
+    <!-- inventory / vendor -->
+    <div class="section-label">Pockets &amp; Pedlar</div>
     <div class="pockets">
       {#each run.pockets as slot}
+        {@const def = slot ? itemDef(slot.item) : null}
         <div class="slot" class:empty={!slot}>
-          {#if slot}
-            <span class="slot-name" title={itemDef(slot.item)?.blurb}>{itemDef(slot.item)?.name}</span>
-            {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+          {#if slot && def}
+            <div class="slot-top">
+              <span class="slot-name" title={def.blurb}>{def.name}</span>
+              {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+            </div>
+            <div class="slot-actions">
+              {#if isEdible(def)}
+                <button class="mini" title="Eat" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {/if}
+              <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
+                Sell {def.value}c
+              </button>
+            </div>
           {:else}
             <span class="slot-empty faint">— empty —</span>
           {/if}
@@ -186,13 +197,46 @@
     background: var(--bg-panel-2);
     font-size: 0.82rem;
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
     min-height: 34px;
   }
   .slot.empty {
+    flex-direction: row;
+    align-items: center;
     border-style: dashed;
     border-color: var(--border);
+  }
+  .slot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .slot-name {
+    line-height: 1.2;
+  }
+  .slot-actions {
+    display: flex;
+    gap: 5px;
+  }
+  .mini {
+    flex: 1;
+    background: #0f0b07;
+    color: var(--ink-dim);
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.72rem;
+    font-family: inherit;
+  }
+  .mini:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+  .mini.sell {
+    color: var(--gold);
   }
   .slot-qty {
     color: var(--gold);

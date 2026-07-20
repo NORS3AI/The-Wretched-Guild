@@ -391,6 +391,37 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.activity === null, 'Lay Low auto-cancels once fully healed and Heat is 0');
 }
 
+// 15f) The pedlar buys pocket items; herbs are eaten for health + water.
+{
+  const g = newGame();
+  g.run.coin = 0;
+  g.run.pockets = [{ item: 'scrap', qty: 2 }, { item: 'herbs', qty: 1 }];
+  dispatch(g, { type: 'sellItem', id: 'scrap' });
+  assert(g.run.coin === 7, 'selling salvaged scrap yields its 7-copper value');
+  assert(g.run.pockets.some((p) => p && p.item === 'scrap' && p.qty === 1), 'one scrap remains after selling one');
+
+  g.run.hp = 6;
+  g.run.needs.water = 40;
+  dispatch(g, { type: 'eatItem', id: 'herbs' });
+  assert(g.run.hp > 6, `eating healing herbs restores a little health (6 -> ${g.run.hp})`);
+  assert(g.run.needs.water > 40, `eating healing herbs restores a little water (40 -> ${g.run.needs.water})`);
+  assert(!g.run.pockets.some((p) => p && p.item === 'herbs'), 'the herbs are consumed');
+}
+
+// 15g) Bathing at the well can land you in the stocks (deterministic via seed).
+{
+  // find a seed where the first bathe attempt fails AND the escape fails
+  let landed = false;
+  for (let seed = 1; seed < 40 && !landed; seed++) {
+    const g = newGame();
+    g.run.seed = seed;
+    g.run.rngCursor = 0;
+    dispatch(g, { type: 'doDeed', id: 'bathe_well' });
+    if (g.run.stocksUntil !== null) landed = true;
+  }
+  assert(landed, 'a failed bathe + failed escape lands the player in the stocks');
+}
+
 // 16) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {

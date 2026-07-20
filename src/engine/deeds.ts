@@ -9,6 +9,7 @@ import { pushLog, trainAttr } from './helpers';
 import { damage, heal, maxHp } from './survival';
 import { ITEMS, itemDef, addItem, removeItem } from './items';
 import { has, randomUnlearned } from './learnings';
+import { TICKS_PER_DAY } from './timeconst';
 
 export interface DeedDef {
   id: string;
@@ -80,21 +81,39 @@ export const DEEDS: DeedDef[] = [
     },
   },
   {
-    id: 'wash_well',
-    name: 'Wash at the Well',
-    blurb: 'Quick, but the townsfolk chase beggars off — and it draws notice.',
+    id: 'refill_well',
+    name: 'Refill at the Well',
+    blurb: 'Top up your waterskin and drink your fill. Quick and unremarkable.',
     timeTicks: 2,
     effect: (_g, run) => {
-      const caught = Math.max(0.05, 0.4 - run.attrs.stealth / 80 - run.attrs.luck / 120);
-      if (chance(run, caught)) {
-        run.heat = Math.min(100, run.heat + 6);
-        pushLog(run, 'A goodwife shrieks and drives you from the well before you can wash.', 'bad');
+      run.waterskinCharges = run.waterskinMax;
+      run.needs.water = clamp100(run.needs.water + 20);
+      pushLog(run, 'You draw clean water at the well and fill your skin to the brim.', 'plain');
+    },
+  },
+  {
+    id: 'bathe_well',
+    name: 'Bathe at the Well',
+    blurb: 'Wash the filth off — but the townsfolk despise a beggar fouling their well. Most attempts end in a chase.',
+    timeTicks: 2,
+    effect: (game, run) => {
+      // Bathing succeeds only 30% of the time; otherwise the guard comes.
+      if (chance(run, 0.3)) {
+        run.needs.hygiene = 100;
+        run.needs.water = clamp100(run.needs.water + 15);
+        pushLog(run, 'You strip and scrub yourself clean in the well-trough before anyone raises a fuss.', 'good');
         return;
       }
-      run.needs.hygiene = clamp100(run.needs.hygiene + 45);
-      run.needs.water = clamp100(run.needs.water + 20);
-      run.waterskinCharges = run.waterskinMax;
-      pushLog(run, 'You scrub quickly at the well and fill your skin before anyone minds.', 'good');
+      // failure → you must run (45% to get clear)
+      if (chance(run, 0.45)) {
+        run.heat = Math.min(100, run.heat + 3);
+        pushLog(run, 'A guard bellows and charges — you snatch up your rags and outrun him through the alleys.', 'bad');
+        return;
+      }
+      // caught → one day in the stocks
+      run.stocksUntil = run.tick + TICKS_PER_DAY;
+      run.activity = null;
+      pushLog(run, 'The guard collars you fouling the well and drags you to the stocks for a day.', 'bad');
     },
   },
   {

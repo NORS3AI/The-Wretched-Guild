@@ -14,8 +14,9 @@ import { canJoinShadow } from './alignment';
 import { advancement, completeAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
-import { tickSurvival } from './survival';
+import { tickSurvival, heal } from './survival';
 import { deedById } from './deeds';
+import { itemDef, isEdible, removeItem } from './items';
 import { chance, nextInt } from './rng';
 
 export { TICKS_PER_DAY, DAYS_PER_YEAR, TICKS_PER_YEAR } from './timeconst';
@@ -153,6 +154,8 @@ export type Command =
   | { type: 'assignMember'; memberId: string; jobId: string | null }
   | { type: 'rerollRecruits' }
   | { type: 'doDeed'; id: string }
+  | { type: 'eatItem'; id: string }
+  | { type: 'sellItem'; id: string }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string };
 
@@ -264,6 +267,28 @@ export function dispatch(game: GameState, cmd: Command): void {
         if (!run.alive || run.encounter) break;
       }
       if (run.alive && !run.encounter) deed.effect(game, run);
+      break;
+    }
+
+    case 'eatItem': {
+      if (!run.alive || run.stocksUntil !== null) break;
+      const def = itemDef(cmd.id);
+      if (!def || !isEdible(def)) break;
+      if (!removeItem(run, cmd.id, 1)) break;
+      if (def.food) run.needs.food = Math.min(100, run.needs.food + def.food);
+      if (def.water) run.needs.water = Math.min(100, run.needs.water + def.water);
+      if (def.heal) heal(run, def.heal);
+      pushLog(run, `You eat a ${def.name.toLowerCase()}.`, 'good');
+      break;
+    }
+
+    case 'sellItem': {
+      if (!run.alive) break;
+      const def = itemDef(cmd.id);
+      if (!def) break;
+      if (!removeItem(run, cmd.id, 1)) break;
+      run.coin += def.value;
+      pushLog(run, `The pedlar buys your ${def.name.toLowerCase()} for ${def.value} copper.`, 'coin');
       break;
     }
 

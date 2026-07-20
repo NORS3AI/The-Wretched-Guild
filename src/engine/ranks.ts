@@ -8,7 +8,7 @@
 
 import type { FactionId } from './factions';
 import type { RunState } from './types';
-import { dominantFaction, peakStanding, secondPeakStanding } from './factions';
+import { dominantFaction, combinedStanding, spendCombinedStanding } from './factions';
 import { pushLog } from './helpers';
 
 export const MAX_RANK = 30; // the slice populates the first six bands
@@ -68,43 +68,44 @@ const BANDS: Band[] = [
 
 export interface RankReq {
   minCoin: number;
-  minStanding: number; // highest single faction
-  minSecond: number; // second-highest faction (breadth)
+  minCombined: number; // total standing summed across ALL factions
 }
 
 // Requirements to advance INTO rank r (index r). Index 1 is the starting rank.
+// Both the coin and the combined standing are SPENT on advancement (see
+// completeAdvance) — rising in the world costs what it demands.
 const REQS: RankReq[] = [
-  { minCoin: 0, minStanding: 0, minSecond: 0 }, // 0 unused
-  { minCoin: 0, minStanding: 0, minSecond: 0 }, // 1 start
-  { minCoin: 15, minStanding: 0, minSecond: 0 }, // 2 — beggar → next: 15 coppers
-  { minCoin: 12, minStanding: 4, minSecond: 0 }, // 3
-  { minCoin: 30, minStanding: 9, minSecond: 0 }, // 4
-  { minCoin: 60, minStanding: 15, minSecond: 0 }, // 5
-  { minCoin: 120, minStanding: 21, minSecond: 0 }, // 6 · rite
-  { minCoin: 200, minStanding: 28, minSecond: 0 }, // 7
-  { minCoin: 320, minStanding: 35, minSecond: 0 }, // 8
-  { minCoin: 480, minStanding: 43, minSecond: 0 }, // 9
-  { minCoin: 700, minStanding: 50, minSecond: 0 }, // 10
-  { minCoin: 1000, minStanding: 56, minSecond: 0 }, // 11 · rite
-  { minCoin: 1400, minStanding: 62, minSecond: 0 }, // 12
-  { minCoin: 1900, minStanding: 68, minSecond: 0 }, // 13
-  { minCoin: 2600, minStanding: 74, minSecond: 0 }, // 14
-  { minCoin: 3500, minStanding: 80, minSecond: 0 }, // 15
-  { minCoin: 4800, minStanding: 84, minSecond: 20 }, // 16 · rite
-  { minCoin: 6500, minStanding: 88, minSecond: 26 }, // 17
-  { minCoin: 8800, minStanding: 90, minSecond: 32 }, // 18
-  { minCoin: 12000, minStanding: 92, minSecond: 38 }, // 19
-  { minCoin: 16000, minStanding: 94, minSecond: 44 }, // 20
-  { minCoin: 21000, minStanding: 95, minSecond: 50 }, // 21 · rite
-  { minCoin: 28000, minStanding: 96, minSecond: 55 }, // 22
-  { minCoin: 37000, minStanding: 97, minSecond: 60 }, // 23
-  { minCoin: 49000, minStanding: 98, minSecond: 66 }, // 24
-  { minCoin: 64000, minStanding: 99, minSecond: 72 }, // 25
-  { minCoin: 82000, minStanding: 100, minSecond: 78 }, // 26 · rite
-  { minCoin: 105000, minStanding: 100, minSecond: 84 }, // 27
-  { minCoin: 132000, minStanding: 100, minSecond: 88 }, // 28
-  { minCoin: 165000, minStanding: 100, minSecond: 92 }, // 29
-  { minCoin: 205000, minStanding: 100, minSecond: 96 }, // 30
+  { minCoin: 0, minCombined: 0 }, // 0 unused
+  { minCoin: 0, minCombined: 0 }, // 1 start
+  { minCoin: 15, minCombined: 0 }, // 2 — beggar → next: 15 coppers
+  { minCoin: 12, minCombined: 4 }, // 3
+  { minCoin: 30, minCombined: 9 }, // 4
+  { minCoin: 60, minCombined: 15 }, // 5
+  { minCoin: 120, minCombined: 21 }, // 6 · rite
+  { minCoin: 200, minCombined: 28 }, // 7
+  { minCoin: 320, minCombined: 35 }, // 8
+  { minCoin: 480, minCombined: 43 }, // 9
+  { minCoin: 700, minCombined: 50 }, // 10
+  { minCoin: 1000, minCombined: 56 }, // 11 · rite
+  { minCoin: 1400, minCombined: 62 }, // 12
+  { minCoin: 1900, minCombined: 68 }, // 13
+  { minCoin: 2600, minCombined: 74 }, // 14
+  { minCoin: 3500, minCombined: 80 }, // 15
+  { minCoin: 4800, minCombined: 104 }, // 16 · rite
+  { minCoin: 6500, minCombined: 114 }, // 17
+  { minCoin: 8800, minCombined: 122 }, // 18
+  { minCoin: 12000, minCombined: 130 }, // 19
+  { minCoin: 16000, minCombined: 138 }, // 20
+  { minCoin: 21000, minCombined: 145 }, // 21 · rite
+  { minCoin: 28000, minCombined: 151 }, // 22
+  { minCoin: 37000, minCombined: 157 }, // 23
+  { minCoin: 49000, minCombined: 164 }, // 24
+  { minCoin: 64000, minCombined: 171 }, // 25
+  { minCoin: 82000, minCombined: 178 }, // 26 · rite
+  { minCoin: 105000, minCombined: 184 }, // 27
+  { minCoin: 132000, minCombined: 188 }, // 28
+  { minCoin: 165000, minCombined: 192 }, // 29
+  { minCoin: 205000, minCombined: 196 }, // 30
 ];
 
 /** Rank → the Rite of Passage encounter that must be undertaken to enter it. */
@@ -134,11 +135,9 @@ export interface Advancement {
   atMax: boolean;
   nextRank: number | null;
   req: RankReq | null;
-  peak: number;
-  second: number;
+  combined: number;
   coinMet: boolean;
   standingMet: boolean;
-  secondMet: boolean;
   eligible: boolean;
   milestone: string | null;
   milestonePassed: boolean;
@@ -146,37 +145,40 @@ export interface Advancement {
 
 /** Everything the UI needs to show the advancement state. */
 export function advancement(run: RunState): Advancement {
-  const peak = peakStanding(run.factions);
-  const second = secondPeakStanding(run.factions);
+  const combined = combinedStanding(run.factions);
   if (run.rank >= MAX_RANK) {
-    return { atMax: true, nextRank: null, req: null, peak, second, coinMet: false, standingMet: false, secondMet: false, eligible: false, milestone: null, milestonePassed: true };
+    return { atMax: true, nextRank: null, req: null, combined, coinMet: false, standingMet: false, eligible: false, milestone: null, milestonePassed: true };
   }
   const next = run.rank + 1;
   const req = REQS[next];
   const coinMet = run.coin >= req.minCoin;
-  const standingMet = peak >= req.minStanding;
-  const secondMet = second >= req.minSecond;
+  const standingMet = combined >= req.minCombined;
   const milestone = MILESTONE_RANKS[next] ?? null;
   const milestonePassed = milestone ? !!run.milestones[milestone] : true;
   return {
     atMax: false,
     nextRank: next,
     req,
-    peak,
-    second,
+    combined,
     coinMet,
     standingMet,
-    secondMet,
-    eligible: coinMet && standingMet && secondMet,
+    eligible: coinMet && standingMet,
     milestone,
     milestonePassed,
   };
 }
 
-/** Advance one rung, marking a rite passed if one gated it. Used by both the
+/** Advance one rung, marking a rite passed if one gated it. The rank's cost —
+ *  its required coin AND combined standing — is SPENT here. Used by both the
  *  direct promotion path and the Rite of Passage encounters. */
 export function completeAdvance(run: RunState, milestoneId?: string): void {
+  const next = Math.min(MAX_RANK, run.rank + 1);
+  const req = REQS[next];
+  if (req) {
+    run.coin = Math.max(0, run.coin - req.minCoin);
+    spendCombinedStanding(run.factions, req.minCombined);
+  }
   if (milestoneId) run.milestones[milestoneId] = true;
-  run.rank = Math.min(MAX_RANK, run.rank + 1);
+  run.rank = next;
   pushLog(run, `You rise in the world — you are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
 }

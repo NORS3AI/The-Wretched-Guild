@@ -90,3 +90,19 @@ export function secondPeakStanding(standing: Record<FactionId, number>): number 
   const vals = FACTION_IDS.map((id) => standing[id]).sort((a, b) => b - a);
   return vals[1] ?? 0;
 }
+
+/** Total standing across every faction — what rank advancement now reads. */
+export function combinedStanding(standing: Record<FactionId, number>): number {
+  let sum = 0;
+  for (const id of FACTION_IDS) sum += standing[id];
+  return sum;
+}
+
+/** Spend `amount` of combined standing, drawn proportionally from every faction
+ *  (calling in favours to rise). */
+export function spendCombinedStanding(standing: Record<FactionId, number>, amount: number): void {
+  const total = combinedStanding(standing);
+  if (total <= 0 || amount <= 0) return;
+  const factor = Math.min(1, amount / total);
+  for (const id of FACTION_IDS) standing[id] = Math.max(0, standing[id] * (1 - factor));
+}

@@ -198,7 +198,13 @@ export const ACTIVITIES: ActivityDef[] = [
     complete(run) {
       run.heat = Math.max(0, run.heat - nextInt(run, 6, 10));
       run.hp = Math.min(maxHp(run), run.hp + 1);
-      pushLog(run, 'You keep to the shadows and let the city forget your face.', 'plain');
+      // stop laying low once there is nothing left to recover from
+      if (run.hp >= maxHp(run) && run.heat <= 0) {
+        run.activity = null;
+        pushLog(run, 'Wounds knit and the hue and cry has died down — no need to hide any longer. You stop laying low.', 'good');
+      } else {
+        pushLog(run, 'You keep to the shadows and let the city forget your face.', 'plain');
+      }
     },
   },
 ];

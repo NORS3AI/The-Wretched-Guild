@@ -27,22 +27,17 @@
       <p class="atmax muted">You have climbed as far as this age of the world allows. (Rank {MAX_RANK} — the ladder grows in a later chapter.)</p>
     {:else if adv.req}
       <div class="advance">
-        <div class="req-label faint">To rise to rung {adv.nextRank}:</div>
+        <div class="req-label faint">To rise to rung {adv.nextRank} — <em>spends what it costs</em>:</div>
         <div class="req" class:met={adv.coinMet}>
           <span class="tick">{adv.coinMet ? '✓' : '○'}</span>
-          <span>Coin</span>
+          <span>Coppers (spent)</span>
           <span class="req-val">{Math.floor(run.coin)} / {adv.req.minCoin}</span>
         </div>
-        <div class="req" class:met={adv.standingMet}>
-          <span class="tick">{adv.standingMet ? '✓' : '○'}</span>
-          <span>Top faction standing</span>
-          <span class="req-val">{Math.floor(adv.peak)} / {adv.req.minStanding}</span>
-        </div>
-        {#if adv.req.minSecond > 0}
-          <div class="req" class:met={adv.secondMet}>
-            <span class="tick">{adv.secondMet ? '✓' : '○'}</span>
-            <span>Second faction standing</span>
-            <span class="req-val">{Math.floor(adv.second)} / {adv.req.minSecond}</span>
+        {#if adv.req.minCombined > 0}
+          <div class="req" class:met={adv.standingMet}>
+            <span class="tick">{adv.standingMet ? '✓' : '○'}</span>
+            <span>Combined standing (spent)</span>
+            <span class="req-val">{Math.floor(adv.combined)} / {adv.req.minCombined}</span>
           </div>
         {/if}
         {#if adv.milestone && !adv.milestonePassed}

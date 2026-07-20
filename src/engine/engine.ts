@@ -11,7 +11,7 @@ import { bindLog, pushLog } from './helpers';
 import { nextFloat } from './rng';
 import { META_UNLOCKS } from './unlocks';
 import { canJoinShadow } from './alignment';
-import { advancement, rankTitle } from './ranks';
+import { advancement, completeAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { tickSurvival } from './survival';
@@ -204,8 +204,8 @@ export function dispatch(game: GameState, cmd: Command): void {
         }
         break;
       }
-      run.rank = adv.nextRank;
-      pushLog(run, `You rise in the world. You are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
+      // completeAdvance spends the required coin + combined standing and logs
+      completeAdvance(run);
       break;
     }
 

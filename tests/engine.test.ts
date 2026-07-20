@@ -119,10 +119,13 @@ console.log('The Wretched Guild — engine tests\n');
 
   g.run.coin = 15;
   g.run.factions.commons = 0;
-  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 15, standing 0
+  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 15, combined 0
   assert(g.run.rank === 2, 'advances to rung 2 once coin/standing are met');
-  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs standing 3 — not met
-  assert(g.run.rank === 2, 'stops at the next unmet requirement (standing)');
+  assert(Math.floor(g.run.coin) === 0, 'advancing SPENDS the 15 coppers it required');
+
+  g.run.coin = 50; // enough coin for rung 3 (needs 12) but no standing
+  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs combined standing 4
+  assert(g.run.rank === 2, 'stops at the next unmet requirement (combined standing)');
 }
 
 // 6b) Crossing into a new band opens a Rite of Passage, which advances on a
@@ -143,19 +146,21 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.encounter === null, 'the rite encounter closes');
 }
 
-// 6c) Higher rungs demand a second faction's standing (breadth), and the ladder
-//     now runs to 30.
+// 6c) Higher rungs demand COMBINED standing across all factions, and advancing
+//     spends it. The ladder runs to 30.
 {
   const g = newGame();
   g.run.rank = 15;
   g.run.milestones['rite_trial'] = true; // pretend the rite is done
   g.run.coin = 100000;
-  g.run.factions.shadow = 100; // top standing maxed
-  dispatch(g, { type: 'seekAdvancement' }); // rank 16 needs a SECOND faction ≥ 20
-  assert(g.run.rank === 15, 'a maxed single faction is not enough for the Notable band');
-  g.run.factions.merchants = 25;
+  g.run.factions.shadow = 100; // combined = 100
+  dispatch(g, { type: 'seekAdvancement' }); // rank 16 needs combined ≥ 104
+  assert(g.run.rank === 15, 'combined standing of 100 is not enough for rung 16 (needs 104)');
+  g.run.factions.merchants = 25; // combined = 125
   dispatch(g, { type: 'seekAdvancement' });
-  assert(g.run.rank === 16, 'breadth across two factions unlocks the higher rung');
+  assert(g.run.rank === 16, 'combined standing of 125 unlocks rung 16');
+  assert(g.run.coin <= 100000 - 4800, 'advancing spent the 4800-copper cost');
+  assert(g.run.factions.shadow < 100, 'advancing spent combined standing (drawn from every faction)');
 }
 
 // 7) A higher rank yields more Legacy on death.
@@ -373,6 +378,17 @@ console.log('The Wretched Guild — engine tests\n');
   for (let i = 0; i < 30; i++) advanceTick(g2); // serve the sentence, no tending
   assert(g2.run.stocksUntil === null, 'the sentence ends on its own');
   assert(g2.run.needs.food <= 12 && g2.run.needs.water <= 8, `release leaves needs wrecked (food ${g2.run.needs.food.toFixed(1)}, water ${g2.run.needs.water.toFixed(1)})`);
+}
+
+// 15e) Lay Low stops on its own once wounds are healed AND Heat is back to 0.
+{
+  const g = newGame();
+  g.run.hp = 4; // wounded
+  g.run.heat = 25;
+  dispatch(g, { type: 'setActivity', id: 'laylow' });
+  ff(g, 120); // fed, lay low long enough to fully recover
+  assert(g.run.hp >= 12 && g.run.heat === 0, `laying low restores health and cools Heat (hp ${g.run.hp}, heat ${g.run.heat})`);
+  assert(g.run.activity === null, 'Lay Low auto-cancels once fully healed and Heat is 0');
 }
 
 // 16) Determinism — same seed + same commands reproduce identical state.

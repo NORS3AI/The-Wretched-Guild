@@ -1,21 +1,22 @@
 <script lang="ts">
   import { gameStore } from './game';
-  import { tick } from 'svelte';
 
   const game = gameStore;
-  let scroller: HTMLDivElement | undefined;
 
-  // keep the log pinned to the newest entry
-  $: if ($game.log.length && scroller) {
-    tick().then(() => {
-      if (scroller) scroller.scrollTop = scroller.scrollHeight;
-    });
+  // Auto-scroll to the newest entry via a self-contained action — decoupled from
+  // the reactive graph so it can never feed back into an update loop.
+  function autoscroll(node: HTMLElement) {
+    const toBottom = () => (node.scrollTop = node.scrollHeight);
+    const obs = new MutationObserver(toBottom);
+    obs.observe(node, { childList: true, subtree: true });
+    toBottom();
+    return { destroy: () => obs.disconnect() };
   }
 </script>
 
 <div class="panel log-panel">
   <div class="panel-title">Chronicle</div>
-  <div class="log scroll" bind:this={scroller}>
+  <div class="log scroll" use:autoscroll>
     {#each $game.log as entry}
       <div class="entry {entry.kind}">
         <span class="day faint">d{Math.floor(entry.tick / 24) + 1}</span>

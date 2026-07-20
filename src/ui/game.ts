@@ -26,19 +26,31 @@ function notify(): void {
 // ── tick loop ───────────────────────────────────────────────────────────────────
 
 let saveAcc = 0;
+let ticking = false; // guard against overlap/re-entrancy
 setInterval(() => {
-  if (!game.paused && game.run.alive && !game.run.encounter) {
-    for (let i = 0; i < game.speed; i++) {
-      advanceTick(game);
-      if (!game.run.alive || game.run.encounter) break;
+  if (ticking) return;
+  ticking = true;
+  try {
+    if (!game.paused && game.run.alive && !game.run.encounter) {
+      const steps = Math.max(1, Math.min(50, game.speed | 0));
+      for (let i = 0; i < steps; i++) {
+        advanceTick(game);
+        if (!game.run.alive || game.run.encounter) break;
+      }
+      notify();
     }
+    saveAcc += TICK_MS;
+    if (saveAcc >= 5000) {
+      saveAcc = 0;
+      saveGame(game);
+    }
+  } catch (err) {
+    // A bug in the sim must never hang or blank the page — pause and report.
+    console.error('Tick error:', err);
+    game.paused = true;
     notify();
-  }
-
-  saveAcc += TICK_MS;
-  if (saveAcc >= 5000) {
-    saveAcc = 0;
-    saveGame(game);
+  } finally {
+    ticking = false;
   }
 }, TICK_MS);
 

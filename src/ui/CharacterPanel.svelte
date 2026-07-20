@@ -2,6 +2,7 @@
   import { gameStore } from './game';
   import { ethicsBand, moralsBand } from '../engine/alignment';
   import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
+  import heartsUrl from '../assets/hearts.png';
 
   const game = gameStore;
 
@@ -21,15 +22,18 @@
     return (v + 100) / 2;
   }
 
-  // hearts: an array of fill fractions (0..1) per heart cell
-  $: heartCells = (() => {
-    const max = maxHp($game.run);
-    const hearts = Math.round(max / QUARTERS_PER_HEART);
-    const cells: number[] = [];
+  // hearts as sprites: each heart has 5 phases (full → empty). The sprite column
+  // is 4 − (quarters in that heart); the row is red (0) normally, green (1) when
+  // poisoned/afflicted.
+  $: poisoned = $game.run.illness !== 'none';
+  $: heartPhases = (() => {
+    const hearts = Math.round(maxHp($game.run) / QUARTERS_PER_HEART);
+    const cols: number[] = [];
     for (let i = 0; i < hearts; i++) {
-      cells.push(Math.max(0, Math.min(1, ($game.run.hp - i * QUARTERS_PER_HEART) / QUARTERS_PER_HEART)));
+      const q = Math.max(0, Math.min(QUARTERS_PER_HEART, Math.round($game.run.hp - i * QUARTERS_PER_HEART)));
+      cols.push(QUARTERS_PER_HEART - q); // 0 = full … 4 = empty
     }
-    return cells;
+    return cols;
   })();
   $: heartText = ($game.run.hp / QUARTERS_PER_HEART).toFixed(2).replace(/\.00$/, '');
 </script>
@@ -41,17 +45,18 @@
     <div class="vital">
       <div class="vital-head">
         <span>Hearts</span>
-        <span class="muted">{heartText} / {heartCells.length}
+        <span class="muted">{heartText} / {heartPhases.length}
           {#if $game.run.illness !== 'none'}
             <span class="illness">· {$game.run.illness}</span>
           {/if}
         </span>
       </div>
       <div class="hearts">
-        {#each heartCells as fill}
-          <div class="heart">
-            <div class="heart-fill" style="width:{fill * 100}%"></div>
-          </div>
+        {#each heartPhases as col}
+          <div
+            class="sprite heart-sprite"
+            style="background-image:url({heartsUrl}); background-position:{col * 25}% {poisoned ? 100 : 0}%"
+          ></div>
         {/each}
       </div>
     </div>
@@ -129,22 +134,16 @@
   }
   .hearts {
     display: flex;
-    gap: 5px;
+    gap: 4px;
+    padding: 2px 0;
   }
-  .heart {
-    position: relative;
-    flex: 1;
-    height: 16px;
-    background: #1a0d0d;
-    border: 1px solid #4a2020;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .heart-fill {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, #a33, #d9534f);
-    transition: width 0.3s ease;
+  .heart-sprite {
+    width: 26px;
+    height: 31px; /* sprite cell aspect 66:80 */
+    background-size: 500% 200%; /* 5 phases × 2 colours */
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    flex-shrink: 0;
   }
   .illness {
     color: var(--blood-bright);

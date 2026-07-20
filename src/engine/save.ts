@@ -6,6 +6,7 @@ import { storage } from './storage';
 import { newGame } from './state';
 import { advanceTick } from './engine';
 import { bindLog, pushLog } from './helpers';
+import { emptyStanding } from './factions';
 
 const SAVE_KEY = 'wretched-guild/save';
 
@@ -39,13 +40,19 @@ export function loadGame(): GameState {
   return game;
 }
 
-/** Bring older saves forward. Today there is only v1; the seam is what matters. */
+/** Bring older saves forward. Each step backfills fields a newer version added. */
 function migrate(data: unknown): GameState {
   const g = data as GameState;
-  if (!g || typeof g !== 'object' || typeof g.version !== 'number') {
+  if (!g || typeof g !== 'object' || typeof g.version !== 'number' || !g.run) {
     return newGame();
   }
-  // future: while (g.version < SAVE_VERSION) { ...bump fields...; g.version++ }
+  // v1 → v2: factions & rank were added to the run.
+  if (g.version < 2) {
+    if (!g.run.factions) g.run.factions = emptyStanding();
+    if (typeof g.run.rank !== 'number') g.run.rank = 1;
+    if (g.meta && typeof g.meta.bestRank !== 'number') g.meta.bestRank = 1;
+    g.version = 2;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

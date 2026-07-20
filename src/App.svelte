@@ -2,6 +2,7 @@
   import { gameStore } from './ui/game';
   import Topbar from './ui/Topbar.svelte';
   import CharacterPanel from './ui/CharacterPanel.svelte';
+  import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import LogPanel from './ui/LogPanel.svelte';
@@ -18,8 +19,9 @@
 <Topbar />
 
 <main class="layout">
-  <aside>
+  <aside class="col">
     <CharacterPanel />
+    <ProgressPanel />
   </aside>
 
   <section class="center">
@@ -60,6 +62,11 @@
     gap: 16px;
     margin-top: 16px;
     align-items: start;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
   .center {
     min-height: 420px;

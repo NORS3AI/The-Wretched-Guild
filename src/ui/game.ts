@@ -60,6 +60,7 @@ export const actions = {
   setActivity: (id: string | null) => run({ type: 'setActivity', id }),
   acceptContract: () => run({ type: 'acceptContract' }),
   chooseEncounter: (index: number) => run({ type: 'chooseEncounter', index }),
+  seekAdvancement: () => run({ type: 'seekAdvancement' }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),
 

@@ -35,11 +35,9 @@ Nothing here is sacred — argue with it.
   deterministic, unit-testable, runnable headless. The UI only *reads* engine
   state and *dispatches* commands.
 - **Hosting:** GitHub Pages (`main` branch, `/docs` output). 100% client-side.
-- **Steam-ready:** Wrappable in **Tauri** later with no rewrite. Two rules keep
-  that door open for free:
-  1. All game logic stays client-side (already required for Pages).
-  2. All saving/loading goes through **one `storage` module**, never scattered
-     `localStorage` calls.
+- **Scope:** A pure TypeScript **browser game**. No native/desktop/Steam target —
+  the storage layer stays behind one `storage` module purely as clean
+  architecture, not to enable any wrapper.
 
 ---
 
@@ -334,7 +332,7 @@ The wall that lets a 15-system game survive.
   a pure function maps coordinates → 9-cell alignment → path eligibility.
 - **Time & offline.** Ticks map to in-game time; the gap since last save is
   simulated forward (bounded, summarized as "while you were away…").
-- **Storage abstraction.** One `storage` module (web now, Tauri later).
+- **Storage abstraction.** One `storage` module wrapping browser storage.
   **Versioned saves + migrations** from day one.
 
 ---
@@ -370,7 +368,6 @@ choice-driven contract — the whole game works.
 | **M4** | Guild recruitment & member assignment (doer → director). |
 | **M5** | The 100-rung ladder content & gating; Encounter content pass. |
 | **M6** | Endgame: King of England claim chain; Master of the World secret. |
-| **M7** | Tauri wrap & Steam prep. |
 
 ---
 

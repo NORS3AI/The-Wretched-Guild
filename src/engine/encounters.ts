@@ -9,7 +9,7 @@
 import type { GameState, RunState } from './types';
 import { riskRoll } from './checks';
 import { shiftAlignment, ethicsBand } from './alignment';
-import { pushLog, trainAttr } from './helpers';
+import { pushLog, trainAttr, gainStanding } from './helpers';
 import { die } from './death';
 
 export interface EncChoice {
@@ -270,6 +270,7 @@ function finishEscape(
   if (roll.tier === 'success') {
     run.coin += pay;
     run.heat = Math.min(100, run.heat + 10);
+    gainStanding(run, 'shadow', pay >= 40 ? 12 : 4);
     pushLog(run, `Contract fulfilled. The Guild pays ${pay} coin into your palm.`, 'good');
     return { text: `You are three streets away before the first scream. ${pay} coin, and a name that now means something in the dark.`, next: null };
   }
@@ -278,6 +279,7 @@ function finishEscape(
     run.coin += half;
     run.heat = Math.min(100, run.heat + 22);
     run.health -= 12;
+    gainStanding(run, 'shadow', 4);
     pushLog(run, `A ragged escape — ${half} coin and a great deal of Heat.`, 'bad');
     return { text: 'The watch spots you. You lose them in the shambles, but not before your face is seen and a bolt grazes you. Half the fee, and every guard in the parish now wants your head.', next: null };
   }

@@ -3,11 +3,13 @@
 import type { GameState, RunState } from './types';
 import { pushLog } from './helpers';
 
-/** Legacy earned by a life: reward reaching wealth and surviving long. */
+/** Legacy earned by a life: reward wealth, longevity, and — most of all — how
+ *  high you climbed the ladder. */
 export function computeLegacy(run: RunState): number {
   const fromCoin = Math.floor(run.coin / 8);
   const fromAge = Math.max(0, run.ageYears - 16);
-  return fromCoin + fromAge;
+  const fromRank = (run.rank - 1) * 4;
+  return fromCoin + fromAge + fromRank;
 }
 
 /** How much coin the Guild vault keeps across death. */
@@ -39,4 +41,5 @@ export function commitToMeta(game: GameState): void {
   game.meta.runsCompleted += 1;
   game.meta.bestAge = Math.max(game.meta.bestAge, run.ageYears);
   game.meta.bestCoin = Math.max(game.meta.bestCoin, run.coin);
+  game.meta.bestRank = Math.max(game.meta.bestRank ?? 1, run.rank);
 }

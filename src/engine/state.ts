@@ -3,6 +3,7 @@
 import type { GameState, MetaState, RunState } from './types';
 import { SAVE_VERSION } from './types';
 import { freshSeed } from './rng';
+import { emptyStanding } from './factions';
 
 export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appears
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
@@ -14,6 +15,7 @@ export function newMeta(): MetaState {
     runsCompleted: 0,
     bestAge: 0,
     bestCoin: 0,
+    bestRank: 1,
     unlocks: {},
   };
 }
@@ -43,6 +45,8 @@ export function newRun(meta: MetaState): RunState {
       wits: 3,
     },
     alignment: { ethics: 0, morals: 0 },
+    rank: 1,
+    factions: emptyStanding(),
     activity: null,
     encounter: null,
     contractAvailable: false,

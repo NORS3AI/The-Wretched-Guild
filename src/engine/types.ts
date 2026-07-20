@@ -2,7 +2,9 @@
 // The engine is framework-free and deterministic. Everything the game needs to
 // resume is inside GameState; nothing lives in the UI.
 
-export const SAVE_VERSION = 1;
+import type { FactionId } from './factions';
+
+export const SAVE_VERSION = 2;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -56,6 +58,11 @@ export interface RunState {
   attrs: Attributes;
   alignment: Alignment;
 
+  /** current position on the 100-rung ladder (§13) */
+  rank: number;
+  /** standing with each faction (§9) */
+  factions: Record<FactionId, number>;
+
   activity: ActiveActivity | null;
   encounter: EncounterRuntime | null;
 
@@ -73,6 +80,7 @@ export interface MetaState {
   runsCompleted: number;
   bestAge: number;
   bestCoin: number;
+  bestRank: number;
   unlocks: Record<string, boolean>;
 }
 

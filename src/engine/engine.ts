@@ -10,6 +10,8 @@ import { die, commitToMeta } from './death';
 import { bindLog, pushLog } from './helpers';
 import { nextFloat } from './rng';
 import { META_UNLOCKS } from './unlocks';
+import { canJoinShadow } from './alignment';
+import { advancement, rankTitle } from './ranks';
 
 export const TICKS_PER_DAY = 24;
 export const DAYS_PER_YEAR = 12;
@@ -86,6 +88,7 @@ export type Command =
   | { type: 'setActivity'; id: string | null }
   | { type: 'acceptContract' }
   | { type: 'chooseEncounter'; index: number }
+  | { type: 'seekAdvancement' }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string };
 
@@ -102,9 +105,25 @@ export function dispatch(game: GameState, cmd: Command): void {
 
     case 'acceptContract': {
       if (!run.alive || !run.contractAvailable || run.encounter) break;
+      // the Shadow Guild's path gate (§9): the Lawful Good are turned away.
+      if (!canJoinShadow(run.alignment)) {
+        pushLog(run, 'The factor studies your honest face, spits, and melts away. The Guild has no use for a saint.', 'bad');
+        run.contractAvailable = false;
+        run.contractCooldown = CONTRACT_COOLDOWN;
+        break;
+      }
       const def = ENCOUNTERS['contract_taxman'];
       run.encounter = { defId: def.id, nodeId: def.start, lastOutcomeText: def.intro };
       run.contractAvailable = false;
+      break;
+    }
+
+    case 'seekAdvancement': {
+      if (!run.alive) break;
+      const adv = advancement(run);
+      if (!adv.eligible || adv.nextRank === null) break;
+      run.rank = adv.nextRank;
+      pushLog(run, `You rise in the world. You are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
       break;
     }
 

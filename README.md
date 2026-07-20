@@ -22,8 +22,8 @@ A playable proof of the core loop:
 - **Permadeath & the Guild.** Death ends the run; a persistent Guild banks
   **Legacy** to spend on permanent unlocks that shape every future life.
 - **Pause / fast-forward / offline** time, and **autosave** to browser storage
-  through a single swappable `storage` seam (Tauri-ready for a future Steam
-  build).
+  through a single swappable `storage` seam (clean architecture — everything
+  stays client-side in the browser).
 
 ## Tech
 

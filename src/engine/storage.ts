@@ -1,6 +1,6 @@
 // The single storage seam (§2, §15). Every read/write of the save goes through
-// here — nowhere else touches localStorage. Swapping this module for a Tauri
-// file-system implementation is the ENTIRE "make it a desktop app" storage change.
+// here — nowhere else touches localStorage. Keeping it behind one interface is
+// just clean architecture: the rest of the game never knows how saves persist.
 
 export interface Storage {
   load(key: string): string | null;
@@ -32,5 +32,4 @@ const webStorage: Storage = {
   },
 };
 
-// Later: `export const storage = isTauri() ? tauriStorage : webStorage;`
 export const storage: Storage = webStorage;

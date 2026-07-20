@@ -76,7 +76,55 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.meta.legacy > 0, `Legacy banked for spending (${g.meta.legacy})`);
 }
 
-// 5) Determinism — same seed + same commands reproduce identical state.
+// 5) Factions: labour builds Commons standing; a Chaotic soul is barred from
+//    the Church (alignment gates the path).
+{
+  const g = newGame();
+  dispatch(g, { type: 'setActivity', id: 'labor' });
+  for (let i = 0; i < 300; i++) advanceTick(g);
+  assert(g.run.factions.commons > 0, `labour builds Commons standing (${g.run.factions.commons.toFixed(1)})`);
+
+  const chaotic = newGame();
+  chaotic.run.alignment.ethics = -80; // deeply Chaotic
+  dispatch(chaotic, { type: 'setActivity', id: 'pray' });
+  for (let i = 0; i < 200; i++) advanceTick(chaotic);
+  assert(chaotic.run.factions.church === 0, 'a Chaotic soul earns no Church standing (path gate holds)');
+
+  const lawful = newGame();
+  lawful.run.alignment.ethics = 50; // Lawful
+  dispatch(lawful, { type: 'setActivity', id: 'pray' });
+  for (let i = 0; i < 200; i++) advanceTick(lawful);
+  assert(lawful.run.factions.church > 0, `a Lawful soul may serve the Church (${lawful.run.factions.church.toFixed(1)})`);
+}
+
+// 6) Rank promotion is gated on coin + standing, and the command respects it.
+{
+  const g = newGame();
+  // not yet worthy — no coin, no standing
+  dispatch(g, { type: 'seekAdvancement' });
+  assert(g.run.rank === 1, 'cannot advance without meeting requirements');
+
+  g.run.coin = 5;
+  g.run.factions.commons = 5;
+  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 3, standing 0
+  assert(g.run.rank === 2, 'advances to rung 2 once coin/standing are met');
+  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs coin 10 — not met
+  assert(g.run.rank === 2, 'stops at the next unmet requirement');
+}
+
+// 7) A higher rank yields more Legacy on death.
+{
+  const low = newGame();
+  low.run.coin = 40;
+  const high = newGame();
+  high.run.coin = 40;
+  high.run.rank = 8;
+  const lowLegacy = Math.floor(low.run.coin / 8) + Math.max(0, low.run.ageYears - 16) + (low.run.rank - 1) * 4;
+  const highLegacy = Math.floor(high.run.coin / 8) + Math.max(0, high.run.ageYears - 16) + (high.run.rank - 1) * 4;
+  assert(highLegacy > lowLegacy, `climbing the ladder is rewarded on death (${lowLegacy} -> ${highLegacy})`);
+}
+
+// 8) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {
     const g = newGame();

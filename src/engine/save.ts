@@ -7,15 +7,15 @@ import { newGame } from './state';
 import { advanceTick } from './engine';
 import { bindLog, pushLog } from './helpers';
 import { emptyStanding } from './factions';
+import { emptySkills } from './skills';
 
 const SAVE_KEY = 'wretched-guild/save';
 
-// Offline is generous but bounded, so a week away doesn't fast-forward you to
-// death — and encounters never auto-resolve while you were gone. Offline runs
-// slower than live play (1 tick per 3 real seconds) so you don't return to a
-// corpse, capped well short of a full life.
-const OFFLINE_TICK_MS = 3000;
-const OFFLINE_MAX_TICKS = 600; // ~30 min of real absence, at most
+// The game keeps running "in the background": whenever you return (reload, or a
+// hidden tab regaining focus), elapsed real time is simulated forward. It runs
+// slower than live play so you don't return to a corpse, and is capped.
+const OFFLINE_TICK_MS = 3000; // 1 tick per 3 real seconds away
+const OFFLINE_MAX_TICKS = 2400; // at most ~2 hours of real absence simulated
 
 export function saveGame(game: GameState): void {
   game.lastSavedAt = Date.now();
@@ -38,7 +38,7 @@ export function loadGame(): GameState {
   }
 
   const game = migrate(data);
-  applyOfflineProgress(game);
+  catchUpOffline(game);
   return game;
 }
 
@@ -109,14 +109,22 @@ function migrate(data: unknown): GameState {
     }
     g.version = 8;
   }
+  // v8 → v9: skills.
+  if (g.version < 9) {
+    if (!g.run.skills) g.run.skills = emptySkills();
+    g.version = 9;
+  }
   g.version = SAVE_VERSION;
   return g;
 }
 
-/** Simulate the idle layer forward for time spent away — bounded, and skipped
- *  entirely while an encounter is pending (set pieces wait for the player). */
-function applyOfflineProgress(game: GameState): void {
-  const elapsedMs = Date.now() - (game.lastSavedAt ?? Date.now());
+/** Simulate the game forward for real time spent away (reload, or a hidden tab
+ *  regaining focus) — bounded, and skipped while an encounter or the stocks are
+ *  pending. Re-anchors lastSavedAt so it can be called repeatedly. */
+export function catchUpOffline(game: GameState): void {
+  const now = Date.now();
+  const elapsedMs = now - (game.lastSavedAt ?? now);
+  game.lastSavedAt = now;
   if (elapsedMs < OFFLINE_TICK_MS) return;
   if (!game.run.alive || game.run.encounter) return;
 
@@ -130,11 +138,11 @@ function applyOfflineProgress(game: GameState): void {
   }
 
   bindLog(game);
-  const gained = game.run.coin - coinBefore;
+  const gained = Math.floor(game.run.coin - coinBefore);
   const mins = Math.round((ticks * OFFLINE_TICK_MS) / 60000);
   pushLog(
     game.run,
-    `While you were away (~${mins} min), your labours continued${gained > 0 ? ` and earned ${gained} coin` : ''}.`,
+    `While you were away (~${mins} min), the world turned on${gained > 0 ? ` and you earned ${gained} copper` : ''}.`,
     'system',
   );
 }

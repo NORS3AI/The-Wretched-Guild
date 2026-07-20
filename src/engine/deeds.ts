@@ -7,8 +7,9 @@ import type { GameState, RunState } from './types';
 import { nextFloat, nextInt, chance } from './rng';
 import { pushLog, trainAttr } from './helpers';
 import { damage, heal, maxHp } from './survival';
-import { ITEMS, itemDef, addItem, removeItem } from './items';
+import { ITEMS, itemDef, addItem, removeItem, countItem } from './items';
 import { has, randomUnlearned } from './learnings';
+import { gainSkill } from './skills';
 import { TICKS_PER_DAY } from './timeconst';
 
 export interface DeedDef {
@@ -135,6 +136,41 @@ export const DEEDS: DeedDef[] = [
       if (chance(run, 0.3) && addItem(run, 'herbs', 1)) {
         pushLog(run, 'You gather healing herbs from the bank.', 'good');
       }
+    },
+  },
+  {
+    id: 'make_campfire',
+    name: 'Make a Campfire',
+    blurb: 'Burn a bundle of firewood to warm yourself in just an hour — far quicker than begging a hearth. Builds Firemaking.',
+    timeTicks: 1,
+    available: (run) => countItem(run, 'firewood') >= 1,
+    effect: (_g, run) => {
+      if (!removeItem(run, 'firewood', 1)) {
+        pushLog(run, 'You have no firewood to burn.', 'bad');
+        return;
+      }
+      run.needs.comfort = 100;
+      run.warmUntil = run.tick + TICKS_PER_DAY;
+      gainSkill(run, 'firemaking', 0.2);
+      pushLog(run, 'You strike a spark and coax a campfire to life, warming yourself to the bone. The cold will not touch you for a day.', 'good');
+    },
+  },
+  {
+    id: 'cook_fish',
+    name: 'Cook & Eat a Fish',
+    blurb: 'Cook a fresh fish over firewood and eat it hot — a real health boost. Builds Cooking and Firemaking.',
+    timeTicks: 1,
+    available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'firewood') >= 1,
+    effect: (_g, run) => {
+      if (!removeItem(run, 'fish', 1) || !removeItem(run, 'firewood', 1)) {
+        pushLog(run, 'You need both a fish and firewood to cook.', 'bad');
+        return;
+      }
+      run.needs.food = clamp100(run.needs.food + 34);
+      heal(run, 2); // a hot cooked meal restores health
+      gainSkill(run, 'cooking', 0.25);
+      gainSkill(run, 'firemaking', 0.1);
+      pushLog(run, 'You cook the fish over the fire and eat it hot. The warmth and nourishment mend you a little.', 'good');
     },
   },
   {

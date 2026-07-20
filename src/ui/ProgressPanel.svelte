@@ -2,6 +2,7 @@
   import { gameStore, actions } from './game';
   import { advancement, rankTitle, bandName, MAX_RANK } from '../engine/ranks';
   import { FACTIONS } from '../engine/factions';
+  import { itemDef } from '../engine/items';
 
   const game = gameStore;
 
@@ -40,6 +41,13 @@
             <span class="req-val">{Math.floor(adv.combined)} / {adv.req.minCombined}</span>
           </div>
         {/if}
+        {#each adv.itemStatus as it}
+          <div class="req" class:met={it.met}>
+            <span class="tick">{it.met ? '✓' : '○'}</span>
+            <span>Turn in {itemDef(it.item)?.name ?? it.item}</span>
+            <span class="req-val">{it.have} / {it.need}</span>
+          </div>
+        {/each}
         {#if adv.milestone && !adv.milestonePassed}
           <div class="rite-note">⚜ A Rite of Passage awaits at this rung.</div>
         {/if}

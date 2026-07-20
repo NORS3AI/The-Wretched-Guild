@@ -7,6 +7,8 @@ import { pushLog, trainAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS } from './items';
 import { TICKS_PER_DAY } from './timeconst';
+import { driftBearing } from './alignment';
+import { gainSkill } from './skills';
 
 export interface ActivityDef {
   id: string;
@@ -59,11 +61,10 @@ export const ACTIVITIES: ActivityDef[] = [
     complete(run) {
       const coin = nextInt(run, 2, 4);
       run.coin += coin;
-      trainAttr(run, 'brawn', 0.2);
+      trainAttr(run, 'brawn');
       gainStanding(run, 'commons', 0.5);
-      // honest toil nudges you, faintly, toward Lawful.
-      run.alignment.ethics = Math.min(100, run.alignment.ethics + 0.4);
-      pushLog(run, `A day's labour earns you ${coin} coin.`, 'coin');
+      driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
+      pushLog(run, `A day's labour earns you ${coin} copper.`, 'coin');
     },
   },
   {
@@ -85,9 +86,9 @@ export const ACTIVITIES: ActivityDef[] = [
         const coin = nextInt(run, 1, 5);
         run.coin += coin;
         run.heat = Math.min(100, run.heat + 1);
-        run.alignment.ethics = Math.max(-100, run.alignment.ethics - 0.3);
+        driftBearing(run, -1, 0); // thieving pulls you toward Chaos
         gainStanding(run, 'shadow', 0.4);
-        pushLog(run, `You lift ${coin} coin from an unguarded purse.`, 'coin');
+        pushLog(run, `You lift ${coin} copper from an unguarded purse.`, 'coin');
       }
     },
   },
@@ -100,7 +101,7 @@ export const ACTIVITIES: ActivityDef[] = [
     trains: 'piety',
     complete(run) {
       trainAttr(run, 'piety', 0.2);
-      run.alignment.ethics = Math.min(100, run.alignment.ethics + 0.3);
+      driftBearing(run, 1, 0);
       const gained = gainStanding(run, 'church', 0.5);
       if (gained > 0) {
         const alms = nextInt(run, 0, 1);
@@ -135,7 +136,8 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 7,
     trains: 'wits',
     complete(run) {
-      trainAttr(run, 'wits', 0.15);
+      trainAttr(run, 'wits');
+      gainSkill(run, 'foraging', 0.12);
       gainStanding(run, 'commons', 0.15);
       const got = chance(run, 0.5) ? 'herbs' : 'roots';
       if (chance(run, 0.7)) {
@@ -154,7 +156,8 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'wits',
     complete(run) {
-      trainAttr(run, 'wits', 0.12);
+      trainAttr(run, 'wits');
+      gainSkill(run, 'fishing', 0.15);
       gainStanding(run, 'commons', 0.2);
       if (chance(run, 0.55)) {
         if (addItem(run, 'fish', 1)) pushLog(run, 'You pull a fish from the shallows.', 'good');

@@ -5,6 +5,7 @@ import { SAVE_VERSION } from './types';
 import { freshSeed } from './rng';
 import { emptyStanding } from './factions';
 import { maxHp } from './survival';
+import { emptySkills } from './skills';
 
 export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appears
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
@@ -60,6 +61,7 @@ export function newRun(meta: MetaState): RunState {
       vitality: 3,
     },
     alignment: { ethics: 0, morals: 0 },
+    skills: emptySkills(),
     rank: 1,
     milestones: {},
     factions: emptyStanding(),

@@ -33,6 +33,9 @@ export function isEdible(def: ItemDef): boolean {
   return !!(def.food || def.water || def.heal);
 }
 
+/** A pocket slot holds a stack of at most this many of one item. */
+export const MAX_STACK = 5;
+
 export function itemDef(id: string): ItemDef | undefined {
   return ITEMS[id];
 }
@@ -41,31 +44,52 @@ export function pocketCount(run: RunState): number {
   return run.pockets.reduce((s, p) => s + (p ? p.qty : 0), 0);
 }
 
-/** Add an item, stacking onto an existing pocket or claiming an empty one.
- *  Returns false (and the item is lost to the mud) if there is no room. */
-export function addItem(run: RunState, id: string, qty = 1): boolean {
-  const existing = run.pockets.find((p) => p && p.item === id);
-  if (existing) {
-    existing.qty += qty;
-    return true;
-  }
-  const emptyIdx = run.pockets.findIndex((p) => p === null);
-  if (emptyIdx < 0) return false;
-  run.pockets[emptyIdx] = { item: id, qty };
-  return true;
+/** How many of an item the player is carrying, across all pocket slots. */
+export function countItem(run: RunState, id: string): number {
+  return run.pockets.reduce((s, p) => s + (p && p.item === id ? p.qty : 0), 0);
 }
 
+/** Add items, filling existing stacks (to MAX_STACK) then empty slots. Returns
+ *  true only if ALL fit; overflow beyond two 5-stacks is lost to the mud. */
+export function addItem(run: RunState, id: string, qty = 1): boolean {
+  let left = qty;
+  for (const slot of run.pockets) {
+    if (left <= 0) break;
+    if (slot && slot.item === id && slot.qty < MAX_STACK) {
+      const room = MAX_STACK - slot.qty;
+      const add = Math.min(room, left);
+      slot.qty += add;
+      left -= add;
+    }
+  }
+  for (let i = 0; i < run.pockets.length && left > 0; i++) {
+    if (run.pockets[i] === null) {
+      const add = Math.min(MAX_STACK, left);
+      run.pockets[i] = { item: id, qty: add };
+      left -= add;
+    }
+  }
+  return left <= 0;
+}
+
+/** Remove `qty` of an item, drawing across slots. Fails (removing nothing) if
+ *  the player isn't carrying enough. */
 export function removeItem(run: RunState, id: string, qty = 1): boolean {
-  const idx = run.pockets.findIndex((p) => p && p.item === id);
-  if (idx < 0) return false;
-  const slot = run.pockets[idx] as ItemStack;
-  if (slot.qty < qty) return false;
-  slot.qty -= qty;
-  if (slot.qty <= 0) run.pockets[idx] = null;
+  if (countItem(run, id) < qty) return false;
+  let left = qty;
+  for (let i = 0; i < run.pockets.length && left > 0; i++) {
+    const slot = run.pockets[i];
+    if (slot && slot.item === id) {
+      const take = Math.min(slot.qty, left);
+      slot.qty -= take;
+      left -= take;
+      if (slot.qty <= 0) run.pockets[i] = null;
+    }
+  }
   return true;
 }
 
 export function hasRoom(run: RunState, id: string): boolean {
-  if (run.pockets.some((p) => p && p.item === id)) return true;
+  if (run.pockets.some((p) => p && p.item === id && p.qty < MAX_STACK)) return true;
   return run.pockets.some((p) => p === null);
 }

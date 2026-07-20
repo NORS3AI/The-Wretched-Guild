@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -100,6 +100,8 @@ export interface RunState {
 
   attrs: Attributes;
   alignment: Alignment;
+  /** RuneScape-style skills trained by doing (fishing, cooking, …) */
+  skills: Record<string, number>;
 
   /** current position on the 100-rung ladder (§13) */
   rank: number;

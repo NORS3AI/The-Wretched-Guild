@@ -3,6 +3,7 @@
 import type { AttrKey, GameState, LogEntry, RunState } from './types';
 import type { FactionId } from './factions';
 import { factionById } from './factions';
+import { nextFloat } from './rng';
 
 const LOG_LIMIT = 120;
 
@@ -21,11 +22,13 @@ export function pushLog(run: RunState, text: string, kind: LogEntry['kind'] = 'p
   if (activeLog.length > LOG_LIMIT) activeLog.splice(0, activeLog.length - LOG_LIMIT);
 }
 
-/** Attributes grow slowly through use; capped so the slice stays sane. The
- *  "quick study" teaching speeds it up. */
-export function trainAttr(run: RunState, key: AttrKey, amount: number): void {
+/** Attributes grow slowly through use — a random 0.03–0.06 per action (the
+ *  "quick study" teaching speeds it up). The `amount` argument is retained for
+ *  call-site intent but no longer sets the size of the gain. */
+export function trainAttr(run: RunState, key: AttrKey, _amount = 1): void {
   const mult = run.learnings && run.learnings['quick_study'] ? 1.5 : 1;
-  run.attrs[key] = Math.min(40, run.attrs[key] + amount * mult);
+  const gain = (0.03 + nextFloat(run) * 0.03) * mult;
+  run.attrs[key] = Math.min(40, run.attrs[key] + gain);
 }
 
 /** Build faction standing — but only if your alignment admits the path (§9).

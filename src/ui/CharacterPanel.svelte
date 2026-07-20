@@ -2,6 +2,7 @@
   import { gameStore } from './game';
   import { ethicsBand, moralsBand } from '../engine/alignment';
   import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
+  import { SKILLS } from '../engine/skills';
   import heartsUrl from '../assets/hearts.png';
 
   const game = gameStore;
@@ -98,6 +99,17 @@
             <div class="fill attr-fill" style="width:{($game.run.attrs[row.key] / 40) * 100}%"></div>
           </div>
           <span class="attr-val">{$game.run.attrs[row.key].toFixed(1)}</span>
+        </div>
+      {/each}
+    </div>
+
+    <!-- skills -->
+    <div class="section-label">Skills</div>
+    <div class="skills">
+      {#each SKILLS as sk}
+        <div class="skill" title={sk.blurb}>
+          <span class="skill-name">{sk.name}</span>
+          <span class="skill-lvl">{Math.floor($game.run.skills[sk.id] ?? 1)}</span>
         </div>
       {/each}
     </div>
@@ -223,6 +235,24 @@
   .attr-val {
     text-align: right;
     color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .skills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 10px;
+  }
+  .skill {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.8rem;
+  }
+  .skill-name {
+    color: var(--ink-dim);
+  }
+  .skill-lvl {
+    color: var(--gold);
     font-variant-numeric: tabular-nums;
   }
 </style>

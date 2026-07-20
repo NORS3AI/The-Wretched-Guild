@@ -6,9 +6,13 @@ import { writable } from 'svelte/store';
 import type { GameState } from '../engine/types';
 import type { Command } from '../engine/engine';
 import { advanceTick, dispatch } from '../engine/engine';
-import { loadGame, saveGame, clearSave } from '../engine/save';
+import { loadGame, saveGame, clearSave, catchUpOffline } from '../engine/save';
 import { newGame } from '../engine/state';
 import { REAL_MS_PER_TICK } from '../engine/timeconst';
+
+function hidden(): boolean {
+  return typeof document !== 'undefined' && document.visibilityState === 'hidden';
+}
 
 // The loop fires every REAL_MS_PER_TICK (0.5s) and processes `speed` ticks each
 // time, so 1× is a lively ~2 ticks/sec and 10× rips through downtime.
@@ -29,6 +33,9 @@ let saveAcc = 0;
 let ticking = false; // guard against overlap/re-entrancy
 setInterval(() => {
   if (ticking) return;
+  // While the tab is hidden, we don't tick here (browsers throttle timers);
+  // the elapsed time is simulated in one bounded batch when the tab returns.
+  if (hidden()) return;
   ticking = true;
   try {
     if (!game.paused && game.run.alive && !game.run.encounter) {
@@ -54,11 +61,17 @@ setInterval(() => {
   }
 }, TICK_MS);
 
-// save on the way out so offline progress has an accurate anchor
+// Background progress: anchor on hide/exit, and simulate elapsed time on return.
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => saveGame(game));
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveGame(game);
+    if (document.visibilityState === 'hidden') {
+      saveGame(game); // anchor lastSavedAt so time-away is measured from here
+    } else {
+      catchUpOffline(game); // simulate what happened while we were hidden
+      saveGame(game);
+      notify();
+    }
   });
 }
 

@@ -8,6 +8,8 @@ import { ENCOUNTERS } from '../src/engine/encounters';
 import { alignmentName } from '../src/engine/alignment';
 import { computeTokens } from '../src/engine/death';
 import { formatMoney } from '../src/engine/money';
+import { rankTitle } from '../src/engine/ranks';
+import { addItem, countItem, MAX_STACK } from '../src/engine/items';
 
 let failures = 0;
 function assert(cond: boolean, msg: string): void {
@@ -49,6 +51,7 @@ console.log('The Wretched Guild — engine tests\n');
   while (!g.run.contractAvailable && guard++ < 5000) advanceTick(g);
   assert(g.run.contractAvailable, 'a contract is offered within reasonable time');
 
+  g.run.stocksUntil = null; // begging may have landed us in the stocks; free us to test the contract
   dispatch(g, { type: 'acceptContract' });
   assert(g.run.encounter?.defId === 'contract_taxman', 'accepting opens the taxman contract');
 
@@ -119,13 +122,13 @@ console.log('The Wretched Guild — engine tests\n');
 
   g.run.coin = 15;
   g.run.factions.commons = 0;
-  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 15, combined 0
-  assert(g.run.rank === 2, 'advances to rung 2 once coin/standing are met');
+  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 15
+  assert(g.run.rank === 2, 'advances to rung 2 once the cost is met');
   assert(Math.floor(g.run.coin) === 0, 'advancing SPENDS the 15 coppers it required');
 
-  g.run.coin = 50; // enough coin for rung 3 (needs 12) but no standing
-  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs combined standing 4
-  assert(g.run.rank === 2, 'stops at the next unmet requirement (combined standing)');
+  // now broke (coin 0), rung 3 needs 25 coppers → cannot advance
+  dispatch(g, { type: 'seekAdvancement' });
+  assert(g.run.rank === 2, 'stops at the next unmet requirement (coin)');
 }
 
 // 6b) Crossing into a new band opens a Rite of Passage, which advances on a
@@ -133,8 +136,9 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   g.run.rank = 5;
-  g.run.coin = 200;
+  g.run.coin = 2000;
   g.run.factions.shadow = 30;
+  g.run.pockets = [{ item: 'firewood', qty: 5 }, null]; // rung 6 turn-in
   dispatch(g, { type: 'seekAdvancement' }); // rank 6 is a rite
   assert(g.run.rank === 5, 'a rite does not auto-advance — it opens an encounter');
   assert(g.run.encounter?.defId === 'rite_crossroads', "the Beggar's Crossroads rite opens");
@@ -146,21 +150,33 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.encounter === null, 'the rite encounter closes');
 }
 
-// 6c) Higher rungs demand COMBINED standing across all factions, and advancing
-//     spends it. The ladder runs to 30.
+// 6c) From rung 4 up, advancement also requires gathered resources turned in
+//     from the pockets — and consumes them. The ladder runs to 100.
 {
   const g = newGame();
   g.run.rank = 15;
-  g.run.milestones['rite_trial'] = true; // pretend the rite is done
+  g.run.milestones['rite_trial'] = true; // the rite is done
   g.run.coin = 100000;
-  g.run.factions.shadow = 100; // combined = 100
-  dispatch(g, { type: 'seekAdvancement' }); // rank 16 needs combined ≥ 104
-  assert(g.run.rank === 15, 'combined standing of 100 is not enough for rung 16 (needs 104)');
-  g.run.factions.merchants = 25; // combined = 125
+  g.run.factions.shadow = 70; // plenty of combined standing
+  dispatch(g, { type: 'seekAdvancement' }); // rung 16 needs resources we don't have
+  assert(g.run.rank === 15, 'cannot rise without the required resources in hand');
+  g.run.pockets = [{ item: 'roots', qty: 5 }, null]; // rung 16 turn-in
   dispatch(g, { type: 'seekAdvancement' });
-  assert(g.run.rank === 16, 'combined standing of 125 unlocks rung 16');
-  assert(g.run.coin <= 100000 - 4800, 'advancing spent the 4800-copper cost');
-  assert(g.run.factions.shadow < 100, 'advancing spent combined standing (drawn from every faction)');
+  assert(g.run.rank === 16, 'with coin, standing, and turned-in resources you rise');
+  assert(g.run.coin < 100000, 'advancing spent coin');
+  assert(g.run.factions.shadow < 70, 'advancing spent combined standing');
+  assert(g.run.pockets.reduce((n, p) => n + (p && p.item === 'roots' ? p.qty : 0), 0) < 5, 'the resources were turned in');
+}
+
+// 6d) The ladder names run from Beggar (1) to King of England (100).
+{
+  const g = newGame();
+  g.run.rank = 1;
+  assert(rankTitle(g.run) === 'Beggar', 'rank 1 is the Beggar');
+  g.run.rank = 3;
+  assert(rankTitle(g.run) === 'Cutpurse', 'rank 3 is the Cutpurse');
+  g.run.rank = 100;
+  assert(rankTitle(g.run) === 'King of England', 'rank 100 is the King of England');
 }
 
 // 7) A higher rank yields more Legacy on death.
@@ -440,6 +456,48 @@ console.log('The Wretched Guild — engine tests\n');
   const before = g.run.needs.comfort;
   for (let i = 0; i < 10; i++) advanceTick(g);
   assert(g.run.needs.comfort >= before - 0.01, `comfort does not drop from cold while warm (${before} -> ${g.run.needs.comfort})`);
+}
+
+// 15i) Pockets: two slots, each stacking up to 5 of one kind.
+{
+  const g = newGame();
+  g.run.pockets = [null, null];
+  addItem(g.run, 'firewood', 5);
+  assert(countItem(g.run, 'firewood') === 5, 'a slot stacks up to 5');
+  addItem(g.run, 'firewood', 5); // fills the second slot
+  assert(countItem(g.run, 'firewood') === 10, 'a second slot holds another stack of 5');
+  const ok = addItem(g.run, 'firewood', 3); // no room — lost
+  assert(!ok && countItem(g.run, 'firewood') === 10, `overflow beyond two stacks of ${MAX_STACK} is lost`);
+}
+
+// 15j) Firewood makes a campfire (fast warmth); cooking fish restores health;
+//      both build skills.
+{
+  const g = newGame();
+  g.run.pockets = [{ item: 'firewood', qty: 2 }, { item: 'fish', qty: 1 }];
+  g.run.needs.comfort = 10;
+  const fire0 = g.run.skills['firemaking'];
+  dispatch(g, { type: 'doDeed', id: 'make_campfire' });
+  assert(g.run.needs.comfort === 100 && g.run.warmUntil > g.run.tick, 'a campfire warms you and grants the warmth window');
+  assert(countItem(g.run, 'firewood') === 1, 'the campfire burns one firewood');
+  assert(g.run.skills['firemaking'] > fire0, 'making a fire builds Firemaking');
+
+  g.run.hp = 6;
+  const cook0 = g.run.skills['cooking'];
+  dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+  assert(g.run.hp > 6, `cooking and eating a fish restores health (6 -> ${g.run.hp})`);
+  assert(countItem(g.run, 'fish') === 0, 'the fish is cooked and eaten');
+  assert(g.run.skills['cooking'] > cook0, 'cooking builds the Cooking skill');
+}
+
+// 15k) Attributes gain a small random 0.03–0.06 per action.
+{
+  const g = newGame();
+  const before = g.run.attrs.brawn;
+  dispatch(g, { type: 'setActivity', id: 'labor' });
+  ff(g, 8); // one labour cycle
+  const gain = g.run.attrs.brawn - before;
+  assert(gain > 0 && gain < 0.5, `a single action gives a small attribute gain (${gain.toFixed(3)})`);
 }
 
 // 16) Determinism — same seed + same commands reproduce identical state.

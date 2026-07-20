@@ -2,6 +2,7 @@
 // function maps the two axes onto the 9 classic cells and the path gates.
 
 import type { Alignment, RunState } from './types';
+import { nextFloat } from './rng';
 
 export const ALIGN_BAND = 33; // |value| > 33 → committed to a side
 
@@ -39,6 +40,13 @@ export function shiftAlignment(run: RunState, dEthics: number, dMorals: number):
   const a = run.alignment;
   a.ethics = clamp(a.ethics + resist(a.ethics, dEthics));
   a.morals = clamp(a.morals + resist(a.morals, dMorals));
+}
+
+/** Incidental bearing drift from everyday deeds: a random 0.30–0.60 nudge along
+ *  an axis. `ethicsDir`/`moralsDir` are -1, 0, or +1. */
+export function driftBearing(run: RunState, ethicsDir: number, moralsDir: number): void {
+  const mag = () => 0.3 + nextFloat(run) * 0.3;
+  shiftAlignment(run, ethicsDir === 0 ? 0 : ethicsDir * mag(), moralsDir === 0 ? 0 : moralsDir * mag());
 }
 
 function resist(current: number, delta: number): number {

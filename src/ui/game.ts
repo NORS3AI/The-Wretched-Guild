@@ -10,10 +10,9 @@ import { loadGame, saveGame, clearSave } from '../engine/save';
 import { newGame } from '../engine/state';
 import { REAL_MS_PER_TICK } from '../engine/timeconst';
 
-// Real-time pacing: one in-game DAY takes 20 minutes at 1× (10 at 2×, 5 at 4×).
-// REAL_MS_PER_TICK derives from that and TICKS_PER_DAY, so game balance (measured
-// in ticks) is completely independent of wall-clock pacing.
-const POLL_MS = 1000; // how often we check the clock
+// The loop fires every REAL_MS_PER_TICK (0.5s) and processes `speed` ticks each
+// time, so 1× is a lively ~2 ticks/sec and 10× rips through downtime.
+const TICK_MS = REAL_MS_PER_TICK;
 
 let game: GameState = loadGame();
 
@@ -24,34 +23,24 @@ function notify(): void {
   store.set(game);
 }
 
-// ── tick loop (real-time accumulator) ───────────────────────────────────────────
+// ── tick loop ───────────────────────────────────────────────────────────────────
 
-let acc = 0; // accumulated game-time in ms, scaled by speed
 let saveAcc = 0;
 setInterval(() => {
   if (!game.paused && game.run.alive && !game.run.encounter) {
-    acc += POLL_MS * game.speed;
-    let ticked = false;
-    while (acc >= REAL_MS_PER_TICK) {
-      acc -= REAL_MS_PER_TICK;
+    for (let i = 0; i < game.speed; i++) {
       advanceTick(game);
-      ticked = true;
-      if (!game.run.alive || game.run.encounter) {
-        acc = 0;
-        break;
-      }
+      if (!game.run.alive || game.run.encounter) break;
     }
-    if (ticked) notify();
-  } else {
-    acc = 0; // don't bank time while paused/dead/in an encounter
+    notify();
   }
 
-  saveAcc += POLL_MS;
+  saveAcc += TICK_MS;
   if (saveAcc >= 5000) {
     saveAcc = 0;
     saveGame(game);
   }
-}, POLL_MS);
+}, TICK_MS);
 
 // save on the way out so offline progress has an accurate anchor
 if (typeof window !== 'undefined') {

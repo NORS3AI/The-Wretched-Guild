@@ -47,13 +47,14 @@ export function climateNow(run: RunState): Climate {
 
 // ── Per-tick decay & consequences ──────────────────────────────────────────
 
-// Per-tick decay (24 ticks = 1 day). Tuned so needs last several in-game days —
-// present and worth watching, but not frantic.
+// Per-tick decay (24 ticks = 1 day). Tuned for the lively 0.5s tick so needs are
+// a comfortable background concern (many minutes of real time from full), not a
+// frantic chore.
 const DECAY = {
-  food: 1.1, // ~3-4 days from full
-  water: 1.4, // ~3 days
-  hygiene: 0.28, // slow — over a week
-  relief: 2.0, // ~2 days
+  food: 0.24, // ~16 days from full
+  water: 0.3, // ~14 days
+  hygiene: 0.06, // very slow
+  relief: 0.4, // ~10 days
 };
 
 function clampNeed(v: number): number {
@@ -73,9 +74,9 @@ export function tickSurvival(game: GameState, run: RunState): boolean {
   // the "hardy" teaching blunts the weather.
   const climate = climateNow(run);
   const hardy = run.learnings['hardy'] ? 0.6 : 1;
-  if (climate === 'cold') n.comfort = clampNeed(n.comfort - 1.0 * hardy);
-  else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.8 * hardy);
-  else n.comfort = clampNeed(n.comfort + 0.7);
+  if (climate === 'cold') n.comfort = clampNeed(n.comfort - 0.28 * hardy);
+  else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.22 * hardy);
+  else n.comfort = clampNeed(n.comfort + 0.2);
 
   // starvation, thirst, exposure each gnaw at the hearts
   if (n.food <= 0 && chance(run, 0.03)) {

@@ -6,7 +6,7 @@
 
   const game = gameStore;
 
-  const speeds = [1, 2, 4];
+  const speeds = [1, 2, 4, 10];
 
   function seasonOf(day: number): string {
     const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];

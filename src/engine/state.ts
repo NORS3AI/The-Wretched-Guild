@@ -19,6 +19,7 @@ export function newMeta(): MetaState {
     bestCoin: 0,
     bestRank: 1,
     tokens: 0,
+    illicitWarningSeen: false,
     unlocks: {},
   };
 }

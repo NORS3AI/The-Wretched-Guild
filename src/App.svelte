@@ -9,6 +9,8 @@
   import GuildPanel from './ui/GuildPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import StocksPanel from './ui/StocksPanel.svelte';
+  import WarningModal from './ui/WarningModal.svelte';
+  import { illicitWarning } from './ui/game';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
 
@@ -50,6 +52,10 @@
 
 {#if !$game.run.alive}
   <DeathScreen />
+{/if}
+
+{#if $illicitWarning}
+  <WarningModal />
 {/if}
 
 <style>

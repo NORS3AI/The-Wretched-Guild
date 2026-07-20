@@ -75,10 +75,25 @@ if (typeof window !== 'undefined') {
   });
 }
 
+// ── one-time permadeath warning for illicit acts ─────────────────────────────
+
+// A separate store so a transient modal flag never ends up in the save file.
+export const illicitWarning = writable(false);
+
+function isIllicit(cmd: Command): boolean {
+  return (cmd.type === 'setActivity' && cmd.id === 'pickpocket') || cmd.type === 'acceptContract';
+}
+
 // ── commands (the only way the UI changes state) ────────────────────────────────
 
 function run(cmd: Command): void {
   dispatch(game, cmd);
+  // First time the player does something illicit, warn them (once, ever) that
+  // dying mid-crime ends the game. Pause until they acknowledge.
+  if (isIllicit(cmd) && !game.meta.illicitWarningSeen) {
+    game.paused = true;
+    illicitWarning.set(true);
+  }
   saveGame(game);
   notify();
 }
@@ -107,6 +122,13 @@ export const actions = {
   },
   togglePause: () => {
     game.paused = !game.paused;
+    notify();
+  },
+  acknowledgeIllicitWarning: () => {
+    game.meta.illicitWarningSeen = true;
+    game.paused = false;
+    illicitWarning.set(false);
+    saveGame(game);
     notify();
   },
 

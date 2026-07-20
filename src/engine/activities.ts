@@ -7,7 +7,7 @@ import { pushLog, trainAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS } from './items';
 import { TICKS_PER_DAY } from './timeconst';
-import { driftBearing } from './alignment';
+import { driftBearing, shiftAlignment } from './alignment';
 import { gainSkill } from './skills';
 
 export interface ActivityDef {
@@ -100,10 +100,13 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 7,
     trains: 'piety',
     complete(run) {
-      trainAttr(run, 'piety', 0.2);
-      driftBearing(run, 1, 0);
+      trainAttr(run, 'piety');
       const gained = gainStanding(run, 'church', 0.5);
       if (gained > 0) {
+        // tending the poor sometimes moves you toward Good (not Lawful)
+        if (chance(run, 0.3)) {
+          shiftAlignment(run, 0, 0.2 + nextFloat(run) * 0.2);
+        }
         const alms = nextInt(run, 0, 1);
         run.coin += alms;
         pushLog(run, 'You serve at the chapel; the priest marks your devotion.', 'plain');

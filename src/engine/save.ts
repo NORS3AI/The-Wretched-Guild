@@ -114,6 +114,11 @@ function migrate(data: unknown): GameState {
     if (!g.run.skills) g.run.skills = emptySkills();
     g.version = 9;
   }
+  // v9 → v10: the one-time permadeath warning flag.
+  if (g.version < 10) {
+    if (g.meta && typeof g.meta.illicitWarningSeen !== 'boolean') g.meta.illicitWarningSeen = false;
+    g.version = 10;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

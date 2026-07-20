@@ -500,6 +500,18 @@ console.log('The Wretched Guild — engine tests\n');
   assert(gain > 0 && gain < 0.5, `a single action gives a small attribute gain (${gain.toFixed(3)})`);
 }
 
+// 15l) Serving at the Chapel can raise Good (morals), not Lawful.
+{
+  const g = newGame();
+  g.run.alignment.ethics = 50; // Lawful, so the Church admits us
+  dispatch(g, { type: 'setActivity', id: 'pray' });
+  const ethics0 = g.run.alignment.ethics;
+  ff(g, 400); // serve for a good while
+  assert(g.run.alignment.morals > 0, `serving the Church raises Good over time (morals ${g.run.alignment.morals.toFixed(2)})`);
+  // it should NOT be pushing ethics upward the way the old version did
+  assert(g.run.alignment.ethics <= ethics0 + 0.5, 'serving no longer steadily raises Lawful');
+}
+
 // 16) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {

@@ -128,6 +128,8 @@ export const actions = {
   doDeed: (id: string) => run({ type: 'doDeed', id }),
   eatItem: (id: string) => run({ type: 'eatItem', id }),
   sellItem: (id: string) => run({ type: 'sellItem', id }),
+  buyItem: (id: string) => run({ type: 'buyItem', id }),
+  buyCarry: (kind: 'pocket' | 'pouch' | 'container') => run({ type: 'buyCarry', kind }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),
 

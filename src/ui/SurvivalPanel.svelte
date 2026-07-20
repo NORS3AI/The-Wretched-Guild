@@ -2,11 +2,14 @@
   import { gameStore, actions } from './game';
   import { DEEDS } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
-  import { itemDef, isEdible } from '../engine/items';
+  import { itemDef, isEdible, VENDOR_STOCK } from '../engine/items';
+  import { shopOpen } from '../engine/time';
 
   const game = gameStore;
   $: run = $game.run;
   $: climate = climateNow(run);
+  $: usedSlots = run.pockets.filter(Boolean).length;
+  $: vendorOpen = shopOpen(run);
 
   const needRows = [
     { key: 'food', label: 'Food', low: 'Starving' },
@@ -67,7 +70,10 @@
     </div>
 
     <!-- inventory / vendor -->
-    <div class="section-label">Pockets &amp; Pedlar</div>
+    <div class="section-label">
+      Pockets &amp; Pedlar
+      <span class="slots faint">{usedSlots}/{run.pockets.length} slots</span>
+    </div>
     <div class="pockets">
       {#each run.pockets as slot}
         {@const def = slot ? itemDef(slot.item) : null}
@@ -90,6 +96,27 @@
           {/if}
         </div>
       {/each}
+    </div>
+
+    <!-- town vendor: buy staples like cooking oil (open 8am–5pm) -->
+    <div class="vendor">
+      {#if vendorOpen}
+        {#each VENDOR_STOCK as id}
+          {@const def = itemDef(id)}
+          {#if def && def.buy != null}
+            <button
+              class="mini buy"
+              disabled={run.coin < def.buy}
+              title={def.blurb}
+              onclick={() => actions.buyItem(id)}
+            >
+              Buy {def.name} · {def.buy}c
+            </button>
+          {/if}
+        {/each}
+      {:else}
+        <span class="faint shut">The town vendor is shut — open 8am to 5pm.</span>
+      {/if}
     </div>
 
     <!-- deeds -->
@@ -244,6 +271,27 @@
   }
   .mini.sell {
     color: var(--gold);
+  }
+  .slots {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    float: right;
+    text-transform: none;
+  }
+  .vendor {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .mini.buy {
+    flex: 0 1 auto;
+    color: var(--gold);
+    padding: 4px 9px;
+  }
+  .vendor .shut {
+    font-size: 0.76rem;
+    font-style: italic;
   }
   .slot-qty {
     color: var(--gold);

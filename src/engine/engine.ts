@@ -17,8 +17,11 @@ import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses'
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { tickSurvival, heal } from './survival';
 import { deedById } from './deeds';
-import { itemDef, isEdible, removeItem } from './items';
+import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from './items';
 import { chance, nextInt } from './rng';
+import { shopOpen } from './time';
+import { buyCarryUpgrade, type CarryKind } from './merchant';
+import { MERCHANT_COOLDOWN, MERCHANT_STAY } from './state';
 
 export { TICKS_PER_DAY, DAYS_PER_YEAR, TICKS_PER_YEAR } from './timeconst';
 import { TICKS_PER_DAY, TICKS_PER_YEAR } from './timeconst';
@@ -104,6 +107,17 @@ export function advanceTick(game: GameState): void {
     }
   }
 
+  // a wandering merchant rolls into town now and then (arriving by daylight) and
+  // lingers a while, selling ways to carry more.
+  if (run.merchantUntil <= run.tick) {
+    run.merchantCooldown--;
+    if (run.merchantCooldown <= 0 && shopOpen(run)) {
+      run.merchantUntil = run.tick + MERCHANT_STAY;
+      run.merchantCooldown = MERCHANT_COOLDOWN;
+      pushLog(run, 'A wandering merchant rolls into the square with pouches, packs, and beasts of burden for sale.', 'system');
+    }
+  }
+
   if (run.coin > run.peakCoin) run.peakCoin = run.coin;
 }
 
@@ -167,7 +181,9 @@ export type Command =
   | { type: 'eatItem'; id: string }
   | { type: 'sellItem'; id: string }
   | { type: 'beginNewLife' }
-  | { type: 'buyUnlock'; id: string };
+  | { type: 'buyUnlock'; id: string }
+  | { type: 'buyItem'; id: string }
+  | { type: 'buyCarry'; kind: CarryKind };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -336,6 +352,36 @@ export function dispatch(game: GameState, cmd: Command): void {
         run.encounter = null;
         pushLog(run, outcome.text, 'plain');
       }
+      break;
+    }
+
+    case 'buyItem': {
+      if (!run.alive || run.stocksUntil !== null) break;
+      if (!VENDOR_STOCK.includes(cmd.id)) break;
+      const def = itemDef(cmd.id);
+      if (!def || def.buy == null) break;
+      if (!shopOpen(run)) {
+        pushLog(run, 'The vendor\'s shutters are down — the shop is open only from 8 in the morning to 5 in the evening.', 'plain');
+        break;
+      }
+      if (run.coin < def.buy) {
+        pushLog(run, `You cannot spare the ${def.buy} copper for a ${def.name.toLowerCase()}.`, 'plain');
+        break;
+      }
+      if (!hasRoom(run, cmd.id)) {
+        pushLog(run, 'Your pockets are too full to carry it.', 'plain');
+        break;
+      }
+      run.coin -= def.buy;
+      addItem(run, cmd.id, 1);
+      pushLog(run, `You buy a ${def.name.toLowerCase()} for ${def.buy} copper.`, 'coin');
+      break;
+    }
+
+    case 'buyCarry': {
+      if (!run.alive) break;
+      if (run.merchantUntil <= run.tick) break; // the merchant has moved on
+      buyCarryUpgrade(run, cmd.kind);
       break;
     }
 

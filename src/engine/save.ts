@@ -136,6 +136,16 @@ function migrate(data: unknown): GameState {
     if (!r.contractFates) r.contractFates = {};
     g.version = 12;
   }
+  // v12 → v13: carry-capacity ladder (pockets/pouches/container) + wandering merchant.
+  if (g.version < 13) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.pocketSlots !== 'number') r.pocketSlots = Array.isArray(r.pockets) ? (r.pockets as unknown[]).length : 2;
+    if (typeof r.pouches !== 'number') r.pouches = 0;
+    if (typeof r.container !== 'number') r.container = 0;
+    if (typeof r.merchantUntil !== 'number') r.merchantUntil = 0;
+    if (typeof r.merchantCooldown !== 'number') r.merchantCooldown = 60;
+    g.version = 13;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

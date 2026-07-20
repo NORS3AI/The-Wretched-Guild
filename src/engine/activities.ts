@@ -5,11 +5,21 @@ import type { AttrKey, RunState } from './types';
 import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
-import { addItem, ITEMS } from './items';
+import { addItem, ITEMS, MAX_POUCHES, syncCapacity } from './items';
 import { ownedLevel } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
+import { churchOpen, illicitPrime } from './time';
 import { driftBearing, shiftAlignment } from './alignment';
 import { gainSkill } from './skills';
+
+/** A market-stall find: try to pocket it, and say so. */
+function stallDrop(run: RunState, id: string): void {
+  if (addItem(run, id, 1)) {
+    pushLog(run, `A customer leaves behind a ${ITEMS[id].name.toLowerCase()} — into your pocket it goes.`, 'good');
+  } else {
+    pushLog(run, `You come by a ${ITEMS[id].name.toLowerCase()}, but have nowhere to put it.`, 'plain');
+  }
+}
 
 export interface ActivityDef {
   id: string;
@@ -72,13 +82,15 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'pickpocket',
     name: 'Pick Pockets',
     path: 'Shadow',
-    blurb: 'Quick coin from careless purses — but every lift raises your Heat.',
+    blurb: 'Quick coin from careless purses — but every lift raises your Heat. Safest worked in the dead of night (2–5 am).',
     ticks: 5,
     trains: 'stealth',
     complete(run) {
       trainAttr(run, 'stealth');
-      // caught? scales with heat, mitigated by stealth.
-      const caughtP = Math.max(0.05, 0.18 + run.heat / 400 - run.attrs.stealth / 120);
+      // caught? scales with heat, mitigated by stealth — and the dead of night
+      // (2–5 am) halves the risk, when honest folk and the watch are abed.
+      let caughtP = Math.max(0.05, 0.18 + run.heat / 400 - run.attrs.stealth / 120);
+      if (illicitPrime(run)) caughtP *= 0.5;
       if (chance(run, caughtP)) {
         run.heat = Math.min(100, run.heat + nextInt(run, 4, 8));
         run.hp = Math.max(0, run.hp - 1); // a beating — engine checks for death
@@ -102,6 +114,11 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 7,
     trains: 'piety',
     complete(run) {
+      // the chapel doors are barred outside its hours (6 am – 9 pm)
+      if (!churchOpen(run)) {
+        pushLog(run, 'The chapel is dark and locked for the night. You wait in the cold.', 'plain');
+        return;
+      }
       trainAttr(run, 'piety');
       const gained = gainStanding(run, 'church', 0.5);
       if (gained > 0) {
@@ -136,6 +153,25 @@ export const ACTIVITIES: ActivityDef[] = [
       trainAttr(run, 'wits');
       gainStanding(run, 'merchants', 0.5);
       pushLog(run, `A day at the stall turns ${coin} copper of profit${lvl >= 1 ? ` (×${mult.toFixed(1)} from your stall)` : ''}.`, 'coin');
+
+      // A better stall draws better wares — the odd treat finds its way to you.
+      if (lvl >= 3 && chance(run, 0.2)) stallDrop(run, 'pastry');
+      if (lvl >= 7 && chance(run, 0.3)) stallDrop(run, 'cake');
+      if (lvl >= 15 && chance(run, 0.4)) stallDrop(run, 'fried_fish');
+      if (lvl >= 30) {
+        if (chance(run, 0.2)) stallDrop(run, 'chicken_curry');
+        if (chance(run, 0.2)) stallDrop(run, 'health_potion');
+        if (chance(run, 0.05)) {
+          if ((run.pouches ?? 0) < MAX_POUCHES) {
+            run.pouches = (run.pouches ?? 0) + 1;
+            syncCapacity(run);
+            pushLog(run, 'You find a fine leather pouch and clip it to your belt (+2 slots).', 'good');
+          } else {
+            run.coin += 30;
+            pushLog(run, 'You find a pouch, but your belt is full — you sell it for 30 copper.', 'coin');
+          }
+        }
+      }
     },
   },
   {

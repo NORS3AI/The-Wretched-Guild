@@ -32,26 +32,29 @@ export const DEEDS: DeedDef[] = [
     name: 'Eat',
     blurb: 'Eat the most filling food in your pockets.',
     timeTicks: 0,
-    available: (run) => run.pockets.some((p) => p && itemDef(p.item)?.kind === 'food'),
+    // only foods that actually restore the belly — a raw fish is not one (cook it first)
+    available: (run) => run.pockets.some((p) => p && (itemDef(p.item)?.food ?? 0) > 0),
     effect: (_g, run) => {
       // pick the food with the highest food value
       let best: string | null = null;
-      let bestFood = -1;
+      let bestFood = 0;
       for (const p of run.pockets) {
         if (!p) continue;
         const def = itemDef(p.item);
-        if (def?.kind === 'food' && (def.food ?? 0) > bestFood) {
-          bestFood = def.food ?? 0;
+        if ((def?.food ?? 0) > bestFood) {
+          bestFood = def!.food ?? 0;
           best = p.item;
         }
       }
       if (!best) {
-        pushLog(run, 'You have nothing to eat.', 'bad');
+        pushLog(run, 'You have nothing fit to eat — raw fish must be cooked first.', 'bad');
         return;
       }
+      const def = ITEMS[best];
       removeItem(run, best, 1);
       run.needs.food = clamp100(run.needs.food + bestFood);
-      pushLog(run, `You eat a ${ITEMS[best].name.toLowerCase()}. The hunger eases.`, 'good');
+      if (def.water) run.needs.water = clamp100(run.needs.water + def.water);
+      pushLog(run, `You eat a ${def.name.toLowerCase()}. The hunger eases.`, 'good');
     },
   },
   {
@@ -157,20 +160,36 @@ export const DEEDS: DeedDef[] = [
   },
   {
     id: 'cook_fish',
-    name: 'Cook & Eat a Fish',
-    blurb: 'Cook a fresh fish over firewood and eat it hot — a real health boost. Builds Cooking and Firemaking.',
+    name: 'Cook a River Fish',
+    blurb: 'Fry a raw river fish in a goblet of cooking oil. Mostly it comes out golden — but one in ten burns to a cinder. Builds Cooking.',
     timeTicks: 1,
-    available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'firewood') >= 1,
+    available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'cooking_oil') >= 1,
     effect: (_g, run) => {
-      if (!removeItem(run, 'fish', 1) || !removeItem(run, 'firewood', 1)) {
-        pushLog(run, 'You need both a fish and firewood to cook.', 'bad');
+      if (countItem(run, 'fish') < 1 || countItem(run, 'cooking_oil') < 1) {
+        pushLog(run, 'You need a raw river fish and a goblet of cooking oil to fry it.', 'bad');
         return;
       }
-      run.needs.food = clamp100(run.needs.food + 34);
-      heal(run, 2); // a hot cooked meal restores health
+      removeItem(run, 'fish', 1);
+      removeItem(run, 'cooking_oil', 1);
       gainSkill(run, 'cooking', 0.25);
-      gainSkill(run, 'firemaking', 0.1);
-      pushLog(run, 'You cook the fish over the fire and eat it hot. The warmth and nourishment mend you a little.', 'good');
+      // one in ten fish is burnt past saving
+      const burnt = chance(run, 0.1);
+      const out = burnt ? 'burnt_fish' : 'cooked_fish';
+      const def = ITEMS[out];
+      if (addItem(run, out, 1)) {
+        pushLog(
+          run,
+          burnt
+            ? 'The fish catches and blackens — a burnt River Fish, barely worth eating.'
+            : 'The fish fries up golden in the oil — a proper Cooked River Fish.',
+          burnt ? 'bad' : 'good',
+        );
+      } else {
+        // no room to store it — eat it off the pan
+        if (def.food) run.needs.food = clamp100(run.needs.food + def.food);
+        if (def.water) run.needs.water = clamp100(run.needs.water + def.water);
+        pushLog(run, `No room to keep it, so you eat the ${def.name.toLowerCase()} straight from the pan.`, burnt ? 'plain' : 'good');
+      }
     },
   },
   {

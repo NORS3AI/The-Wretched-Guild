@@ -5,6 +5,7 @@
   import SurvivalPanel from './ui/SurvivalPanel.svelte';
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
+  import MerchantPanel from './ui/MerchantPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
@@ -46,6 +47,9 @@
       <EncounterView />
     {:else}
       <div class="col">
+        {#if $game.run.merchantUntil > $game.run.tick}
+          <MerchantPanel />
+        {/if}
         <ActivitiesPanel />
         <BusinessesPanel />
         <GuildPanel />

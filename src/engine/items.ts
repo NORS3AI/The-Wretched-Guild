@@ -15,18 +15,33 @@ export interface ItemDef {
   heal?: number;
   /** sale price in copper */
   value: number;
+  /** if sold by the town vendor, the price to buy one */
+  buy?: number;
   blurb: string;
 }
 
 export const ITEMS: Record<string, ItemDef> = {
   bread: { id: 'bread', name: 'Crust of Bread', kind: 'food', food: 40, value: 6, blurb: 'Hard, but it fills the belly.' },
   roots: { id: 'roots', name: 'Wild Roots', kind: 'food', food: 22, water: 8, value: 2, blurb: 'Dug from the hedgerow. Bitter, but juicy.' },
-  fish: { id: 'fish', name: 'River Fish', kind: 'food', food: 34, water: 6, value: 8, blurb: 'Fresh-caught and slippery.' },
+  // Raw river fish is no longer fit to eat — it must be cooked with oil first.
+  fish: { id: 'fish', name: 'River Fish', kind: 'food', value: 3, blurb: 'Raw and slippery. Cook it with oil before it is fit to eat.' },
+  cooked_fish: { id: 'cooked_fish', name: 'Cooked River Fish', kind: 'food', food: 35, water: 5, value: 7, blurb: 'Fried golden in oil. A proper meal.' },
+  burnt_fish: { id: 'burnt_fish', name: 'Burnt River Fish', kind: 'food', food: 10, value: 1, blurb: 'Charred to a cinder. Barely food at all.' },
   game: { id: 'game', name: 'Snared Game', kind: 'food', food: 46, value: 14, blurb: 'A rabbit or hare, cleanly taken.' },
   herbs: { id: 'herbs', name: 'Healing Herbs', kind: 'herb', heal: 1, water: 15, value: 10, blurb: 'Feverfew and comfrey — eat them to soothe wounds and wet the throat.' },
   firewood: { id: 'firewood', name: 'Bundle of Firewood', kind: 'goods', value: 5, blurb: 'Deadfall gathered from the wood.' },
   scrap: { id: 'scrap', name: 'Salvaged Scrap', kind: 'goods', value: 7, blurb: 'Bent nails, rags, a cracked buckle — worth a copper to someone.' },
+  cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish.' },
+  // market-stall wares (drop while working a stall)
+  pastry: { id: 'pastry', name: 'Pastry', kind: 'food', food: 25, water: 20, value: 5, blurb: 'A flaky little pastry from the stall.' },
+  cake: { id: 'cake', name: 'Honey Cake', kind: 'food', food: 35, water: 25, value: 9, blurb: 'Rich, sweet, and moist with honey.' },
+  fried_fish: { id: 'fried_fish', name: 'Fried Fish', kind: 'food', food: 40, water: 35, value: 11, blurb: 'Hot from the fryer, crisp and dripping.' },
+  chicken_curry: { id: 'chicken_curry', name: 'Chicken Curry', kind: 'food', food: 55, water: 20, value: 15, blurb: 'A spiced eastern dish — a feast for a beggar.' },
+  health_potion: { id: 'health_potion', name: 'Health Potion', kind: 'food', heal: 4, value: 20, blurb: 'A ruby draught that knits flesh — restores a whole heart.' },
 };
+
+/** Items the town vendor stocks for sale (during shop hours). */
+export const VENDOR_STOCK = ['cooking_oil'];
 
 /** Can this item be eaten for food/water/health? */
 export function isEdible(def: ItemDef): boolean {
@@ -92,4 +107,45 @@ export function removeItem(run: RunState, id: string, qty = 1): boolean {
 export function hasRoom(run: RunState, id: string): boolean {
   if (run.pockets.some((p) => p && p.item === id && p.qty < MAX_STACK)) return true;
   return run.pockets.some((p) => p === null);
+}
+
+// ── carry capacity: pockets → belt pouches → beasts and wagons ────────────────
+// The player's slot count grows as they buy upgrades from a wandering merchant.
+// pocketSlots (2–6) + pouches×2 (a belt holds up to six) + a container tier.
+
+export interface ContainerTier {
+  id: string;
+  name: string;
+  /** slots this tier adds on top of the previous one */
+  add: number;
+}
+
+/** The container ladder, cheapest first (index 0 = none). Each tier owned adds
+ *  its `add` slots; a player owns every tier up to their `container` index. */
+export const CONTAINERS: ContainerTier[] = [
+  { id: 'none', name: '—', add: 0 },
+  { id: 'satchel', name: 'Leather Satchel', add: 3 },
+  { id: 'backpack', name: 'Canvas Backpack', add: 4 },
+  { id: 'travelpack', name: "Traveller's Pack", add: 5 },
+  { id: 'horse', name: 'Pack Horse & Saddlebags', add: 8 },
+  { id: 'handcart', name: 'Handcart', add: 10 },
+  { id: 'caravan', name: "Merchant's Caravan", add: 16 },
+  { id: 'wagon', name: 'Great Wagon', add: 24 },
+];
+
+export const MAX_POCKETS = 6;
+export const MAX_POUCHES = 6;
+export const MAX_CONTAINER = CONTAINERS.length - 1;
+
+/** Total carry slots from pockets, belt pouches, and the owned container tier. */
+export function inventoryCapacity(run: RunState): number {
+  let cap = (run.pocketSlots ?? 2) + (run.pouches ?? 0) * 2;
+  for (let i = 1; i <= (run.container ?? 0); i++) cap += CONTAINERS[i].add;
+  return cap;
+}
+
+/** Grow the pockets array to match capacity (upgrades only ever add slots). */
+export function syncCapacity(run: RunState): void {
+  const cap = inventoryCapacity(run);
+  while (run.pockets.length < cap) run.pockets.push(null);
 }

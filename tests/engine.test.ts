@@ -9,7 +9,7 @@ import { alignmentName } from '../src/engine/alignment';
 import { computeTokens } from '../src/engine/death';
 import { formatMoney } from '../src/engine/money';
 import { rankTitle } from '../src/engine/ranks';
-import { addItem, countItem, MAX_STACK } from '../src/engine/items';
+import { addItem, countItem, MAX_STACK, itemDef, isEdible } from '../src/engine/items';
 
 let failures = 0;
 function assert(cond: boolean, msg: string): void {
@@ -470,8 +470,8 @@ console.log('The Wretched Guild — engine tests\n');
   assert(!ok && countItem(g.run, 'firewood') === 10, `overflow beyond two stacks of ${MAX_STACK} is lost`);
 }
 
-// 15j) Firewood makes a campfire (fast warmth); cooking fish restores health;
-//      both build skills.
+// 15j) Firewood makes a campfire (fast warmth); frying a river fish with oil
+//      produces a cooked (or occasionally burnt) fish and builds Cooking.
 {
   const g = newGame();
   g.run.pockets = [{ item: 'firewood', qty: 2 }, { item: 'fish', qty: 1 }];
@@ -482,12 +482,59 @@ console.log('The Wretched Guild — engine tests\n');
   assert(countItem(g.run, 'firewood') === 1, 'the campfire burns one firewood');
   assert(g.run.skills['firemaking'] > fire0, 'making a fire builds Firemaking');
 
-  g.run.hp = 6;
-  const cook0 = g.run.skills['cooking'];
+  // cooking needs a fish AND a goblet of cooking oil
+  g.run.pockets = [{ item: 'fish', qty: 1 }, { item: 'cooking_oil', qty: 1 }];
+  const cook0 = g.run.skills['cooking'] ?? 0;
   dispatch(g, { type: 'doDeed', id: 'cook_fish' });
-  assert(g.run.hp > 6, `cooking and eating a fish restores health (6 -> ${g.run.hp})`);
-  assert(countItem(g.run, 'fish') === 0, 'the fish is cooked and eaten');
+  assert(countItem(g.run, 'fish') === 0, 'the raw fish is used up');
+  assert(countItem(g.run, 'cooking_oil') === 0, 'the cooking oil is used up');
+  const fried = countItem(g.run, 'cooked_fish') + countItem(g.run, 'burnt_fish');
+  assert(fried === 1, 'frying yields one cooked or burnt river fish');
   assert(g.run.skills['cooking'] > cook0, 'cooking builds the Cooking skill');
+
+  // raw river fish is no longer edible; the cooked one is
+  const raw = itemDef('fish')!;
+  const cooked = itemDef('cooked_fish')!;
+  assert(!isEdible(raw), 'a raw river fish cannot be eaten');
+  assert(isEdible(cooked) && cooked.value === 7 && raw.value === 3, 'cooked fish (7c) is worth more than raw (3c)');
+}
+
+// 15j-2) A market stall at level 3+ can drop treats while you work it.
+{
+  const g = newGame();
+  g.run.businesses = { market_stall: 30 };
+  dispatch(g, { type: 'setActivity', id: 'trade' });
+  let treats = 0;
+  for (let n = 0; n < 400; n++) {
+    ff(g, 7); // one stall cycle
+    treats =
+      countItem(g.run, 'pastry') +
+      countItem(g.run, 'cake') +
+      countItem(g.run, 'fried_fish') +
+      countItem(g.run, 'chicken_curry') +
+      countItem(g.run, 'health_potion');
+    // keep pockets clear so drops keep landing
+    if (treats > 0) break;
+  }
+  assert(treats > 0, 'a high-level market stall drops food while worked');
+}
+
+// 15j-3) The wandering merchant sells carry upgrades gated by coin + faction.
+{
+  const { carryOffers, canBuyCarry, buyCarryUpgrade } = await import('../src/engine/merchant');
+  const { inventoryCapacity } = await import('../src/engine/items');
+  const g = newGame();
+  const cap0 = inventoryCapacity(g.run);
+  const pocket = carryOffers(g.run).find((o) => o.kind === 'pocket')!;
+  g.run.coin = 0;
+  g.run.factions.commons = 0;
+  assert(!canBuyCarry(g.run, pocket), 'a third pocket is barred without coin or standing');
+  g.run.coin = pocket.cost;
+  g.run.factions.commons = pocket.factionReq;
+  assert(canBuyCarry(g.run, pocket), 'with the coin and standing, the pocket is buyable');
+  assert(buyCarryUpgrade(g.run, 'pocket'), 'buying the pocket succeeds');
+  assert(inventoryCapacity(g.run) === cap0 + 1, 'a bought pocket adds one carry slot');
+  assert(g.run.pockets.length === cap0 + 1, 'the new slot is real and empty');
 }
 
 // 15k) Honest Labour occasionally raises Brawn (10% chance, +0.1–0.4 each).

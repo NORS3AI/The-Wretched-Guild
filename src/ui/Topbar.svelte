@@ -3,10 +3,15 @@
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
   import { alignmentName } from '../engine/alignment';
   import { formatMoney } from '../engine/money';
+  import { hourOfDay, formatClock, dayPart } from '../engine/time';
 
   const game = gameStore;
 
   const speeds = [1, 2, 4, 10];
+
+  const partIcon = { night: '🌙', dawn: '🌅', day: '☀️', dusk: '🌆' } as const;
+  $: hour = hourOfDay($game.run);
+  $: part = dayPart($game.run);
 
   function seasonOf(day: number): string {
     const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
@@ -21,6 +26,11 @@
     <span class="label">Day</span>
     <span class="val">{currentDay($game.run)}</span>
     <span class="sub faint">{seasonOf(currentDay($game.run))}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Hour</span>
+    <span class="val clock" class:night={part === 'night'}>{partIcon[part]} {formatClock(hour)}</span>
+    <span class="sub faint">{part}</span>
   </div>
   <div class="stat">
     <span class="label">Age</span>
@@ -96,6 +106,13 @@
   .val.align {
     font-size: 0.98rem;
     color: var(--ink);
+  }
+  .val.clock {
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  .val.clock.night {
+    color: #8ea3c8;
   }
   .val.hot {
     color: var(--blood-bright);

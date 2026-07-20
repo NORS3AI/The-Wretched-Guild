@@ -21,6 +21,19 @@ export interface PatchNote {
 // Newest first. PATCH_NOTES[0] is the live build.
 export const PATCH_NOTES: PatchNote[] = [
   {
+    version: 'v0.15.0',
+    date: 'July 20, 2026',
+    time: '3:45 PM MST',
+    title: 'The Day, the Night & the Larder',
+    changes: [
+      'Added a day/night cycle — a clock now turns in the top bar. Shops open 8am–5pm, the church 6am–9pm, taverns 6am–2am.',
+      'Illicit work is safest in the dead of night: pick pockets between 2am and 5am and you\'re far less likely to be caught.',
+      'A high-level market stall now drops treats while you work it: a Pastry (L3), Honey Cake (L7), Fried Fish (L15), and at L30 a Chicken Curry, a Health Potion (heals a full heart), or a belt pouch.',
+      'Carry more! A wandering merchant visits town and sells upgrades — extra pockets (up to 6), belt pouches (up to 6, +2 slots each), then satchels, backpacks, pack horses, handcarts, caravans, and a great wagon — if you have the coin and standing.',
+      'River fish must now be cooked before eating: fry 1 raw fish with 1 Goblet of Cooking Oil (12c from the town vendor). One in ten burns. Cooked fish restores 35% food / 5% water (worth 7c); burnt is 10% food (1c); raw is worth 3c.',
+    ],
+  },
+  {
     version: 'v0.14.0',
     date: 'July 20, 2026',
     time: '3:20 PM MST',

@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -97,6 +97,11 @@ export interface RunState {
   waterskinCharges: number;
   waterskinMax: number;
   pockets: (ItemStack | null)[];
+  /** carry-capacity ladder: base pockets (2–6), belt pouches (×2 slots each,
+   *  belt holds up to 6), and the owned container tier (satchel … wagon). */
+  pocketSlots: number;
+  pouches: number;
+  container: number;
   learnings: Record<string, boolean>; // semi-upgrades learned this life
 
   coin: number; // base currency: COPPER (see money.ts)
@@ -140,6 +145,11 @@ export interface RunState {
   contractsOffered: number;
   /** the fate of each mark this life: killed marks never return, spared can */
   contractFates: Record<string, 'dead' | 'spared'>;
+
+  /** a wandering merchant is in town until this tick (0 = not here) */
+  merchantUntil: number;
+  /** ticks until the wandering merchant next comes to town */
+  merchantCooldown: number;
 
   legacyThisRun: number;
 }

@@ -6,6 +6,7 @@ import { freshSeed } from './rng';
 import { emptyStanding } from './factions';
 import { maxHp } from './survival';
 import { emptySkills } from './skills';
+import { HOUR_LENGTH_MS, START_HOUR } from './timeconst';
 
 export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appears
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
@@ -37,6 +38,7 @@ export function newRun(meta: MetaState): RunState {
     seed: freshSeed(),
     rngCursor: 0,
     tick: 0,
+    dayMs: START_HOUR * HOUR_LENGTH_MS, // begin the day at 8 in the morning
     ageYears: 16,
     alive: true,
     deathCause: null,

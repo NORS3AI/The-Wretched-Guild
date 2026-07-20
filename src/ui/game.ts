@@ -8,7 +8,7 @@ import type { Command } from '../engine/engine';
 import { advanceTick, dispatch } from '../engine/engine';
 import { loadGame, saveGame, clearSave, catchUpOffline } from '../engine/save';
 import { newGame } from '../engine/state';
-import { REAL_MS_PER_TICK } from '../engine/timeconst';
+import { REAL_MS_PER_TICK, DAY_LENGTH_MS } from '../engine/timeconst';
 
 function hidden(): boolean {
   return typeof document !== 'undefined' && document.visibilityState === 'hidden';
@@ -57,9 +57,11 @@ setInterval(() => {
   try {
     if (!game.paused && game.run.alive && !game.run.encounter) {
       const wasAlive = game.run.alive;
-      // bank this frame's worth of speed-scaled real time, then spend it a
-      // whole tick at a time.
-      tickAcc += RENDER_MS * Math.max(1, game.speed | 0);
+      const dt = RENDER_MS * Math.max(1, game.speed | 0);
+      // the day/night clock runs on its own real-time timer (6 min per day)
+      game.run.dayMs += dt;
+      // the sim clock advances a whole tick at a time from the same real time
+      tickAcc += dt;
       let did = 0;
       while (tickAcc >= REAL_MS_PER_TICK && did < MAX_TICKS_PER_FRAME) {
         tickAcc -= REAL_MS_PER_TICK;
@@ -70,8 +72,9 @@ setInterval(() => {
           break;
         }
       }
+      // repaint every frame so the clock glides even between ticks
+      notify();
       if (did > 0) {
-        notify();
         checkFlash();
         // death banks this life's Legacy/Tokens into meta — persist it at once so
         // a reload on the death screen can't lose the just-earned prestige.
@@ -100,6 +103,9 @@ if (typeof window !== 'undefined') {
     if (document.visibilityState === 'hidden') {
       saveGame(game); // anchor lastSavedAt so time-away is measured from here
     } else {
+      // advance the day/night clock by the real time spent away (capped to a day)
+      const awayMs = Date.now() - (game.lastSavedAt ?? Date.now());
+      if (game.run.alive) game.run.dayMs += Math.min(Math.max(0, awayMs), DAY_LENGTH_MS);
       catchUpOffline(game); // simulate what happened while we were hidden
       lastStarveHits = game.run.starveHits; // don't flash for offline progress
       saveGame(game);

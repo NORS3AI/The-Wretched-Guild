@@ -1,17 +1,19 @@
 // Time constants live alone so both the engine and the survival sim can import
 // them without a circular dependency.
 
-export const TICKS_PER_DAY = 24; // one tick = one in-game hour
+export const TICKS_PER_DAY = 24;
 export const DAYS_PER_YEAR = 12;
 export const TICKS_PER_YEAR = TICKS_PER_DAY * DAYS_PER_YEAR;
 
-// Real-time pacing (UI concern only). A whole in-game day is 6 real minutes at
-// 1×, so one hour (one tick) is 15 real seconds — the day/night cycle turns at a
-// believable, unhurried pace. 24 ticks × 15 s = 360 s = 6 min. The render loop is
-// decoupled from this (it repaints several times a second), so faster speeds skip
-// smoothly rather than in big chunks. Balance is measured in ticks, independent
-// of this constant.
-export const REAL_MS_PER_TICK = 15000;
+// The SIM clock. Ticks drive everything you do — activities, skills, attributes,
+// needs, income, aging — at a lively pace so you learn and grow quickly. One tick
+// every 2 real seconds at 1×; higher speeds skip through smoothly.
+export const REAL_MS_PER_TICK = 2000;
 
-/** A full in-game day in real milliseconds at 1× speed (should be 6 minutes). */
-export const REAL_MS_PER_DAY = TICKS_PER_DAY * REAL_MS_PER_TICK;
+// The DAY/NIGHT clock is a SEPARATE, real-time timer (it does NOT gate how fast
+// you grow). A full day — sunrise to sunrise, the whole shop/church/tavern
+// schedule — takes 6 real minutes at 1×, so an hour is 15 real seconds.
+export const DAY_LENGTH_MS = 6 * 60 * 1000; // 6 minutes
+export const HOUR_LENGTH_MS = DAY_LENGTH_MS / 24; // 15 s
+/** New lives begin at 8 in the morning. */
+export const START_HOUR = 8;

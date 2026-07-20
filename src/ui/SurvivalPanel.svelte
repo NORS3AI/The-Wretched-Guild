@@ -25,14 +25,11 @@
     return '';
   }
 
-  // Reactive so the list re-derives when the weather or run state changes
-  // (a plain function wouldn't — Svelte can't see `climate`/`run` inside it,
-  // which is why cold used to still show "Seek Shade").
-  $: deedRows = DEEDS.filter((d) => {
-    if (d.id === 'seek_warmth') return climate === 'cold';
-    if (d.id === 'seek_shade') return climate === 'hot';
-    return true;
-  }).map((d) => ({
+  // Reactive so the list re-derives when the weather, inventory, or illness
+  // changes (all live on `run`). A deed with a `reveal` predicate stays hidden
+  // until it applies — Seek Warmth only when cold, Cook a Fish only once you
+  // hold a fish, See a Doctor only when sick, and so on.
+  $: deedRows = DEEDS.filter((d) => !d.reveal || d.reveal(run)).map((d) => ({
     def: d,
     enabled:
       run.stocksUntil === null &&

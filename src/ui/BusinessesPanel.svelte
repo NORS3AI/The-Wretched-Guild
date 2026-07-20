@@ -15,10 +15,6 @@
 
   // only enterprises whose prerequisites are met (or already owned) are shown
   $: visible = visibleBusinesses(run);
-
-  function pips(level: number, max: number): string {
-    return '●'.repeat(Math.min(level, max)) + '○'.repeat(Math.max(0, max - level));
-  }
 </script>
 
 <div class="panel">
@@ -44,7 +40,7 @@
         <div class="biz" class:owned={level > 0}>
           <div class="biz-head">
             <span class="biz-name">{b.name}</span>
-            <span class="pips" title="{level} of {b.maxLevel}">{pips(level, b.maxLevel)}</span>
+            <span class="pips" title="Level {level} of {b.maxLevel}">Lv {level}<span class="faint">/{b.maxLevel}</span></span>
           </div>
           <div class="biz-meta">
             <span class="faction-tag">{factionById(b.faction).name}</span>
@@ -135,8 +131,10 @@
   }
   .pips {
     color: var(--gold);
-    letter-spacing: 2px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .biz-meta {
     display: flex;

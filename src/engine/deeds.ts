@@ -6,7 +6,7 @@
 import type { GameState, RunState } from './types';
 import { nextFloat, nextInt, chance } from './rng';
 import { pushLog, trainAttr } from './helpers';
-import { damage, heal, maxHp } from './survival';
+import { damage, heal, maxHp, climateNow } from './survival';
 import { ITEMS, itemDef, addItem, removeItem, countItem } from './items';
 import { has, randomUnlearned } from './learnings';
 import { gainSkill, cookRoll } from './skills';
@@ -51,6 +51,9 @@ export interface DeedDef {
   timeTicks: number; // in-game time the deed consumes
   cost?: number; // copper cost
   available?: (run: RunState) => boolean;
+  /** only SHOW this deed when the condition holds (a locked deed is hidden, not
+   *  greyed out — e.g. Cook a Fish appears only once you hold a fish). Absent = always shown. */
+  reveal?: (run: RunState) => boolean;
   effect: (game: GameState, run: RunState) => void;
 }
 
@@ -176,8 +179,9 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'make_campfire',
     name: 'Make a Campfire',
-    blurb: 'Burn a bundle of firewood to warm yourself in just an hour — far quicker than begging a hearth. Builds Firemaking.',
+    blurb: 'Burn a bundle of firewood to warm yourself in just an hour — far quicker than begging a hearth.',
     timeTicks: 1,
+    reveal: (run) => climateNow(run) === 'cold',
     available: (run) => countItem(run, 'firewood') >= 1,
     effect: (_g, run) => {
       if (!removeItem(run, 'firewood', 1)) {
@@ -193,8 +197,9 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'cook_fish',
     name: 'Cook a River Fish',
-    blurb: 'Fry a raw river fish in a goblet of cooking oil. Your Cooking skill decides whether it comes out golden, burns, or won\'t cook at all.',
+    blurb: 'Fry a raw river fish in a goblet of cooking oil. It may come out golden, burn, or refuse to cook at all.',
     timeTicks: 1,
+    reveal: (run) => countItem(run, 'fish') >= 1,
     available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'cooking_oil') >= 1,
     effect: (_g, run) => {
       if (countItem(run, 'fish') < 1 || countItem(run, 'cooking_oil') < 1) {
@@ -207,8 +212,9 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'bake_potato',
     name: 'Bake a Potato',
-    blurb: 'Bake a raw potato with a goblet of oil and a slab of butter. Your Cooking skill decides how it turns out.',
+    blurb: 'Bake a raw potato with a goblet of oil and a slab of butter. It may come out crisp, burn, or refuse to bake at all.',
     timeTicks: 1,
+    reveal: (run) => countItem(run, 'potato') >= 1,
     available: (run) =>
       countItem(run, 'potato') >= 1 && countItem(run, 'cooking_oil') >= 1 && countItem(run, 'slab_of_butter') >= 1,
     effect: (_g, run) => {
@@ -224,6 +230,7 @@ export const DEEDS: DeedDef[] = [
     name: 'Seek Warmth',
     blurb: 'Huddle by a smithy or a charitable hearth. Banishes the cold and keeps it off you for a full day.',
     timeTicks: 3,
+    reveal: (run) => climateNow(run) === 'cold',
     effect: (_g, run) => {
       run.needs.comfort = 100; // the cold is fully banished
       run.warmUntil = run.tick + TICKS_PER_DAY; // and cannot touch you for a day
@@ -235,6 +242,7 @@ export const DEEDS: DeedDef[] = [
     name: 'Seek Shade',
     blurb: 'Rest out of the sun and cool down.',
     timeTicks: 3,
+    reveal: (run) => climateNow(run) === 'hot',
     effect: (_g, run) => {
       run.needs.comfort = clamp100(run.needs.comfort + 45);
       pushLog(run, 'You rest in the cool shade of the church wall.', 'plain');
@@ -246,6 +254,7 @@ export const DEEDS: DeedDef[] = [
     blurb: 'A physician\'s care — dear, but it can pull you back from the plague.',
     timeTicks: 2,
     cost: 150,
+    reveal: (run) => run.illness !== 'none',
     effect: (_g, run) => {
       if (run.coin < 150) {
         pushLog(run, 'The physician takes one look at your empty purse and shuts the door.', 'bad');

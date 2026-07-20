@@ -1,13 +1,15 @@
-// The day/night clock. A tick is an hour (TICKS_PER_DAY = 24), so the hour of
-// the day is simply tick mod 24. Shops, the church, taverns, and the best hours
-// for illicit work all key off this.
+// The day/night clock runs on its OWN real-time timer (run.dayMs), wholly apart
+// from the sim ticks that drive how fast you grow — a full day is 6 real minutes.
+// Shops, the church, taverns, and the best hours for illicit work all key off the
+// hour derived here.
 
 import type { RunState } from './types';
-import { TICKS_PER_DAY } from './timeconst';
+import { DAY_LENGTH_MS, HOUR_LENGTH_MS } from './timeconst';
 
-/** 0–23, the current hour of the in-game day. */
+/** 0–23, the current hour of the day/night cycle. */
 export function hourOfDay(run: RunState): number {
-  return ((run.tick % TICKS_PER_DAY) + TICKS_PER_DAY) % TICKS_PER_DAY;
+  const ms = ((run.dayMs ?? 0) % DAY_LENGTH_MS + DAY_LENGTH_MS) % DAY_LENGTH_MS;
+  return Math.floor(ms / HOUR_LENGTH_MS) % 24;
 }
 
 /** The town vendor / market — open 8 am to 5 pm. */

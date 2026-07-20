@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -76,7 +76,10 @@ export interface RunState {
   /** monotonic cursor into the seeded RNG stream — serializable determinism */
   rngCursor: number;
 
-  tick: number; // total ticks this life
+  tick: number; // total ticks this life (the sim clock — drives growth)
+  /** the day/night clock, in real ms — a SEPARATE 6-minute-per-day timer that
+   *  only sets the time of day and the shop/church/tavern schedule. */
+  dayMs: number;
   ageYears: number;
 
   alive: boolean;

@@ -165,6 +165,16 @@ function migrate(data: unknown): GameState {
     if (typeof r.merchantCooldown !== 'number') r.merchantCooldown = 60;
     g.version = 15;
   }
+  // v15 → v16: the day/night cycle became a real-time clock separate from ticks.
+  if (g.version < 16) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.dayMs !== 'number') {
+      // seed from the old tick-based hour so the sky doesn't jump
+      const hour = typeof r.tick === 'number' ? (r.tick as number) % 24 : 8;
+      r.dayMs = hour * 15000;
+    }
+    g.version = 16;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

@@ -52,7 +52,10 @@
         >
           <div class="act-head">
             <span class="act-name">{act.name}</span>
-            <span class="act-path">{act.path}</span>
+            <span class="act-head-right">
+              {#if act.earns}<span class="act-earns" title="Copper earned per cycle">{act.earns}</span>{/if}
+              <span class="act-path">{act.path}</span>
+            </span>
           </div>
           <p class="act-blurb">{act.blurb}</p>
           <div class="act-bar">
@@ -134,10 +137,23 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    gap: 8px;
   }
   .act-name {
     font-weight: 600;
     font-size: 0.98rem;
+  }
+  .act-head-right {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .act-earns {
+    font-size: 0.66rem;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
   .act-path {
     font-size: 0.6rem;

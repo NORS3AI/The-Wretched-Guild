@@ -38,8 +38,12 @@ export interface ActivityDef {
   path: string;
   blurb: string;
   ticks: number;
-  /** trains this attribute a little each cycle */
+  /** trains this attribute a little each cycle (never shown to the player —
+   *  what builds Brawn, Wits, Charm, etc. is for them to discover) */
   trains: AttrKey | null;
+  /** the copper a cycle pays, shown as a tag (e.g. "3–5c"). Omit for activities
+   *  that yield goods or nothing rather than coin. */
+  earns?: string;
   /** run one completed cycle; returns a short log line (or null for silence) */
   complete: (run: RunState) => void;
 }
@@ -50,8 +54,9 @@ export const ACTIVITIES: ActivityDef[] = [
     name: 'Beg in the Square',
     path: 'Commons',
     blurb: 'A copper from the pitying and the pious — but begging is a crime, and the watch is watching.',
-    ticks: 6, // 12 seconds at 1×
+    ticks: 6,
     trains: 'charm',
+    earns: '≈1c',
     complete(run) {
       gainStanding(run, 'commons', 0.15);
       if (chance(run, 0.05)) raiseAttr(run, 'charm', 0.1, 0.3); // 5% → +0.1–0.3 Charm
@@ -77,9 +82,10 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'fell_timber',
     name: 'Fell Timber',
     path: 'Hard Labour',
-    blurb: 'Swing an axe in the lord\'s wood. 3–5 copper, and now and then a good log to sell.',
+    blurb: 'Swing an axe in the lord\'s wood — and now and then a good log to sell.',
     ticks: 8,
     trains: 'brawn',
+    earns: '3–5c',
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'wooden_log');
@@ -89,9 +95,10 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'coal_mine',
     name: 'Work the Coal Mines',
     path: 'Hard Labour',
-    blurb: 'Hew at the black seam underground. 3–5 copper, and a chance at coal or iron ore.',
+    blurb: 'Hew at the black seam underground — a chance at coal or iron ore.',
     ticks: 8,
     trains: 'brawn',
+    earns: '3–5c',
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'coal');
@@ -102,9 +109,10 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'till_fields',
     name: 'Till the Fields',
     path: 'Hard Labour',
-    blurb: 'Break the earth behind the plough. 3–5 copper, and a chance at seed or a stray potato.',
+    blurb: 'Break the earth behind the plough — a chance at seed or a stray potato.',
     ticks: 8,
     trains: 'brawn',
+    earns: '3–5c',
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'wheat_seeds');
@@ -118,6 +126,7 @@ export const ACTIVITIES: ActivityDef[] = [
     blurb: 'Quick coin from careless purses — but every lift raises your Heat. Safest worked in the dead of night (2–5 am).',
     ticks: 5,
     trains: 'stealth',
+    earns: '1–5c',
     complete(run) {
       trainAttr(run, 'stealth');
       // caught? scales with heat, mitigated by stealth — and the dead of night
@@ -143,7 +152,7 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'pray',
     name: 'Serve at the Chapel',
     path: 'Church',
-    blurb: 'Sweep the nave, tend the poor, learn your letters. Builds Piety and Church standing — but the Chaotic are turned away.',
+    blurb: 'Sweep the nave, tend the poor, learn your letters — but the Chaotic of spirit are turned away.',
     ticks: 7,
     trains: 'piety',
     complete(run) {
@@ -172,7 +181,7 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'forage',
     name: 'Forage & Gather Herbs',
     path: 'Commons',
-    blurb: 'Comb the hedgerows for roots and herbs. The keener your Foraging skill, the more you find.',
+    blurb: 'Comb the hedgerows for roots and herbs to fill your pockets.',
     ticks: 7,
     trains: 'wits',
     complete(run) {
@@ -195,7 +204,7 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'fish',
     name: 'Fish the Shallows',
     path: 'Commons',
-    blurb: 'Patient work at the water\'s edge for a raw fish. Fishing skill rises by 1 for every two you land.',
+    blurb: 'Patient work at the water\'s edge for a raw fish to cook or sell.',
     ticks: 8,
     trains: 'wits',
     complete(run) {
@@ -217,7 +226,7 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'scavenge',
     name: 'Scavenge for Salvage',
     path: 'Commons',
-    blurb: 'Pick through middens and ruins for anything worth a coin. Builds Brawn.',
+    blurb: 'Pick through middens and ruins for anything worth a coin.',
     ticks: 6,
     trains: 'brawn',
     complete(run) {

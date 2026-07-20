@@ -37,6 +37,19 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '6:05 PM MST',
+    title: 'Two Clocks & a Tidier Ledger',
+    changes: [
+      'The day/night cycle now runs on its OWN 6-minute real-time timer, wholly separate from how fast you learn and grow. Skills, attributes, and activities are back to their quick pace — you can build yourself up in a short session while the sun still takes 6 minutes to cross the sky.',
+      'Fixed the Enterprises panel: the Market Stall\'s level row no longer spills a string of circles off the edge — it now reads a tidy "Lv 0/50".',
+      'Make a Campfire only appears when the air is cold; Seek Warmth/Seek Shade follow the weather.',
+      'Cook a River Fish shows up only once you\'re carrying a river fish; Bake a Potato only with a potato in hand; See a Doctor only when you\'re actually sick.',
+      'Coin-earning work now shows what it pays (Fell Timber, the Coal Mines, Till the Fields, Pick Pockets, and Begging all carry a copper tag).',
+      'What builds your Brawn, Wits, Charm, and the like — and how fast your skills rise — is no longer spelled out. That\'s for you to discover.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '5:35 PM MST',
     title: 'A Proper Day & a Patient Merchant',
     changes: [

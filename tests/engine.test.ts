@@ -801,12 +801,26 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.meta.legacy === metaLegacy, 'no double-banking of Legacy on the new life');
 }
 
-// 23) A full in-game day is six real minutes at 1× (24 ticks × 15 s).
+// 23) The day/night clock is a SEPARATE 6-minute timer from the fast sim ticks.
 {
-  const { TICKS_PER_DAY, REAL_MS_PER_TICK, REAL_MS_PER_DAY } = await import('../src/engine/timeconst');
-  assert(TICKS_PER_DAY === 24, 'a day is 24 ticks (one per hour)');
-  assert(REAL_MS_PER_TICK === 15000, 'one tick (hour) is 15 real seconds at 1×');
-  assert(REAL_MS_PER_DAY === 360000, 'a full day is 6 real minutes (360,000 ms) at 1×');
+  const { REAL_MS_PER_TICK, DAY_LENGTH_MS, HOUR_LENGTH_MS, START_HOUR } = await import('../src/engine/timeconst');
+  const { hourOfDay } = await import('../src/engine/time');
+  assert(REAL_MS_PER_TICK === 2000, 'the sim tick stays fast (2s) so growth is quick');
+  assert(DAY_LENGTH_MS === 360000, 'a full day/night cycle is 6 real minutes');
+  assert(HOUR_LENGTH_MS === 15000, 'an hour of the day is 15 real seconds');
+
+  // the hour is derived from the real-time dayMs clock, not from ticks
+  const g = newGame();
+  assert(hourOfDay(g.run) === START_HOUR, 'a new life begins at 8 in the morning');
+  g.run.dayMs = 13 * HOUR_LENGTH_MS; // 1 pm
+  assert(hourOfDay(g.run) === 13, 'the hour follows the dayMs clock');
+  g.run.dayMs = DAY_LENGTH_MS + 3 * HOUR_LENGTH_MS; // next day, 3 am
+  assert(hourOfDay(g.run) === 3, 'the clock wraps to the next day');
+
+  // advancing sim ticks does NOT move the day/night clock
+  const before = g.run.dayMs;
+  ff(g, 100);
+  assert(g.run.dayMs === before, 'sim ticks leave the day/night clock untouched (separate timers)');
 }
 
 // 24) The wandering merchant stays until dismissed, then wanders back later.
@@ -829,6 +843,40 @@ console.log('The Wretched Guild — engine tests\n');
   guard = 0;
   while (!g.run.merchantHere && guard++ < 100000) ff(g, 1);
   assert(g.run.merchantHere, 'the merchant wanders back later');
+}
+
+// 25) Deeds stay hidden until they apply; coin activities show earnings but
+//     never reveal what they train.
+{
+  const { DEEDS } = await import('../src/engine/deeds');
+  const { ACTIVITIES } = await import('../src/engine/activities');
+  const byId = (id: string) => DEEDS.find((d) => d.id === id)!;
+
+  const g = newGame();
+  g.run.pockets = [null, null];
+  g.run.illness = 'none';
+
+  // Cook a Fish is hidden with no fish, revealed once you hold one
+  assert(byId('cook_fish').reveal!(g.run) === false, 'Cook a River Fish is hidden without a fish');
+  addItem(g.run, 'fish', 1);
+  assert(byId('cook_fish').reveal!(g.run) === true, 'Cook a River Fish appears once you hold a fish');
+
+  // Bake a Potato likewise
+  assert(byId('bake_potato').reveal!(g.run) === false, 'Bake a Potato is hidden without a potato');
+  addItem(g.run, 'potato', 1);
+  assert(byId('bake_potato').reveal!(g.run) === true, 'Bake a Potato appears once you hold a potato');
+
+  // See a Doctor only when sick
+  assert(byId('see_doctor').reveal!(g.run) === false, 'See a Doctor is hidden while healthy');
+  g.run.illness = 'fever';
+  assert(byId('see_doctor').reveal!(g.run) === true, 'See a Doctor appears when sick');
+
+  // coin activities carry an earnings tag; none of the blurbs leak their attribute
+  const labour = ACTIVITIES.find((a) => a.id === 'fell_timber')!;
+  assert(labour.earns === '3–5c', 'Fell Timber shows its 3–5c earnings');
+  assert(ACTIVITIES.find((a) => a.id === 'pickpocket')!.earns === '1–5c', 'Pick Pockets shows its earnings');
+  const leaks = ACTIVITIES.filter((a) => /\b(Brawn|Wits|Charm|Stealth|Piety|Luck|skill)\b/i.test(a.blurb));
+  assert(leaks.length === 0, `no activity blurb reveals what it trains (leaks: ${leaks.map((a) => a.id).join(', ')})`);
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

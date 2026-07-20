@@ -1,5 +1,12 @@
 # The Wretched Guild
 
+### ▶ [**PLAY THE GAME**](https://nors3ai.github.io/The-Wretched-Guild/)
+
+Play in your browser at **https://nors3ai.github.io/The-Wretched-Guild/**
+*(if the page looks blank, hard-refresh with Ctrl/Cmd + Shift + R to clear a cached build).*
+
+---
+
 A medieval **rags-to-regicide systems sim**. You begin as a beggar in the mud of
 England and claw your way — through contracts, commerce, the shadows, the Church,
 or the land itself — up 100 rungs of medieval rank, to the throne of England, and

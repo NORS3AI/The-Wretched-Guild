@@ -52,6 +52,7 @@ setInterval(() => {
   ticking = true;
   try {
     if (!game.paused && game.run.alive && !game.run.encounter) {
+      const wasAlive = game.run.alive;
       const steps = Math.max(1, Math.min(50, game.speed | 0));
       for (let i = 0; i < steps; i++) {
         advanceTick(game);
@@ -59,6 +60,9 @@ setInterval(() => {
       }
       notify();
       checkFlash();
+      // death banks this life's Legacy/Tokens into meta — persist it at once so a
+      // reload on the death screen can't lose the just-earned prestige.
+      if (wasAlive && !game.run.alive) saveGame(game);
     }
     saveAcc += TICK_MS;
     if (saveAcc >= 5000) {

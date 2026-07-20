@@ -10,7 +10,8 @@ export interface UnlockDef {
   id: string;
   name: string;
   currency: UnlockCurrency;
-  /** cost of each successive level; its length is the maximum level */
+  /** cost of the early levels; beyond the ladder the cost keeps climbing (levels
+   *  are infinite). */
   costs: number[];
   /** what one level grants, for the UI (e.g. "+1 heart") */
   perLevel: string;
@@ -48,11 +49,14 @@ export function unlockById(id: string): UnlockDef | undefined {
   return META_UNLOCKS.find((u) => u.id === id);
 }
 
-export function unlockMaxLevel(def: UnlockDef): number {
-  return def.costs.length;
-}
-
-/** Cost of the next level up from `level`, or null if already maxed. */
-export function unlockNextCost(def: UnlockDef, level: number): number | null {
-  return level < def.costs.length ? def.costs[level] : null;
+/** Cost to buy the level above `level` (0 → first level). Within the ladder it's
+ *  the listed cost; beyond it, the price keeps climbing from the last rung by the
+ *  ladder's own tail growth (levels are infinite). */
+export function unlockCost(def: UnlockDef, level: number): number {
+  const n = def.costs.length;
+  if (level < n) return def.costs[level];
+  const last = def.costs[n - 1];
+  const prev = n >= 2 ? def.costs[n - 2] : last;
+  const growth = Math.max(2, prev > 0 ? last / prev : 2); // at least ×2 per step
+  return Math.round(last * Math.pow(growth, level - n + 1));
 }

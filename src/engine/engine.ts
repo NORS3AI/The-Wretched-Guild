@@ -7,10 +7,10 @@ import { ENCOUNTERS } from './encounters';
 import { CONTRACTS, pickContractTarget, contractById, wasSpared } from './contracts';
 import { newRun } from './state';
 import { CONTRACT_COOLDOWN } from './state';
-import { die, commitToMeta } from './death';
+import { die } from './death';
 import { bindLog, pushLog } from './helpers';
 import { nextFloat } from './rng';
-import { META_UNLOCKS } from './unlocks';
+import { META_UNLOCKS, unlockCost } from './unlocks';
 import { canJoinShadow } from './alignment';
 import { advancement, completeAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel, ownsAnyBusiness } from './businesses';
@@ -394,7 +394,9 @@ export function dispatch(game: GameState, cmd: Command): void {
 
     case 'beginNewLife': {
       if (run.alive) break;
-      commitToMeta(game);
+      // spoils were already banked at death; just count the finished life and
+      // seed the next one (meta unlocks bought on the death screen shape it).
+      game.meta.runsCompleted += 1;
       game.run = newRun(game.meta);
       pushLog(game.run, 'A new wretch takes up the Guild\'s cause, born into the same cold mud.', 'system');
       break;
@@ -404,8 +406,7 @@ export function dispatch(game: GameState, cmd: Command): void {
       const def = META_UNLOCKS.find((u) => u.id === cmd.id);
       if (!def) break;
       const level = game.meta.unlocks[def.id] ?? 0;
-      if (level >= def.costs.length) break; // already maxed
-      const cost = def.costs[level];
+      const cost = unlockCost(def, level); // levels are infinite
       if (def.currency === 'tokens') {
         if (game.meta.tokens < cost) break;
         game.meta.tokens = Math.round((game.meta.tokens - cost) * 4) / 4;

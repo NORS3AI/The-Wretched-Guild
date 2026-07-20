@@ -754,14 +754,51 @@ console.log('The Wretched Guild — engine tests\n');
   const bornLucky = newRun(h.meta);
   assert(bornLucky.attrs.luck === 6, 'three levels of +2 Luck begin life at Luck 6');
 
-  // A Coin in the Lining: a single level worth 15 copper at birth
+  // A Coin in the Lining: 15 copper per level, and levels are infinite
   const c = newGame();
-  c.meta.legacy = 10;
+  c.meta.legacy = 10000;
   dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' });
   assert(c.meta.unlocks['stashed_coin'] === 1, 'A Coin in the Lining is bought');
-  dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' }); // no second level
-  assert(c.meta.unlocks['stashed_coin'] === 1, 'A Coin in the Lining has only one level');
-  assert(newRun(c.meta).coin === 15, 'each new wretch is passed 15 copper');
+  assert(newRun(c.meta).coin === 15, 'level 1 passes each new wretch 15 copper');
+  dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' });
+  dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' });
+  assert(c.meta.unlocks['stashed_coin'] === 3, 'levels are infinite — you can keep buying');
+  assert(newRun(c.meta).coin === 45, 'three levels pass 45 copper at birth');
+}
+
+// 22b) Unlock levels are infinite: cost keeps climbing past the ladder's end.
+{
+  const { unlockById, unlockCost } = await import('../src/engine/unlocks');
+  const hardened = unlockById('hardened')!;
+  const ladder = hardened.costs.length; // 7 rungs
+  assert(unlockCost(hardened, 0) === hardened.costs[0], 'within the ladder, cost is the listed rung');
+  const beyond1 = unlockCost(hardened, ladder); // first level past the ladder
+  const beyond2 = unlockCost(hardened, ladder + 1);
+  assert(beyond1 > hardened.costs[ladder - 1], 'past the ladder the cost keeps climbing');
+  assert(beyond2 > beyond1, 'and it climbs further with each level (infinite)');
+}
+
+// 22c) Spoils are banked at death, so they are spendable on the death screen.
+{
+  const g = newGame();
+  g.run.rank = 8;
+  g.run.coin = 800;
+  const legacyBefore = g.meta.legacy;
+  // kill the wretch outright
+  const { die } = await import('../src/engine/death');
+  die(g, g.run, 'slain for the test');
+  assert(!g.run.alive, 'the wretch is dead');
+  assert(g.meta.legacy > legacyBefore, 'Legacy is banked into meta at the moment of death');
+  // and can be spent immediately (before beginning a new life)
+  const spendable = g.meta.legacy;
+  dispatch(g, { type: 'buyUnlock', id: 'stashed_coin' });
+  assert(g.meta.legacy < spendable, 'the freshly-earned Legacy can be spent on the death screen');
+  // beginning a new life does NOT re-bank (no double credit)
+  const runsBefore = g.meta.runsCompleted;
+  const metaLegacy = g.meta.legacy;
+  dispatch(g, { type: 'beginNewLife' });
+  assert(g.meta.runsCompleted === runsBefore + 1, 'a new life bumps the run count');
+  assert(g.meta.legacy === metaLegacy, 'no double-banking of Legacy on the new life');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '5:10 PM MST',
+    title: 'Infinite Legacy & Steady Hands on Glass',
+    changes: [
+      'Meta-unlocks now have infinite levels — spend your Legacy and Tokens on the death screen however you like, as many times as you like. Each shows its current Level, and the cost keeps climbing past the listed ladder.',
+      'Your Legacy and Tokens are now banked the moment you die, so you can spend everything you just earned right there on the death screen.',
+      'iPad and phone: double-tap-to-zoom is disabled so a quick double-tap on a button no longer zooms the page.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '4:45 PM MST',
     title: 'A Lucky Start & a Fairer Pan',
     changes: [

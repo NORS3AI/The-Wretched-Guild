@@ -1,26 +1,25 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
-  import { META_UNLOCKS } from '../engine/unlocks';
-  import { computeLegacy, computeVaultCarry, computeTokens } from '../engine/death';
+  import { META_UNLOCKS, unlockCost } from '../engine/unlocks';
+  import { computeVaultCarry } from '../engine/death';
   import { formatMoney } from '../engine/money';
 
   const game = gameStore;
 
-  // Meta is folded in only when the new life begins, so preview the gains here.
-  $: pendingLegacy = computeLegacy($game.run);
-  $: pendingVault = computeVaultCarry($game.run);
-  $: pendingTokens = computeTokens($game.run);
-  $: availableLegacy = $game.meta.legacy + pendingLegacy;
-  $: availableTokens = Math.round(($game.meta.tokens + pendingTokens) * 4) / 4;
+  // This life's spoils are banked into meta AT DEATH, so the pools below are the
+  // real, spendable totals — spend them here freely, as many times as you like.
+  $: earnedLegacy = $game.run.legacyThisRun;
+  $: earnedVault = computeVaultCarry($game.run);
+  $: availableLegacy = $game.meta.legacy;
+  $: availableTokens = $game.meta.tokens;
 
-  // For a leveled unlock: current level, next cost (null = maxed), affordability.
+  // For an (infinitely) leveled unlock: current level, next-level cost, afford.
   function unlockState(u: (typeof META_UNLOCKS)[number]) {
     const level = $game.meta.unlocks[u.id] ?? 0;
-    const maxed = level >= u.costs.length;
-    const cost = maxed ? null : u.costs[level];
+    const cost = unlockCost(u, level);
     const pool = u.currency === 'tokens' ? availableTokens : availableLegacy;
-    const canAfford = cost !== null && pool >= cost;
-    return { level, max: u.costs.length, maxed, cost, canAfford };
+    const canAfford = pool >= cost;
+    return { level, cost, canAfford };
   }
 </script>
 
@@ -33,48 +32,39 @@
       </p>
 
       <div class="tally">
-        <div><span class="faint">Legacy earned this life</span><strong class="gold">+{pendingLegacy}</strong></div>
-        <div><span class="faint">Coin to the Guild vault</span><strong class="gold">+{formatMoney(pendingVault)}</strong></div>
-        {#if pendingTokens > 0}
-          <div><span class="faint">Wretched Tokens earned</span><strong class="token">+{pendingTokens}</strong></div>
-        {/if}
+        <div><span class="faint">Legacy earned this life</span><strong class="gold">+{earnedLegacy}</strong></div>
+        <div><span class="faint">Coin to the Guild vault</span><strong class="gold">+{formatMoney(earnedVault)}</strong></div>
         <div><span class="faint">Lives lived</span><strong>{$game.meta.runsCompleted + 1}</strong></div>
       </div>
 
       <div class="section">The Guild Endures</div>
       <p class="muted small">
-        Available: <strong class="gold">{availableLegacy}</strong> Legacy ·
+        To spend: <strong class="gold">{availableLegacy}</strong> Legacy ·
         <strong class="token">{availableTokens}</strong> Wretched Tokens
-        <span class="faint">(both carry over — spend now or later).</span>
+        <span class="faint">(anything left carries over — buy as much as you like).</span>
       </p>
 
       <div class="shop">
         {#each META_UNLOCKS as u}
           {@const s = unlockState(u)}
-          <div class="unlock" class:owned={s.maxed}>
+          <div class="unlock">
             <div class="unlock-head">
               <span class="unlock-name">
                 {u.name}
-                {#if u.costs.length > 1}<span class="lvl faint">· Lv {s.level}/{s.max}</span>{/if}
+                <span class="lvl faint">· Level {s.level}</span>
               </span>
-              {#if s.maxed}
-                <span class="owned-tag">Maxed</span>
-              {:else}
-                <span class="cost" class:token={u.currency === 'tokens'}>{s.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
-              {/if}
+              <span class="cost" class:token={u.currency === 'tokens'}>{s.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
             </div>
             <p class="unlock-blurb">{u.blurb} <span class="faint">({u.perLevel} per level)</span></p>
-            {#if !s.maxed}
-              <button
-                class="btn"
-                disabled={!s.canAfford}
-                onclick={() => actions.buyUnlock(u.id)}
-              >
-                {s.canAfford
-                  ? `${s.level > 0 ? 'Raise' : 'Invest'} — ${s.cost} ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'} (${u.perLevel})`
-                  : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
-              </button>
-            {/if}
+            <button
+              class="btn"
+              disabled={!s.canAfford}
+              onclick={() => actions.buyUnlock(u.id)}
+            >
+              {s.canAfford
+                ? `${s.level > 0 ? 'Raise to' : 'Invest —'} Level ${s.level + 1} · ${s.cost} ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'} (${u.perLevel})`
+                : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
+            </button>
           </div>
         {/each}
       </div>
@@ -165,10 +155,6 @@
     padding: 11px 13px;
     background: var(--bg-panel-2);
   }
-  .unlock.owned {
-    opacity: 0.65;
-    border-style: dashed;
-  }
   .unlock-head {
     display: flex;
     justify-content: space-between;
@@ -182,9 +168,8 @@
     color: var(--gold);
     font-size: 0.82rem;
   }
-  .owned-tag {
-    font-size: 0.72rem;
-    color: var(--green);
+  .lvl {
+    font-size: 0.78rem;
   }
   .unlock-blurb {
     margin: 0 0 9px;

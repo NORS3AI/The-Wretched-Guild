@@ -61,6 +61,20 @@ html {
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  /* iOS: kill the 300ms delay and, crucially, the double-tap-to-zoom gesture. */
+  touch-action: manipulation;
+}
+/* belt-and-braces: every tappable control opts out of double-tap zoom too */
+button,
+a,
+input,
+label,
+.act,
+.choice,
+.deed,
+.slot,
+.biz {
+  touch-action: manipulation;
 }
 img,
 .sprite {

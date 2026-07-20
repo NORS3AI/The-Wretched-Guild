@@ -30,7 +30,7 @@ export function newMeta(): MetaState {
 /** Start a new life. Meta-unlocks (§4) shape the starting conditions. */
 export function newRun(meta: MetaState): RunState {
   const lvl = (id: string): number => meta.unlocks[id] ?? 0;
-  const startCoin = 0 + (lvl('stashed_coin') > 0 ? 15 : 0) + Math.floor(meta.vault);
+  const startCoin = 15 * lvl('stashed_coin') + Math.floor(meta.vault); // +15 copper per level
   const heartsBonus = lvl('hardened'); // +1 heart per level
   const startLuck = 2 * lvl('beggars_luck'); // +2 Luck per level
 

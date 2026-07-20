@@ -64,15 +64,19 @@ export function die(game: GameState, run: RunState, cause: string): void {
 
   pushLog(run, `You are dead — ${cause}. (Age ${run.ageYears})`, 'death');
   pushLog(run, `The Wretched Guild remembers. ${legacy} Legacy passes on.`, 'system');
+
+  // Bank this life's spoils into the persistent Guild AT DEATH, so the player can
+  // spend their fresh Legacy and Tokens on the death screen straight away.
+  commitToMeta(game);
 }
 
-/** Fold a finished life's spoils into the persistent Guild, then it's ready to
- *  seed the next run via newRun(meta). */
+/** Fold a finished life's spoils into the persistent Guild (Legacy, vault coin,
+ *  Tokens, and best-of records). Called once, at the moment of death. The run
+ *  count is bumped separately when the next life actually begins. */
 export function commitToMeta(game: GameState): void {
   const run = game.run;
   game.meta.legacy += run.legacyThisRun;
   game.meta.vault += computeVaultCarry(run);
-  game.meta.runsCompleted += 1;
   game.meta.bestAge = Math.max(game.meta.bestAge, run.ageYears);
   game.meta.bestCoin = Math.max(game.meta.bestCoin, run.peakCoin);
   game.meta.bestRank = Math.max(game.meta.bestRank ?? 1, run.rank);

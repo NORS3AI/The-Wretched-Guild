@@ -70,6 +70,29 @@ function migrate(data: unknown): GameState {
     if (!g.run.milestones) g.run.milestones = {};
     g.version = 5;
   }
+  // v5 → v6: the beggar-phase survival layer (hearts, needs, inventory, tokens).
+  if (g.version < 6) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (r.attrs && typeof (r.attrs as Record<string, number>).luck !== 'number') {
+      (r.attrs as Record<string, number>).luck = 2;
+      (r.attrs as Record<string, number>).vitality = 3;
+    }
+    if (typeof r.hp !== 'number') {
+      r.hp = 12;
+      r.heartsBonus = 0;
+    }
+    if (!r.needs) r.needs = { food: 80, water: 80, comfort: 80, hygiene: 70, relief: 90 };
+    if (!r.illness) r.illness = 'none';
+    if (typeof r.waterskinCharges !== 'number') {
+      r.waterskinCharges = 4;
+      r.waterskinMax = 4;
+    }
+    if (!r.pockets) r.pockets = [null, null];
+    if (!r.learnings) r.learnings = {};
+    if (typeof r.peakCoin !== 'number') r.peakCoin = (r.coin as number) ?? 0;
+    if (g.meta && typeof g.meta.tokens !== 'number') g.meta.tokens = 0;
+    g.version = 6;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

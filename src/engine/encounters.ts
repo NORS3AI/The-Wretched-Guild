@@ -10,7 +10,7 @@ import type { GameState, RunState } from './types';
 import { riskRoll } from './checks';
 import { shiftAlignment, ethicsBand } from './alignment';
 import { pushLog, trainAttr, gainStanding } from './helpers';
-import { die } from './death';
+import { damage } from './survival';
 
 export interface EncChoice {
   label: string;
@@ -69,7 +69,8 @@ export const CONTRACT: EncounterDef = {
             const roll = riskRoll(run, run.attrs.stealth, 8);
             if (roll.tier === 'disaster') {
               run.heat = Math.min(100, run.heat + 12);
-              run.health -= 10;
+              damage(game, run, 1, 'killed breaking into a manor');
+              if (!run.alive) return { text: 'You misjudge the drop, crack your skull on the flagstones, and never rise.', next: null };
               return {
                 text: 'You misjudge the drop and land hard among clattering pots. A dog erupts. You press on, heart hammering — but the house is awake now.',
                 next: 'deed_alert',
@@ -198,7 +199,10 @@ export const CONTRACT: EncounterDef = {
             shiftAlignment(run, -10, -18);
             run.heat = Math.min(100, run.heat + 14);
             const roll = riskRoll(run, run.attrs.brawn, 10);
-            if (roll.tier === 'disaster') run.health -= 14;
+            if (roll.tier === 'disaster') {
+              damage(game, run, 2, 'beaten to death by a cornered mark');
+              if (!run.alive) return { text: 'Osric\'s candlestick catches your temple and the world goes black. He stands over your body, shaking.', next: null };
+            }
             return {
               text: 'You close the distance and finish it, taking a candlestick blow across the shoulder for your trouble. The deed is done, loudly.',
               next: 'escape',
@@ -278,17 +282,17 @@ function finishEscape(
     const half = Math.floor(pay / 2);
     run.coin += half;
     run.heat = Math.min(100, run.heat + 22);
-    run.health -= 12;
+    damage(game, run, 2, 'slain fleeing a botched contract');
     gainStanding(run, 'shadow', 4);
-    pushLog(run, `A ragged escape — ${half} coin and a great deal of Heat.`, 'bad');
+    if (!run.alive) return { text: 'The watch runs you down in the shambles. You do not get up.', next: null };
+    pushLog(run, `A ragged escape — ${half} copper and a great deal of Heat.`, 'bad');
     return { text: 'The watch spots you. You lose them in the shambles, but not before your face is seen and a bolt grazes you. Half the fee, and every guard in the parish now wants your head.', next: null };
   }
   // disaster — cornered by the watch. Fight for your life.
   run.heat = Math.min(100, run.heat + 30);
-  const hurt = 40 + Math.floor(run.heat / 3);
-  run.health -= hurt;
-  if (run.health <= 0) {
-    die(game, run, 'cut down by the watch while fleeing a contract');
+  const hurt = 4 + Math.floor(run.heat / 25);
+  damage(game, run, hurt, 'cut down by the watch while fleeing a contract');
+  if (!run.alive) {
     return { text: 'The watch corners you against a dead-end wall. Steel rings on steel — and then a halberd finds the gap in your guard. You die in a gutter, the contract your last.', next: null };
   }
   pushLog(run, 'You barely escape the watch, gravely wounded and hunted.', 'bad');

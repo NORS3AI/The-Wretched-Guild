@@ -2,6 +2,7 @@
   import { gameStore, actions } from './game';
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
   import { alignmentName } from '../engine/alignment';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
 
@@ -26,8 +27,8 @@
     <span class="val">{$game.run.ageYears}</span>
   </div>
   <div class="stat">
-    <span class="label">Coin</span>
-    <span class="val gold">{Math.floor($game.run.coin)}</span>
+    <span class="label">Purse</span>
+    <span class="val gold">{formatMoney($game.run.coin)}</span>
   </div>
   <div class="stat">
     <span class="label">Heat</span>

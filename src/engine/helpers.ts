@@ -21,9 +21,11 @@ export function pushLog(run: RunState, text: string, kind: LogEntry['kind'] = 'p
   if (activeLog.length > LOG_LIMIT) activeLog.splice(0, activeLog.length - LOG_LIMIT);
 }
 
-/** Attributes grow slowly through use; capped so the slice stays sane. */
+/** Attributes grow slowly through use; capped so the slice stays sane. The
+ *  "quick study" teaching speeds it up. */
 export function trainAttr(run: RunState, key: AttrKey, amount: number): void {
-  run.attrs[key] = Math.min(40, run.attrs[key] + amount);
+  const mult = run.learnings && run.learnings['quick_study'] ? 1.5 : 1;
+  run.attrs[key] = Math.min(40, run.attrs[key] + amount * mult);
 }
 
 /** Build faction standing — but only if your alignment admits the path (§9).

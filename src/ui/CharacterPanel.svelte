@@ -1,6 +1,7 @@
 <script lang="ts">
   import { gameStore } from './game';
   import { ethicsBand, moralsBand } from '../engine/alignment';
+  import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
 
   const game = gameStore;
 
@@ -11,28 +12,47 @@
     { key: 'stealth', label: 'Stealth' },
     { key: 'piety', label: 'Piety' },
     { key: 'wits', label: 'Wits' },
+    { key: 'luck', label: 'Luck' },
+    { key: 'vitality', label: 'Vitality' },
   ] as const;
 
   // map axis value [-100,100] -> [0,100] for a centered bar
   function axisPct(v: number): number {
     return (v + 100) / 2;
   }
+
+  // hearts: an array of fill fractions (0..1) per heart cell
+  $: heartCells = (() => {
+    const max = maxHp($game.run);
+    const hearts = Math.round(max / QUARTERS_PER_HEART);
+    const cells: number[] = [];
+    for (let i = 0; i < hearts; i++) {
+      cells.push(Math.max(0, Math.min(1, ($game.run.hp - i * QUARTERS_PER_HEART) / QUARTERS_PER_HEART)));
+    }
+    return cells;
+  })();
+  $: heartText = ($game.run.hp / QUARTERS_PER_HEART).toFixed(2).replace(/\.00$/, '');
 </script>
 
 <div class="panel">
   <div class="panel-title">The Wretch</div>
   <div class="body">
-    <!-- vitals -->
+    <!-- hearts -->
     <div class="vital">
       <div class="vital-head">
-        <span>Health</span>
-        <span class="muted">{Math.max(0, Math.round($game.run.health))}/{$game.run.maxHealth}</span>
+        <span>Hearts</span>
+        <span class="muted">{heartText} / {heartCells.length}
+          {#if $game.run.illness !== 'none'}
+            <span class="illness">· {$game.run.illness}</span>
+          {/if}
+        </span>
       </div>
-      <div class="bar">
-        <div
-          class="fill health"
-          style="width:{Math.max(0, Math.min(100, ($game.run.health / $game.run.maxHealth) * 100))}%"
-        ></div>
+      <div class="hearts">
+        {#each heartCells as fill}
+          <div class="heart">
+            <div class="heart-fill" style="width:{fill * 100}%"></div>
+          </div>
+        {/each}
       </div>
     </div>
 
@@ -107,8 +127,29 @@
     height: 100%;
     transition: width 0.3s ease;
   }
-  .fill.health {
-    background: linear-gradient(90deg, #7a2a2a, #b34a3f);
+  .hearts {
+    display: flex;
+    gap: 5px;
+  }
+  .heart {
+    position: relative;
+    flex: 1;
+    height: 16px;
+    background: #1a0d0d;
+    border: 1px solid #4a2020;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .heart-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #a33, #d9534f);
+    transition: width 0.3s ease;
+  }
+  .illness {
+    color: var(--blood-bright);
+    text-transform: capitalize;
+    font-style: italic;
   }
   .fill.heat {
     background: linear-gradient(90deg, #8a6a1e, #d0913a);

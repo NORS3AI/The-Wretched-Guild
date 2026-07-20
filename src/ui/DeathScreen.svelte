@@ -1,14 +1,21 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
   import { META_UNLOCKS } from '../engine/unlocks';
-  import { computeLegacy, computeVaultCarry } from '../engine/death';
+  import { computeLegacy, computeVaultCarry, computeTokens } from '../engine/death';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
 
-  // Legacy is folded into meta only when the new life begins, so preview it here.
+  // Meta is folded in only when the new life begins, so preview the gains here.
   $: pendingLegacy = computeLegacy($game.run);
   $: pendingVault = computeVaultCarry($game.run);
+  $: pendingTokens = computeTokens($game.run);
   $: availableLegacy = $game.meta.legacy + pendingLegacy;
+  $: availableTokens = Math.round(($game.meta.tokens + pendingTokens) * 4) / 4;
+
+  function affordable(u: (typeof META_UNLOCKS)[number]): boolean {
+    return u.currency === 'tokens' ? availableTokens >= u.cost : availableLegacy >= u.cost;
+  }
 </script>
 
 <div class="overlay">
@@ -21,38 +28,41 @@
 
       <div class="tally">
         <div><span class="faint">Legacy earned this life</span><strong class="gold">+{pendingLegacy}</strong></div>
-        <div><span class="faint">Coin to the Guild vault</span><strong class="gold">+{pendingVault}</strong></div>
+        <div><span class="faint">Coin to the Guild vault</span><strong class="gold">+{formatMoney(pendingVault)}</strong></div>
+        {#if pendingTokens > 0}
+          <div><span class="faint">Wretched Tokens earned</span><strong class="token">+{pendingTokens}</strong></div>
+        {/if}
         <div><span class="faint">Lives lived</span><strong>{$game.meta.runsCompleted + 1}</strong></div>
       </div>
 
       <div class="section">The Guild Endures</div>
       <p class="muted small">
-        Spend Legacy to strengthen every life that follows. Available:
-        <strong class="gold">{availableLegacy}</strong> Legacy
-        <span class="faint">(unspent Legacy carries over — buy now or later).</span>
+        Available: <strong class="gold">{availableLegacy}</strong> Legacy ·
+        <strong class="token">{availableTokens}</strong> Wretched Tokens
+        <span class="faint">(both carry over — spend now or later).</span>
       </p>
 
       <div class="shop">
         {#each META_UNLOCKS as u}
           {@const owned = $game.meta.unlocks[u.id]}
-          {@const affordable = availableLegacy >= u.cost}
+          {@const canAfford = affordable(u)}
           <div class="unlock" class:owned>
             <div class="unlock-head">
               <span class="unlock-name">{u.name}</span>
               {#if owned}
                 <span class="owned-tag">Owned</span>
               {:else}
-                <span class="cost">{u.cost} Legacy</span>
+                <span class="cost" class:token={u.currency === 'tokens'}>{u.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
               {/if}
             </div>
             <p class="unlock-blurb">{u.blurb}</p>
             {#if !owned}
               <button
                 class="btn"
-                disabled={!affordable}
+                disabled={!canAfford}
                 onclick={() => actions.buyUnlock(u.id)}
               >
-                {affordable ? 'Invest' : 'Not enough Legacy'}
+                {canAfford ? 'Invest' : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
               </button>
             {/if}
           </div>
@@ -117,6 +127,9 @@
   }
   .gold {
     color: var(--gold-bright);
+  }
+  .token {
+    color: #b98bd6;
   }
   .section {
     font-size: 0.68rem;

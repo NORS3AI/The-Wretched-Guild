@@ -14,11 +14,12 @@ import { canJoinShadow } from './alignment';
 import { advancement, rankTitle } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
+import { tickSurvival } from './survival';
+import { deedById } from './deeds';
 import { chance, nextInt } from './rng';
 
-export const TICKS_PER_DAY = 24;
-export const DAYS_PER_YEAR = 12;
-export const TICKS_PER_YEAR = TICKS_PER_DAY * DAYS_PER_YEAR;
+export { TICKS_PER_DAY, DAYS_PER_YEAR, TICKS_PER_YEAR } from './timeconst';
+import { TICKS_PER_DAY, TICKS_PER_YEAR } from './timeconst';
 
 export function currentDay(run: RunState): number {
   return Math.floor(run.tick / TICKS_PER_DAY) + 1;
@@ -45,6 +46,9 @@ export function advanceTick(game: GameState): void {
     }
   }
 
+  // survival: hunger, thirst, cold, filth, and sickness (§ beggar phase)
+  if (tickSurvival(game, run)) return;
+
   // owned ventures earn passively (§11)
   processBusinesses(run);
 
@@ -59,7 +63,7 @@ export function advanceTick(game: GameState): void {
       if (run.activity.progress >= def.ticks) {
         run.activity.progress = 0;
         def.complete(run);
-        if (run.health <= 0 && run.alive) {
+        if (run.hp <= 0 && run.alive) {
           die(game, run, 'dead of your wounds');
           return;
         }
@@ -78,6 +82,8 @@ export function advanceTick(game: GameState): void {
       pushLog(run, 'A hooded factor of the Shadow Guild is asking for you. There is work.', 'system');
     }
   }
+
+  if (run.coin > run.peakCoin) run.peakCoin = run.coin;
 }
 
 /** High Heat draws the watch. They fine you, cool your notoriety, and — if your
@@ -100,8 +106,8 @@ function lawEnforcement(game: GameState, run: RunState): boolean {
   const fine = Math.min(Math.max(0, run.coin), 12 + Math.floor(run.heat));
   run.coin -= fine;
   run.heat = Math.max(0, run.heat - 30);
-  run.health -= nextInt(run, 0, 6);
-  if (run.health <= 0) {
+  run.hp = Math.max(0, run.hp - nextInt(run, 0, 2));
+  if (run.hp <= 0) {
     die(game, run, 'beaten to death by the watch');
     return true;
   }
@@ -135,6 +141,7 @@ export type Command =
   | { type: 'dismissMember'; id: string }
   | { type: 'assignMember'; memberId: string; jobId: string | null }
   | { type: 'rerollRecruits' }
+  | { type: 'doDeed'; id: string }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string };
 
@@ -225,6 +232,20 @@ export function dispatch(game: GameState, cmd: Command): void {
       break;
     }
 
+    case 'doDeed': {
+      if (!run.alive || run.encounter) break;
+      const deed = deedById(cmd.id);
+      if (!deed) break;
+      if (deed.available && !deed.available(run)) break;
+      // the deed consumes time — needs decay while it happens
+      for (let i = 0; i < deed.timeTicks; i++) {
+        advanceTick(game);
+        if (!run.alive || run.encounter) break;
+      }
+      if (run.alive && !run.encounter) deed.effect(game, run);
+      break;
+    }
+
     case 'chooseEncounter': {
       if (!run.encounter) break;
       const def = ENCOUNTERS[run.encounter.defId];
@@ -267,8 +288,13 @@ export function dispatch(game: GameState, cmd: Command): void {
       const def = META_UNLOCKS.find((u) => u.id === cmd.id);
       if (!def) break;
       if (game.meta.unlocks[def.id]) break;
-      if (game.meta.legacy < def.cost) break;
-      game.meta.legacy -= def.cost;
+      if (def.currency === 'tokens') {
+        if (game.meta.tokens < def.cost) break;
+        game.meta.tokens = Math.round((game.meta.tokens - def.cost) * 4) / 4;
+      } else {
+        if (game.meta.legacy < def.cost) break;
+        game.meta.legacy -= def.cost;
+      }
       game.meta.unlocks[def.id] = true;
       break;
     }

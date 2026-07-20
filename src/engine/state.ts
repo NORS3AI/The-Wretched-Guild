@@ -4,6 +4,7 @@ import type { GameState, MetaState, RunState } from './types';
 import { SAVE_VERSION } from './types';
 import { freshSeed } from './rng';
 import { emptyStanding } from './factions';
+import { maxHp } from './survival';
 
 export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appears
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
@@ -16,25 +17,37 @@ export function newMeta(): MetaState {
     bestAge: 0,
     bestCoin: 0,
     bestRank: 1,
+    tokens: 0,
     unlocks: {},
   };
 }
 
 /** Start a new life. Meta-unlocks (§4) shape the starting conditions. */
 export function newRun(meta: MetaState): RunState {
-  const startCoin = 0 + (meta.unlocks['stashed_coin'] ? 10 : 0) + Math.floor(meta.vault);
-  const bonusHealth = meta.unlocks['hardened'] ? 10 : 0;
+  const startCoin = 0 + (meta.unlocks['stashed_coin'] ? 30 : 0) + Math.floor(meta.vault);
+  const heartsBonus = meta.unlocks['hardened'] ? 1 : 0;
+  const startLuck = meta.unlocks['beggars_luck'] ? 5 : 2;
 
-  return {
+  const run: RunState = {
     seed: freshSeed(),
     rngCursor: 0,
     tick: 0,
     ageYears: 16,
     alive: true,
     deathCause: null,
-    health: 100 + bonusHealth,
-    maxHealth: 100 + bonusHealth,
+    hp: 0, // set below once maxHp is known
+    heartsBonus,
+    needs: { food: 80, water: 80, comfort: 80, hygiene: 70, relief: 90 },
+    illness: 'none',
+    waterskinCharges: 4,
+    waterskinMax: 4,
+    pockets: [
+      { item: 'bread', qty: 1 },
+      null,
+    ],
+    learnings: {},
     coin: startCoin,
+    peakCoin: startCoin,
     heat: 0,
     attrs: {
       cunning: 3,
@@ -43,6 +56,8 @@ export function newRun(meta: MetaState): RunState {
       stealth: 3,
       piety: 3,
       wits: 3,
+      luck: startLuck,
+      vitality: 3,
     },
     alignment: { ethics: 0, morals: 0 },
     rank: 1,
@@ -58,6 +73,8 @@ export function newRun(meta: MetaState): RunState {
     contractCooldown: CONTRACT_FIRST_OFFER,
     legacyThisRun: 0,
   };
+  run.hp = maxHp(run);
+  return run;
 }
 
 export function newGame(): GameState {

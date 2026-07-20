@@ -6,6 +6,8 @@ import { newGame } from '../src/engine/state';
 import { advanceTick, dispatch } from '../src/engine/engine';
 import { ENCOUNTERS } from '../src/engine/encounters';
 import { alignmentName } from '../src/engine/alignment';
+import { computeTokens } from '../src/engine/death';
+import { formatMoney } from '../src/engine/money';
 
 let failures = 0;
 function assert(cond: boolean, msg: string): void {
@@ -17,13 +19,24 @@ function assert(cond: boolean, msg: string): void {
   }
 }
 
+// Advance time while keeping the wretch fed/watered/warm, to isolate systems
+// that aren't about survival from the new needs layer.
+function ff(g: ReturnType<typeof newGame>, n: number): void {
+  for (let i = 0; i < n; i++) {
+    Object.assign(g.run.needs, { food: 100, water: 100, comfort: 100, relief: 100 });
+    g.run.illness = 'none';
+    advanceTick(g);
+    if (!g.run.alive) break;
+  }
+}
+
 console.log('The Wretched Guild — engine tests\n');
 
 // 1) Idle labour accrues coin and nudges alignment toward Lawful.
 {
   const g = newGame();
   dispatch(g, { type: 'setActivity', id: 'labor' });
-  for (let i = 0; i < 200; i++) advanceTick(g);
+  ff(g, 200);
   assert(g.run.coin > 0, `idle labour earned coin (got ${g.run.coin})`);
   assert(g.run.alignment.ethics > 0, `honest toil nudged toward Lawful (ethics ${g.run.alignment.ethics.toFixed(1)})`);
 }
@@ -66,7 +79,7 @@ console.log('The Wretched Guild — engine tests\n');
   const g = newGame();
   dispatch(g, { type: 'setActivity', id: 'labor' });
   let ticks = 0;
-  while (g.run.alive && ticks++ < 400000) advanceTick(g);
+  while (g.run.alive && ticks++ < 400000) ff(g, 1); // fed, so death comes by age/illness
   assert(!g.run.alive, `character eventually dies (${g.run.deathCause}, age ${g.run.ageYears})`);
   assert(g.run.legacyThisRun > 0, `death yields Legacy (${g.run.legacyThisRun})`);
   const before = g.meta.runsCompleted;
@@ -81,19 +94,19 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   dispatch(g, { type: 'setActivity', id: 'labor' });
-  for (let i = 0; i < 300; i++) advanceTick(g);
+  ff(g, 300);
   assert(g.run.factions.commons > 0, `labour builds Commons standing (${g.run.factions.commons.toFixed(1)})`);
 
   const chaotic = newGame();
   chaotic.run.alignment.ethics = -80; // deeply Chaotic
   dispatch(chaotic, { type: 'setActivity', id: 'pray' });
-  for (let i = 0; i < 200; i++) advanceTick(chaotic);
+  ff(chaotic, 200);
   assert(chaotic.run.factions.church === 0, 'a Chaotic soul earns no Church standing (path gate holds)');
 
   const lawful = newGame();
   lawful.run.alignment.ethics = 50; // Lawful
   dispatch(lawful, { type: 'setActivity', id: 'pray' });
-  for (let i = 0; i < 200; i++) advanceTick(lawful);
+  ff(lawful, 200);
   assert(lawful.run.factions.church > 0, `a Lawful soul may serve the Church (${lawful.run.factions.church.toFixed(1)})`);
 }
 
@@ -165,7 +178,7 @@ console.log('The Wretched Guild — engine tests\n');
   dispatch(g, { type: 'investBusiness', id: 'market_stall' });
   assert(g.run.businesses['market_stall'] === 1, 'a Market Stall is acquired');
   const coinAfterBuy = g.run.coin;
-  for (let i = 0; i < 100; i++) advanceTick(g);
+  ff(g, 100);
   assert(g.run.coin > coinAfterBuy, `the stall earns passive income (${coinAfterBuy.toFixed(1)} -> ${g.run.coin.toFixed(1)})`);
 
   // an illicit venture requires standing + rank; set them and confirm Heat rises
@@ -176,7 +189,7 @@ console.log('The Wretched Guild — engine tests\n');
   dispatch(h, { type: 'investBusiness', id: 'fencing_den' });
   assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once rank + shadow standing are met');
   const heatBefore = h.run.heat;
-  for (let i = 0; i < 200; i++) advanceTick(h);
+  ff(h, 200);
   assert(h.run.heat > heatBefore, `the illicit den raises Heat over time (${heatBefore} -> ${h.run.heat.toFixed(1)})`);
 }
 
@@ -196,6 +209,9 @@ console.log('The Wretched Guild — engine tests\n');
   let fined = false;
   const coin0 = g.run.coin;
   for (let i = 0; i < 400 && g.run.alive; i++) {
+    Object.assign(g.run.needs, { food: 100, water: 100, comfort: 100, relief: 100 });
+    g.run.illness = 'none';
+    g.run.heat = 100; // keep the pressure pinned high
     advanceTick(g);
     if (g.run.coin < coin0 || g.run.heat < 100) { fined = true; break; }
   }
@@ -225,7 +241,7 @@ console.log('The Wretched Guild — engine tests\n');
   // the assigned member earns for the Guild treasury
   g.run.coin = 100;
   const before = g.run.coin;
-  for (let i = 0; i < 50; i++) advanceTick(g);
+  ff(g, 50);
   // net of the friar's small upkeep, almswork should still add coin + church standing
   assert(g.run.factions.church > 0, `the friar builds the Guild's Church standing (${g.run.factions.church.toFixed(1)})`);
   assert(before !== g.run.coin, 'the treasury changes as the member works and is paid');
@@ -250,14 +266,63 @@ console.log('The Wretched Guild — engine tests\n');
   assert(hired >= 1, 'at least one hire succeeded');
 }
 
-// 13) Determinism — same seed + same commands reproduce identical state.
+// 13) Survival: unattended needs kill; eating restores food; a doctor cures.
+{
+  // an unfed, unwatered wretch dies of hunger or thirst
+  const g = newGame();
+  let ticks = 0;
+  while (g.run.alive && ticks++ < 2000) advanceTick(g);
+  assert(!g.run.alive, `neglecting food and water is lethal (${g.run.deathCause})`);
+
+  // eating restores the food need
+  const e = newGame();
+  e.run.needs.food = 20;
+  e.run.pockets = [{ item: 'bread', qty: 1 }, null];
+  dispatch(e, { type: 'doDeed', id: 'eat' });
+  assert(e.run.needs.food > 20, `eating bread restores food (20 -> ${e.run.needs.food})`);
+  assert(!e.run.pockets.some((p) => p && p.item === 'bread'), 'the bread is consumed');
+
+  // a doctor lifts the plague
+  const p = newGame();
+  p.run.illness = 'plague';
+  p.run.coin = 500;
+  dispatch(p, { type: 'doDeed', id: 'see_doctor' });
+  assert(p.run.illness === 'none', 'seeing a doctor cures the plague');
+}
+
+// 14) Wretched Tokens are rare, weighted, and quantised to quarters.
+{
+  const poor = newGame();
+  poor.run.rank = 1;
+  poor.run.peakCoin = 10;
+  const great = newGame();
+  great.run.rank = 22;
+  great.run.peakCoin = 2_000_000;
+  great.run.ageYears = 60;
+  great.run.factions.shadow = 70;
+  great.run.factions.merchants = 65;
+  const t1 = computeTokens(poor.run);
+  const t2 = computeTokens(great.run);
+  assert(t2 > t1, `a great life earns more Tokens than a poor one (${t1} -> ${t2})`);
+  assert(Math.round(t2 * 4) === t2 * 4, `Tokens are quantised to 0.25 (got ${t2})`);
+  assert(t2 <= 10, `Tokens stay rare — a huge run is still under 10 (got ${t2})`);
+}
+
+// 15) Money formats into denominations (1000 copper = 1 shilling).
+{
+  assert(formatMoney(40) === '40c', 'small sums read in copper');
+  assert(formatMoney(1250) === '1s 250c', '1250 copper = 1 shilling 250 copper');
+  assert(formatMoney(3_000_000) === '3si', 'a million copper reads in silver');
+}
+
+// 16) Determinism — same seed + same commands reproduce identical state.
 {
   const play = (seed: number): string => {
     const g = newGame();
     g.run.seed = seed;
     g.run.rngCursor = 0;
     dispatch(g, { type: 'setActivity', id: 'pickpocket' });
-    for (let i = 0; i < 300; i++) advanceTick(g);
+    ff(g, 300);
     return `${g.run.coin}|${g.run.heat}|${g.run.health}`;
   };
   assert(play(12345) === play(12345), 'the same seed reproduces identical state');

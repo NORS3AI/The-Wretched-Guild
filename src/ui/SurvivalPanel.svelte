@@ -1,0 +1,216 @@
+<script lang="ts">
+  import { gameStore, actions } from './game';
+  import { DEEDS } from '../engine/deeds';
+  import { climateNow } from '../engine/survival';
+  import { itemDef } from '../engine/items';
+
+  const game = gameStore;
+  $: run = $game.run;
+  $: climate = climateNow(run);
+
+  const needRows = [
+    { key: 'food', label: 'Food', low: 'Starving' },
+    { key: 'water', label: 'Water', low: 'Parched' },
+    { key: 'comfort', label: 'Comfort', low: 'Exposed' },
+    { key: 'hygiene', label: 'Hygiene', low: 'Filthy' },
+    { key: 'relief', label: 'Relief', low: 'Desperate' },
+  ] as const;
+
+  function needClass(v: number): string {
+    if (v <= 15) return 'crit';
+    if (v <= 40) return 'warn';
+    return '';
+  }
+
+  // hide the weather-inappropriate remedy
+  function deedHidden(id: string): boolean {
+    if (id === 'seek_warmth') return climate !== 'cold';
+    if (id === 'seek_shade') return climate !== 'hot';
+    return false;
+  }
+
+  function deedEnabled(id: string): boolean {
+    const d = DEEDS.find((x) => x.id === id);
+    if (!d) return false;
+    if (d.available && !d.available(run)) return false;
+    if (d.cost && run.coin < d.cost) return false;
+    return true;
+  }
+</script>
+
+<div class="panel">
+  <div class="panel-title">Body & Needs</div>
+  <div class="body">
+    <div class="weather">
+      The air is
+      <strong class:cold={climate === 'cold'} class:hot={climate === 'hot'}>{climate}</strong>.
+      <span class="faint">Waterskin: {run.waterskinCharges}/{run.waterskinMax}</span>
+    </div>
+
+    <!-- needs -->
+    <div class="needs">
+      {#each needRows as n}
+        {@const v = run.needs[n.key]}
+        <div class="need">
+          <span class="need-label">{n.label}</span>
+          <div class="bar">
+            <div class="fill {needClass(v)}" style="width:{v}%"></div>
+          </div>
+          <span class="need-val {needClass(v)}">{v <= 0 ? n.low : Math.round(v)}</span>
+        </div>
+      {/each}
+    </div>
+
+    <!-- inventory -->
+    <div class="section-label">Pockets</div>
+    <div class="pockets">
+      {#each run.pockets as slot}
+        <div class="slot" class:empty={!slot}>
+          {#if slot}
+            <span class="slot-name" title={itemDef(slot.item)?.blurb}>{itemDef(slot.item)?.name}</span>
+            {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+          {:else}
+            <span class="slot-empty faint">— empty —</span>
+          {/if}
+        </div>
+      {/each}
+    </div>
+
+    <!-- deeds -->
+    <div class="section-label">Tend to Yourself</div>
+    <div class="deeds">
+      {#each DEEDS as d}
+        {#if !deedHidden(d.id)}
+          <button
+            class="btn deed"
+            disabled={!deedEnabled(d.id)}
+            title={d.blurb}
+            onclick={() => actions.doDeed(d.id)}
+          >
+            {d.name}
+            {#if d.timeTicks > 0}<span class="time">· {d.timeTicks}h</span>{/if}
+          </button>
+        {/if}
+      {/each}
+    </div>
+  </div>
+</div>
+
+<style>
+  .body {
+    padding: 12px 14px 14px;
+  }
+  .weather {
+    font-size: 0.84rem;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .weather strong {
+    color: var(--ink);
+    text-transform: capitalize;
+  }
+  .weather strong.cold {
+    color: #7fa8d0;
+  }
+  .weather strong.hot {
+    color: #d08a4f;
+  }
+  .needs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .need {
+    display: grid;
+    grid-template-columns: 62px 1fr 54px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+  .need-label {
+    color: var(--ink-dim);
+  }
+  .bar {
+    height: 9px;
+    background: #0f0b07;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #55702f, #86a94e);
+    transition: width 0.3s ease;
+  }
+  .fill.warn {
+    background: linear-gradient(90deg, #8a6a1e, #d0913a);
+  }
+  .fill.crit {
+    background: linear-gradient(90deg, #7a2a2a, #c04a3f);
+  }
+  .need-val {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    font-size: 0.74rem;
+  }
+  .need-val.warn {
+    color: var(--gold);
+  }
+  .need-val.crit {
+    color: var(--blood-bright);
+  }
+  .section-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+    margin: 16px 0 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  .pockets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .slot {
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 7px 9px;
+    background: var(--bg-panel-2);
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    min-height: 34px;
+  }
+  .slot.empty {
+    border-style: dashed;
+    border-color: var(--border);
+  }
+  .slot-qty {
+    color: var(--gold);
+    font-size: 0.76rem;
+  }
+  .slot-empty {
+    font-size: 0.76rem;
+    font-style: italic;
+  }
+  .deeds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .deed {
+    font-size: 0.8rem;
+  }
+  .deed .time {
+    color: var(--ink-faint);
+    font-size: 0.72rem;
+  }
+</style>

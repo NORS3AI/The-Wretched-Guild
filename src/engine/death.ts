@@ -17,11 +17,45 @@ export function computeVaultCarry(run: RunState): number {
   return Math.floor(run.coin * 0.15);
 }
 
+/** Wretched Tokens — the rare prestige currency. Weighted by how far you climbed,
+ *  how rich you grew, how long you lived, and how broadly you reached — then
+ *  rounded to the nearest quarter. A whole token is a genuine achievement; a
+ *  great life earns a few, and 10 across the whole save is a fortune. */
+export function computeTokens(run: RunState): number {
+  let t = 0;
+
+  // the climb — the heaviest weight
+  if (run.rank >= 6) t += 0.25;
+  if (run.rank >= 11) t += 0.5;
+  if (run.rank >= 16) t += 0.75;
+  if (run.rank >= 21) t += 1.0;
+  if (run.rank >= 26) t += 1.25;
+  if (run.rank >= 30) t += 1.5;
+
+  // wealth — by denomination reached
+  const peak = run.peakCoin;
+  if (peak >= 1_000) t += 0.25; // a shilling
+  if (peak >= 100_000) t += 0.5;
+  if (peak >= 1_000_000) t += 0.75; // a silver
+  if (peak >= 100_000_000) t += 1.0;
+
+  // longevity
+  if (run.ageYears >= 45) t += 0.25;
+  if (run.ageYears >= 65) t += 0.25;
+
+  // breadth — factions built past real standing
+  const broad = (['commons', 'shadow', 'church', 'merchants', 'crown'] as const).filter((f) => run.factions[f] >= 60).length;
+  t += broad * 0.25;
+
+  // round to the nearest quarter
+  return Math.round(t * 4) / 4;
+}
+
 export function die(game: GameState, run: RunState, cause: string): void {
   if (!run.alive) return;
   run.alive = false;
   run.deathCause = cause;
-  run.health = 0;
+  run.hp = 0;
   run.activity = null;
   run.encounter = null;
 
@@ -40,6 +74,7 @@ export function commitToMeta(game: GameState): void {
   game.meta.vault += computeVaultCarry(run);
   game.meta.runsCompleted += 1;
   game.meta.bestAge = Math.max(game.meta.bestAge, run.ageYears);
-  game.meta.bestCoin = Math.max(game.meta.bestCoin, run.coin);
+  game.meta.bestCoin = Math.max(game.meta.bestCoin, run.peakCoin);
   game.meta.bestRank = Math.max(game.meta.bestRank ?? 1, run.rank);
+  game.meta.tokens = Math.round((game.meta.tokens + computeTokens(run)) * 4) / 4;
 }

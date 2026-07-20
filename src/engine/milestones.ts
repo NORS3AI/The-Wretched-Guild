@@ -10,6 +10,7 @@ import { completeAdvance } from './ranks';
 import { shiftAlignment, ethicsBand, moralsBand } from './alignment';
 import { pushLog } from './helpers';
 import { riskRoll } from './checks';
+import { damage } from './survival';
 
 /** Standard "you rise" ending: advance the rank and close the encounter. */
 function rise(run: RunState, milestoneId: string, text: string): EncOutcome {
@@ -247,11 +248,12 @@ const ascent: EncounterDef = {
           tag: '[Shadow ≥ 85] risk',
           gate: (r) => r.factions.shadow >= 85,
           gateHint: 'Requires 85 standing with the Shadow Guild',
-          resolve: (_g, run) => {
+          resolve: (g, run) => {
             const roll = riskRoll(run, run.attrs.cunning + run.attrs.stealth, 35);
             if (roll.tier === 'disaster') {
               run.heat = Math.min(100, run.heat + 30);
-              run.health -= 25;
+              damage(g, run, 4, 'slain reaching too far into the shadow network');
+              if (!run.alive) return { text: 'You reach too far into the dark, and something reaches back. It closes its hand, and you are gone.', next: null };
               return { text: 'You reach too far into the dark and something reaches back. Bloodied, you retreat with your life and little else. The halls remain closed — for now.', next: null };
             }
             shiftAlignment(run, -8, -6);

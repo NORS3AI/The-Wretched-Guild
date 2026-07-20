@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -21,7 +21,26 @@ export interface Attributes {
   stealth: number;
   piety: number;
   wits: number;
+  luck: number; // sways opportunities and events
+  vitality: number; // endurance — extends maximum hearts
 }
+
+/** A single item stack in a pocket. */
+export interface ItemStack {
+  item: string; // ItemDef id
+  qty: number;
+}
+
+/** Survival needs, each 0..100 where 100 = fully satisfied (§ beggar phase). */
+export interface Needs {
+  food: number;
+  water: number;
+  comfort: number; // exposure — drained by cold or heat
+  hygiene: number;
+  relief: number; // bladder/bowel; 0 = desperate
+}
+
+export type Illness = 'none' | 'fever' | 'plague';
 
 export type AttrKey = keyof Attributes;
 
@@ -63,9 +82,20 @@ export interface RunState {
   alive: boolean;
   deathCause: string | null;
 
-  health: number;
-  maxHealth: number;
-  coin: number;
+  /** hearts, measured in quarters. maxHp() derives the cap from vitality + bonus. */
+  hp: number;
+  heartsBonus: number; // extra whole hearts from meta unlocks
+
+  /** survival state (§ beggar phase) */
+  needs: Needs;
+  illness: Illness;
+  waterskinCharges: number;
+  waterskinMax: number;
+  pockets: (ItemStack | null)[];
+  learnings: Record<string, boolean>; // semi-upgrades learned this life
+
+  coin: number; // base currency: COPPER (see money.ts)
+  peakCoin: number; // most copper held this life (for tokens)
   heat: number; // 0..100 notoriety
 
   attrs: Attributes;
@@ -103,6 +133,7 @@ export interface MetaState {
   bestAge: number;
   bestCoin: number;
   bestRank: number;
+  tokens: number; // Wretched Tokens — rare prestige, in 0.25 steps
   unlocks: Record<string, boolean>;
 }
 

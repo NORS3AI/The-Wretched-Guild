@@ -2,6 +2,7 @@
   import { gameStore } from './ui/game';
   import Topbar from './ui/Topbar.svelte';
   import CharacterPanel from './ui/CharacterPanel.svelte';
+  import SurvivalPanel from './ui/SurvivalPanel.svelte';
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
@@ -23,6 +24,7 @@
 <main class="layout">
   <aside class="col">
     <CharacterPanel />
+    <SurvivalPanel />
     <ProgressPanel />
   </aside>
 

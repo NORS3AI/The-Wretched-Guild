@@ -66,6 +66,7 @@ export const actions = {
   dismissMember: (id: string) => run({ type: 'dismissMember', id }),
   assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
   rerollRecruits: () => run({ type: 'rerollRecruits' }),
+  doDeed: (id: string) => run({ type: 'doDeed', id }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),
 

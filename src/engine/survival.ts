@@ -71,12 +71,14 @@ export function tickSurvival(game: GameState, run: RunState): boolean {
   n.relief = clampNeed(n.relief - DECAY.relief);
 
   // comfort drains under harsh weather; mild weather lets it recover.
-  // the "hardy" teaching blunts the weather.
+  // the "hardy" teaching blunts the weather, and Seeking Warmth grants a full
+  // day's immunity to the cold.
   const climate = climateNow(run);
   const hardy = run.learnings['hardy'] ? 0.6 : 1;
-  if (climate === 'cold') n.comfort = clampNeed(n.comfort - 0.28 * hardy);
+  const warm = run.warmUntil > run.tick;
+  if (climate === 'cold' && !warm) n.comfort = clampNeed(n.comfort - 0.28 * hardy);
   else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.22 * hardy);
-  else n.comfort = clampNeed(n.comfort + 0.2);
+  else n.comfort = clampNeed(n.comfort + 0.2); // mild, or cold-but-warm
 
   // starvation, thirst, exposure each gnaw at the hearts
   if (n.food <= 0 && chance(run, 0.03)) {

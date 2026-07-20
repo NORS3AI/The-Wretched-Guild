@@ -70,6 +70,7 @@ export function newRun(meta: MetaState): RunState {
     activity: null,
     encounter: null,
     stocksUntil: null,
+    warmUntil: 0,
     contractAvailable: false,
     contractCooldown: CONTRACT_FIRST_OFFER,
     legacyThisRun: 0,

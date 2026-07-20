@@ -102,6 +102,13 @@ function migrate(data: unknown): GameState {
     }
     g.version = 7;
   }
+  // v7 → v8: the warmth buff.
+  if (g.version < 8) {
+    if (typeof (g.run as unknown as Record<string, unknown>).warmUntil !== 'number') {
+      g.run.warmUntil = 0;
+    }
+    g.version = 8;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

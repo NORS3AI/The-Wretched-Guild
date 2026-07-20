@@ -43,8 +43,13 @@
   <div class="panel-title">Body & Needs</div>
   <div class="body">
     <div class="weather">
-      The air is
-      <strong class:cold={climate === 'cold'} class:hot={climate === 'hot'}>{climate}</strong>.
+      <span>
+        The air is
+        <strong class:cold={climate === 'cold'} class:hot={climate === 'hot'}>{climate}</strong>.
+        {#if run.warmUntil > run.tick}
+          <span class="warm" title="The cold cannot touch you">🔥 Warm ~{run.warmUntil - run.tick}h</span>
+        {/if}
+      </span>
       <span class="faint">Waterskin: {run.waterskinCharges}/{run.waterskinMax}</span>
     </div>
 
@@ -130,6 +135,11 @@
   }
   .weather strong.hot {
     color: #d08a4f;
+  }
+  .weather .warm {
+    color: #e08a3a;
+    font-size: 0.76rem;
+    white-space: nowrap;
   }
   .needs {
     display: flex;

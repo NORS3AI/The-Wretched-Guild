@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -120,6 +120,8 @@ export interface RunState {
 
   /** if imprisoned, the tick at which the stocks release you (null = free) */
   stocksUntil: number | null;
+  /** tick until which the cold cannot touch you (from seeking warmth) */
+  warmUntil: number;
 
   /** a contract is waiting on the board to be accepted */
   contractAvailable: boolean;

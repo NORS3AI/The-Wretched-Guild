@@ -140,11 +140,12 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'seek_warmth',
     name: 'Seek Warmth',
-    blurb: 'Huddle by a smithy or a charitable hearth.',
+    blurb: 'Huddle by a smithy or a charitable hearth. Banishes the cold and keeps it off you for a full day.',
     timeTicks: 3,
     effect: (_g, run) => {
-      run.needs.comfort = clamp100(run.needs.comfort + 45);
-      pushLog(run, 'You linger near a smith\'s forge until the shivering stops.', 'plain');
+      run.needs.comfort = 100; // the cold is fully banished
+      run.warmUntil = run.tick + TICKS_PER_DAY; // and cannot touch you for a day
+      pushLog(run, 'You linger by a smith\'s forge until the warmth soaks deep into your bones. The cold will not touch you for a day.', 'good');
     },
   },
   {

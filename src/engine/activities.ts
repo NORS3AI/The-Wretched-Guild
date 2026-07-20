@@ -6,19 +6,30 @@ import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS, MAX_POUCHES, syncCapacity } from './items';
-import { ownedLevel } from './businesses';
+import { ownedLevel, workMultiplier, BUSINESSES, type BusinessDef } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
 import { churchOpen, illicitPrime } from './time';
 import { driftBearing, shiftAlignment } from './alignment';
-import { gainSkill } from './skills';
+import { gainSkill, skillLevel } from './skills';
 
-/** A market-stall find: try to pocket it, and say so. */
+/** A find dropped by work: try to pocket it, and say so. */
 function stallDrop(run: RunState, id: string): void {
   if (addItem(run, id, 1)) {
-    pushLog(run, `A customer leaves behind a ${ITEMS[id].name.toLowerCase()} — into your pocket it goes.`, 'good');
+    pushLog(run, `You come away with a ${ITEMS[id].name.toLowerCase()} — into your pocket it goes.`, 'good');
   } else {
     pushLog(run, `You come by a ${ITEMS[id].name.toLowerCase()}, but have nowhere to put it.`, 'plain');
   }
+}
+
+/** Shared payout for the three Hard Labour activities: 3–5 copper, a nudge
+ *  toward Lawful, Commons standing, and the odd burst of Brawn. */
+function labourEarn(run: RunState): void {
+  const coin = nextInt(run, 3, 5);
+  run.coin += coin;
+  gainStanding(run, 'commons', 0.5);
+  driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
+  if (chance(run, 0.1)) raiseAttr(run, 'brawn', 0.1, 0.4); // 10% → +0.1–0.4 Brawn
+  pushLog(run, `A day's hard labour earns you ${coin} copper.`, 'coin');
 }
 
 export interface ActivityDef {
@@ -63,19 +74,41 @@ export const ACTIVITIES: ActivityDef[] = [
     },
   },
   {
-    id: 'labor',
-    name: 'Honest Labour',
-    path: 'Commons',
-    blurb: 'Fish, fell timber, work the fields. Slow, steady, and lawful.',
+    id: 'fell_timber',
+    name: 'Fell Timber',
+    path: 'Hard Labour',
+    blurb: 'Swing an axe in the lord\'s wood. 3–5 copper, and now and then a good log to sell.',
     ticks: 8,
     trains: 'brawn',
     complete(run) {
-      const coin = nextInt(run, 2, 4);
-      run.coin += coin;
-      gainStanding(run, 'commons', 0.5);
-      driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
-      if (chance(run, 0.1)) raiseAttr(run, 'brawn', 0.1, 0.4); // 10% → +0.1–0.4 Brawn
-      pushLog(run, `A day's labour earns you ${coin} copper.`, 'coin');
+      labourEarn(run);
+      if (chance(run, 0.1)) stallDrop(run, 'wooden_log');
+    },
+  },
+  {
+    id: 'coal_mine',
+    name: 'Work the Coal Mines',
+    path: 'Hard Labour',
+    blurb: 'Hew at the black seam underground. 3–5 copper, and a chance at coal or iron ore.',
+    ticks: 8,
+    trains: 'brawn',
+    complete(run) {
+      labourEarn(run);
+      if (chance(run, 0.1)) stallDrop(run, 'coal');
+      if (chance(run, 0.1)) stallDrop(run, 'iron_ore');
+    },
+  },
+  {
+    id: 'till_fields',
+    name: 'Till the Fields',
+    path: 'Hard Labour',
+    blurb: 'Break the earth behind the plough. 3–5 copper, and a chance at seed or a stray potato.',
+    ticks: 8,
+    trains: 'brawn',
+    complete(run) {
+      labourEarn(run);
+      if (chance(run, 0.1)) stallDrop(run, 'wheat_seeds');
+      if (chance(run, 0.1)) stallDrop(run, 'potato');
     },
   },
   {
@@ -136,61 +169,25 @@ export const ACTIVITIES: ActivityDef[] = [
     },
   },
   {
-    id: 'trade',
-    name: 'Work a Market Stall',
-    path: 'Merchants',
-    blurb: 'Buy low, sell dear, haggle all day. Steady coin and standing with the Merchant Guilds.',
-    ticks: 7,
-    trains: 'wits',
-    complete(run) {
-      // owning a Market Stall business multiplies your takings: L1 ×2, L2 ×2.5,
-      // L3 ×3 … (×(1.5 + 0.5·level)).
-      const lvl = ownedLevel(run, 'market_stall');
-      const mult = lvl >= 1 ? 1.5 + 0.5 * lvl : 1;
-      const base = nextInt(run, 1, 4);
-      const coin = Math.round(base * mult);
-      run.coin += coin;
-      trainAttr(run, 'wits');
-      gainStanding(run, 'merchants', 0.5);
-      pushLog(run, `A day at the stall turns ${coin} copper of profit${lvl >= 1 ? ` (×${mult.toFixed(1)} from your stall)` : ''}.`, 'coin');
-
-      // A better stall draws better wares — the odd treat finds its way to you.
-      if (lvl >= 3 && chance(run, 0.2)) stallDrop(run, 'pastry');
-      if (lvl >= 7 && chance(run, 0.3)) stallDrop(run, 'cake');
-      if (lvl >= 15 && chance(run, 0.4)) stallDrop(run, 'fried_fish');
-      if (lvl >= 30) {
-        if (chance(run, 0.2)) stallDrop(run, 'chicken_curry');
-        if (chance(run, 0.2)) stallDrop(run, 'health_potion');
-        if (chance(run, 0.05)) {
-          if ((run.pouches ?? 0) < MAX_POUCHES) {
-            run.pouches = (run.pouches ?? 0) + 1;
-            syncCapacity(run);
-            pushLog(run, 'You find a fine leather pouch and clip it to your belt (+2 slots).', 'good');
-          } else {
-            run.coin += 30;
-            pushLog(run, 'You find a pouch, but your belt is full — you sell it for 30 copper.', 'coin');
-          }
-        }
-      }
-    },
-  },
-  {
     id: 'forage',
     name: 'Forage & Gather Herbs',
     path: 'Commons',
-    blurb: 'Comb the hedgerows for roots and healing herbs. Sharpens the eye (Wits).',
+    blurb: 'Comb the hedgerows for roots and herbs. The keener your Foraging skill, the more you find.',
     ticks: 7,
     trains: 'wits',
     complete(run) {
       trainAttr(run, 'wits');
-      gainSkill(run, 'foraging', 0.12);
       gainStanding(run, 'commons', 0.15);
-      const got = chance(run, 0.5) ? 'herbs' : 'roots';
-      if (chance(run, 0.7)) {
+      // Foraging skill is the difference between finding something and nothing:
+      // 45% at skill 0 rising to ~90% at 100.
+      const findChance = 0.45 + (skillLevel(run, 'foraging') / 100) * 0.45;
+      if (chance(run, findChance)) {
+        gainSkill(run, 'foraging', 1); // a find teaches the eye
+        const got = chance(run, 0.5) ? 'herbs' : 'roots';
         if (addItem(run, got, 1)) pushLog(run, `You gather ${ITEMS[got].name.toLowerCase()} from the hedge.`, 'good');
         else pushLog(run, 'Your pockets are too full to carry more.', 'plain');
       } else {
-        pushLog(run, 'You search the hedgerows but find little of use.', 'plain');
+        pushLog(run, 'You search the hedgerows but find nothing of use.', 'plain');
       }
     },
   },
@@ -198,14 +195,14 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'fish',
     name: 'Fish the Shallows',
     path: 'Commons',
-    blurb: 'Patient work at the water\'s edge for a meal or coin. Builds Wits.',
+    blurb: 'Patient work at the water\'s edge for a raw fish. Fishing skill rises by 1 for every two you land.',
     ticks: 8,
     trains: 'wits',
     complete(run) {
       trainAttr(run, 'wits');
-      gainSkill(run, 'fishing', 0.15);
       gainStanding(run, 'commons', 0.2);
       if (chance(run, 0.55)) {
+        gainSkill(run, 'fishing', 0.5); // +1 skill per two fish landed
         if (addItem(run, 'fish', 1)) pushLog(run, 'You pull a fish from the shallows.', 'good');
         else {
           run.coin += ITEMS['fish'].value;
@@ -258,6 +255,63 @@ export const ACTIVITIES: ActivityDef[] = [
   },
 ];
 
+// ── Working your enterprises ──────────────────────────────────────────────────
+// Every owned enterprise can be WORKED for coin, scaled by the same ownership
+// multiplier as the market stall (×2 at L1, ×2.5 at L2, …). These aren't listed
+// under "Ply Your Trade" — they live in the Enterprises panel, and only an
+// enterprise you actually own can be worked.
+
+export const WORK_PREFIX = 'work_';
+
+function makeWorkActivity(def: BusinessDef): ActivityDef {
+  return {
+    id: WORK_PREFIX + def.id,
+    name: `${def.workVerb} the ${def.name}`,
+    path: 'Enterprise',
+    blurb: `Put in a shift at your ${def.name}. Yield scales with its level (×2, ×2.5, ×3 …).`,
+    ticks: 7,
+    trains: def.workTrains,
+    complete(run) {
+      const lvl = ownedLevel(run, def.id);
+      if (lvl < 1) return; // you can only work what you own
+      const mult = workMultiplier(lvl);
+      const base = nextInt(run, def.workYield[0], def.workYield[1]);
+      const coin = Math.round(base * mult);
+      run.coin += coin;
+      trainAttr(run, def.workTrains);
+      gainStanding(run, def.faction, 0.5);
+      pushLog(run, `A shift at the ${def.name} turns ${coin} copper (×${mult.toFixed(1)}).`, 'coin');
+
+      // the market stall draws better wares as it grows (see the drop table).
+      if (def.id === 'market_stall') marketStallDrops(run, lvl);
+    },
+  };
+}
+
+/** The market stall's level-gated finds while it is worked. */
+function marketStallDrops(run: RunState, lvl: number): void {
+  if (lvl >= 3 && chance(run, 0.2)) stallDrop(run, 'pastry');
+  if (lvl >= 7 && chance(run, 0.3)) stallDrop(run, 'cake');
+  if (lvl >= 15 && chance(run, 0.4)) stallDrop(run, 'fried_fish');
+  if (lvl >= 30) {
+    if (chance(run, 0.2)) stallDrop(run, 'chicken_curry');
+    if (chance(run, 0.2)) stallDrop(run, 'health_potion');
+    if (chance(run, 0.05)) {
+      if ((run.pouches ?? 0) < MAX_POUCHES) {
+        run.pouches = (run.pouches ?? 0) + 1;
+        syncCapacity(run);
+        pushLog(run, 'You find a fine leather pouch and clip it to your belt (+2 slots).', 'good');
+      } else {
+        run.coin += 30;
+        pushLog(run, 'You find a pouch, but your belt is full — you sell it for 30 copper.', 'coin');
+      }
+    }
+  }
+}
+
+/** A work-activity for each enterprise, keyed `work_<businessId>`. */
+export const WORK_ACTIVITIES: ActivityDef[] = BUSINESSES.map(makeWorkActivity);
+
 export function activityById(id: string): ActivityDef | undefined {
-  return ACTIVITIES.find((a) => a.id === id);
+  return ACTIVITIES.find((a) => a.id === id) ?? WORK_ACTIVITIES.find((a) => a.id === id);
 }

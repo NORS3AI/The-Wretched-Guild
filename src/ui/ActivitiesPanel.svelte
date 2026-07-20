@@ -1,6 +1,7 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
   import { ACTIVITIES } from '../engine/activities';
+  import { ownsAnyBusiness } from '../engine/businesses';
   import { REAL_MS_PER_TICK } from '../engine/timeconst';
   import { CONTRACTS } from '../engine/contracts';
 
@@ -8,6 +9,9 @@
 
   // The waiting mark, so the offer names who the Guild wants dealt with.
   $: mark = $game.run.contractTargetId ? CONTRACTS[$game.run.contractTargetId] : null;
+
+  // Once you own an enterprise, the begging life is behind you — drop it.
+  $: trades = ACTIVITIES.filter((a) => !(a.id === 'beg' && ownsAnyBusiness($game.run)));
 
   // The fill glides smoothly over each cycle's real duration (ticks × tick time,
   // divided by speed) via a CSS animation, rather than jumping per tick.
@@ -39,7 +43,7 @@
   <div class="panel">
     <div class="panel-title">Ply Your Trade</div>
     <div class="acts">
-      {#each ACTIVITIES as act}
+      {#each trades as act}
         {@const active = $game.run.activity?.id === act.id}
         <button
           class="act"

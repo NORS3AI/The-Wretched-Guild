@@ -57,7 +57,7 @@
     {/if}
   </section>
 
-  <aside>
+  <aside class="rightcol">
     <LogPanel />
   </aside>
 </main>
@@ -117,20 +117,37 @@
   }
   .layout {
     display: grid;
-    grid-template-columns: 300px 1fr 320px;
+    grid-template-columns: 300px minmax(0, 1fr) 320px;
     gap: 16px;
     margin-top: 16px;
     align-items: start;
+  }
+  /* every column must be allowed to shrink, or wide content overflows the page */
+  .layout > * {
+    min-width: 0;
   }
   .col {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-width: 0;
   }
   .center {
     min-height: 420px;
+    min-width: 0;
   }
-  @media (max-width: 980px) {
+  /* Tablets (incl. iPad landscape): drop to two columns and float the Chronicle
+     full-width beneath, so nothing spills past the screen edge. */
+  @media (max-width: 1120px) {
+    .layout {
+      grid-template-columns: 280px minmax(0, 1fr);
+    }
+    .rightcol {
+      grid-column: 1 / -1;
+    }
+  }
+  /* Phones and iPad portrait: a single stacked column. */
+  @media (max-width: 780px) {
     .layout {
       grid-template-columns: 1fr;
     }

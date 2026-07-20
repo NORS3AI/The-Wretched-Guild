@@ -5,6 +5,9 @@
   import { SKILLS } from '../engine/skills';
   import heartsUrl from '../assets/hearts.png';
 
+  // show a skill only once the player has used it at least once (value > 0)
+  $: discoveredSkills = SKILLS.filter((sk) => ($game.run.skills[sk.id] ?? 0) > 0);
+
   const game = gameStore;
 
   const attrRows = [
@@ -103,16 +106,18 @@
       {/each}
     </div>
 
-    <!-- skills -->
-    <div class="section-label">Skills</div>
-    <div class="skills">
-      {#each SKILLS as sk}
-        <div class="skill" title={sk.blurb}>
-          <span class="skill-name">{sk.name}</span>
-          <span class="skill-lvl">{Math.floor($game.run.skills[sk.id] ?? 1)}</span>
-        </div>
-      {/each}
-    </div>
+    <!-- skills — only those the wretch has actually discovered by doing -->
+    {#if discoveredSkills.length > 0}
+      <div class="section-label">Skills</div>
+      <div class="skills">
+        {#each discoveredSkills as sk}
+          <div class="skill" title={sk.blurb}>
+            <span class="skill-name">{sk.name}</span>
+            <span class="skill-lvl">{Math.floor($game.run.skills[sk.id] ?? 0)}%</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>
 

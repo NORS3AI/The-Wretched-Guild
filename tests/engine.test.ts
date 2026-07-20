@@ -37,7 +37,7 @@ console.log('The Wretched Guild — engine tests\n');
 // 1) Idle labour accrues coin and nudges alignment toward Lawful.
 {
   const g = newGame();
-  dispatch(g, { type: 'setActivity', id: 'labor' });
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 200);
   assert(g.run.coin > 0, `idle labour earned coin (got ${g.run.coin})`);
   assert(g.run.alignment.ethics > 0, `honest toil nudged toward Lawful (ethics ${g.run.alignment.ethics.toFixed(1)})`);
@@ -80,7 +80,7 @@ console.log('The Wretched Guild — engine tests\n');
 // 4) Permadeath yields Legacy, and a new life carries meta forward.
 {
   const g = newGame();
-  dispatch(g, { type: 'setActivity', id: 'labor' });
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   let ticks = 0;
   while (g.run.alive && ticks++ < 400000) ff(g, 1); // fed, so death comes by age/illness
   assert(!g.run.alive, `character eventually dies (${g.run.deathCause}, age ${g.run.ageYears})`);
@@ -96,7 +96,7 @@ console.log('The Wretched Guild — engine tests\n');
 //    the Church (alignment gates the path).
 {
   const g = newGame();
-  dispatch(g, { type: 'setActivity', id: 'labor' });
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 300);
   assert(g.run.factions.commons > 0, `labour builds Commons standing (${g.run.factions.commons.toFixed(1)})`);
 
@@ -207,6 +207,7 @@ console.log('The Wretched Guild — engine tests\n');
   h.run.coin = 500;
   h.run.rank = 3;
   h.run.factions.shadow = 20;
+  h.run.attrs.stealth = 6; // the den also wants a little Stealth
   dispatch(h, { type: 'investBusiness', id: 'fencing_den' });
   assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once rank + shadow standing are met');
   const heatBefore = h.run.heat;
@@ -377,7 +378,7 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.stocksUntil = g.run.tick + 24;
   g.run.activity = { id: 'beg', progress: 0 };
   // imprisoned: cannot start a new activity or deed
-  dispatch(g, { type: 'setActivity', id: 'labor' });
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   assert(g.run.activity?.id === 'beg' || g.run.activity === null, 'cannot switch activities while imprisoned');
 
   // pay to leave
@@ -482,15 +483,24 @@ console.log('The Wretched Guild — engine tests\n');
   assert(countItem(g.run, 'firewood') === 1, 'the campfire burns one firewood');
   assert(g.run.skills['firemaking'] > fire0, 'making a fire builds Firemaking');
 
-  // cooking needs a fish AND a goblet of cooking oil
-  g.run.pockets = [{ item: 'fish', qty: 1 }, { item: 'cooking_oil', qty: 1 }];
-  const cook0 = g.run.skills['cooking'] ?? 0;
-  dispatch(g, { type: 'doDeed', id: 'cook_fish' });
-  assert(countItem(g.run, 'fish') === 0, 'the raw fish is used up');
-  assert(countItem(g.run, 'cooking_oil') === 0, 'the cooking oil is used up');
-  const fried = countItem(g.run, 'cooked_fish') + countItem(g.run, 'burnt_fish');
-  assert(fried === 1, 'frying yields one cooked or burnt river fish');
-  assert(g.run.skills['cooking'] > cook0, 'cooking builds the Cooking skill');
+  // cooking needs a fish AND a goblet of cooking oil, and your Cooking skill —
+  // which starts at 0 — decides the outcome. Practise it up from nothing.
+  g.run.pockets = [null, null, null, null];
+  g.run.skills['cooking'] = 0;
+  let everProduced = false;
+  for (let n = 0; n < 120 && g.run.skills['cooking'] < 60; n++) {
+    if (countItem(g.run, 'fish') < 1) addItem(g.run, 'fish', 1);
+    if (countItem(g.run, 'cooking_oil') < 1) addItem(g.run, 'cooking_oil', 1);
+    dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+    if (countItem(g.run, 'cooked_fish') + countItem(g.run, 'burnt_fish') > 0) everProduced = true;
+    // clear any produced dish so there is always room to cook again
+    for (let i = 0; i < g.run.pockets.length; i++) {
+      const p = g.run.pockets[i];
+      if (p && (p.item === 'cooked_fish' || p.item === 'burnt_fish')) g.run.pockets[i] = null;
+    }
+  }
+  assert(g.run.skills['cooking'] > 0, `practice builds the Cooking skill up from 0 (now ${g.run.skills['cooking'].toFixed(0)})`);
+  assert(everProduced, 'cooking eventually produces a dish (cooked or burnt)');
 
   // raw river fish is no longer edible; the cooked one is
   const raw = itemDef('fish')!;
@@ -503,7 +513,7 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   g.run.businesses = { market_stall: 30 };
-  dispatch(g, { type: 'setActivity', id: 'trade' });
+  dispatch(g, { type: 'setActivity', id: 'work_market_stall' });
   let treats = 0;
   for (let n = 0; n < 400; n++) {
     ff(g, 7); // one stall cycle
@@ -541,7 +551,7 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   const before = g.run.attrs.brawn;
-  dispatch(g, { type: 'setActivity', id: 'labor' });
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 8 * 60); // many labour cycles — a gain becomes near-certain
   const gain = g.run.attrs.brawn - before;
   assert(gain > 0, `honest labour builds brawn over time (${gain.toFixed(3)})`);
@@ -650,6 +660,66 @@ console.log('The Wretched Guild — engine tests\n');
   dispatch(g, { type: 'chooseEncounter', index: 0 }); // melt into the night
   assert(before === coinAfterBribe, `bribe cost 20 before the deed (coin ${before})`);
   assert(g.run.coin - before === 40, `melting into the night pays the full 40-copper fee (+${g.run.coin - before})`);
+}
+
+// 18) Skills are hidden until discovered; the cook burn-curve is monotonic.
+{
+  const { cookRoll, isDiscovered } = await import('../src/engine/skills');
+  const g = newGame();
+  assert(!isDiscovered(g.run, 'cooking'), 'an untouched skill is undiscovered (hidden)');
+  g.run.skills['cooking'] = 5;
+  assert(isDiscovered(g.run, 'cooking'), 'a used skill becomes discovered');
+
+  // at skill 100 a cook can never burn or fail
+  g.run.skills['cooking'] = 100;
+  let allCooked = true;
+  for (let i = 0; i < 50; i++) if (cookRoll(g.run, 'cooking') !== 'cooked') allCooked = false;
+  assert(allCooked, 'at Cooking 100 every dish comes out right (no burns)');
+
+  // at skill 0 a cook can never succeed (it burns or fails)
+  g.run.skills['cooking'] = 0;
+  let noSuccess = true;
+  for (let i = 0; i < 50; i++) if (cookRoll(g.run, 'cooking') === 'cooked') noSuccess = false;
+  assert(noSuccess, 'at Cooking 0 no dish comes out right');
+}
+
+// 19) Enterprises: the market stall can only be worked once owned, and working
+//     it out-earns the same base by its ×(1.5+0.5·level) multiplier.
+{
+  const g = newGame();
+  dispatch(g, { type: 'setActivity', id: 'work_market_stall' });
+  assert(g.run.activity === null, 'you cannot work a market stall you do not own');
+
+  g.run.businesses = { market_stall: 3 }; // ×3 yield at level 3
+  dispatch(g, { type: 'setActivity', id: 'work_market_stall' });
+  assert(g.run.activity?.id === 'work_market_stall', 'an owned stall can be worked');
+  const before = g.run.coin;
+  ff(g, 7); // one work cycle
+  assert(g.run.coin > before, `working the owned stall earns coin (${before.toFixed(0)} -> ${g.run.coin.toFixed(0)})`);
+}
+
+// 20) Owning any enterprise ends the begging life.
+{
+  const { ownsAnyBusiness } = await import('../src/engine/businesses');
+  const g = newGame();
+  assert(!ownsAnyBusiness(g.run), 'a fresh wretch owns nothing');
+  dispatch(g, { type: 'setActivity', id: 'beg' });
+  assert(g.run.activity?.id === 'beg', 'the pauper may beg');
+  g.run.businesses = { market_stall: 1 };
+  assert(ownsAnyBusiness(g.run), 'buying an enterprise is remembered');
+  dispatch(g, { type: 'setActivity', id: null }); // stop begging
+  dispatch(g, { type: 'setActivity', id: 'beg' }); // and try to beg again
+  assert(g.run.activity?.id !== 'beg', 'once you own an enterprise you can no longer choose to beg');
+}
+
+// 21) The patch-note odometer counts up from v0.0.1-alpha.
+{
+  const { versionForOrdinal } = await import('../src/ui/patchNotes');
+  assert(versionForOrdinal(1) === 'v0.0.1-alpha', 'the first patch is v0.0.1-alpha');
+  assert(versionForOrdinal(9) === 'v0.0.9-alpha', 'the ninth is v0.0.9-alpha');
+  assert(versionForOrdinal(10) === 'v0.1.0-alpha', '0.0.9 rolls to v0.1.0-alpha');
+  assert(versionForOrdinal(999) === 'v0.99.9-alpha', 'the 999th is v0.99.9-alpha');
+  assert(versionForOrdinal(1000) === 'v1.0.0-alpha', '0.99.9 rolls to v1.0.0-alpha');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

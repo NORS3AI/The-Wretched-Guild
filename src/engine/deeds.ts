@@ -9,8 +9,43 @@ import { pushLog, trainAttr } from './helpers';
 import { damage, heal, maxHp } from './survival';
 import { ITEMS, itemDef, addItem, removeItem, countItem } from './items';
 import { has, randomUnlearned } from './learnings';
-import { gainSkill } from './skills';
+import { gainSkill, cookRoll } from './skills';
 import { TICKS_PER_DAY } from './timeconst';
+
+/** Shared cooking: roll against Cooking skill. A success yields the good dish
+ *  and +1 Cooking; a burn yields the ruined dish and no skill; a failure cooks
+ *  nothing and spares the ingredients (see cookRoll for the odds). */
+function doCook(run: RunState, ingredients: string[], cookedId: string, burntId: string): void {
+  const res = cookRoll(run, 'cooking');
+  if (res === 'failed') {
+    // couldn't manage it — the ingredients are spared, but the fumble still
+    // teaches a little (otherwise a cook of skill 0, who can never succeed,
+    // could never learn to cook at all).
+    gainSkill(run, 'cooking', 1);
+    pushLog(run, 'You cannot get the cooking right at all — but you learn from the fumble. At least the ingredients are spared.', 'plain');
+    return;
+  }
+  for (const ing of ingredients) removeItem(run, ing, 1);
+  const out = res === 'cooked' ? cookedId : burntId;
+  if (res === 'cooked') gainSkill(run, 'cooking', 1); // a good cook teaches; a burn does not
+  const def = ITEMS[out];
+  if (addItem(run, out, 1)) {
+    pushLog(
+      run,
+      res === 'cooked' ? `It comes out a fine ${def.name}.` : `It blackens into a ${def.name} — barely worth keeping.`,
+      res === 'cooked' ? 'good' : 'bad',
+    );
+  } else {
+    // no room to store it — eat it off the pan (or bin it if ruined)
+    if (def.food) run.needs.food = clamp100(run.needs.food + def.food);
+    if (def.water) run.needs.water = clamp100(run.needs.water + def.water);
+    pushLog(
+      run,
+      def.food ? `No room to keep it, so you eat the ${def.name.toLowerCase()} straight away.` : `No room — and the ${def.name.toLowerCase()} isn't worth keeping.`,
+      'plain',
+    );
+  }
+}
 
 export interface DeedDef {
   id: string;
@@ -154,14 +189,14 @@ export const DEEDS: DeedDef[] = [
       }
       run.needs.comfort = 100;
       run.warmUntil = run.tick + TICKS_PER_DAY;
-      gainSkill(run, 'firemaking', 0.2);
+      gainSkill(run, 'firemaking', 1);
       pushLog(run, 'You strike a spark and coax a campfire to life, warming yourself to the bone. The cold will not touch you for a day.', 'good');
     },
   },
   {
     id: 'cook_fish',
     name: 'Cook a River Fish',
-    blurb: 'Fry a raw river fish in a goblet of cooking oil. Mostly it comes out golden — but one in ten burns to a cinder. Builds Cooking.',
+    blurb: 'Fry a raw river fish in a goblet of cooking oil. Your Cooking skill decides whether it comes out golden, burns, or won\'t cook at all.',
     timeTicks: 1,
     available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'cooking_oil') >= 1,
     effect: (_g, run) => {
@@ -169,27 +204,22 @@ export const DEEDS: DeedDef[] = [
         pushLog(run, 'You need a raw river fish and a goblet of cooking oil to fry it.', 'bad');
         return;
       }
-      removeItem(run, 'fish', 1);
-      removeItem(run, 'cooking_oil', 1);
-      gainSkill(run, 'cooking', 0.25);
-      // one in ten fish is burnt past saving
-      const burnt = chance(run, 0.1);
-      const out = burnt ? 'burnt_fish' : 'cooked_fish';
-      const def = ITEMS[out];
-      if (addItem(run, out, 1)) {
-        pushLog(
-          run,
-          burnt
-            ? 'The fish catches and blackens — a burnt River Fish, barely worth eating.'
-            : 'The fish fries up golden in the oil — a proper Cooked River Fish.',
-          burnt ? 'bad' : 'good',
-        );
-      } else {
-        // no room to store it — eat it off the pan
-        if (def.food) run.needs.food = clamp100(run.needs.food + def.food);
-        if (def.water) run.needs.water = clamp100(run.needs.water + def.water);
-        pushLog(run, `No room to keep it, so you eat the ${def.name.toLowerCase()} straight from the pan.`, burnt ? 'plain' : 'good');
+      doCook(run, ['fish', 'cooking_oil'], 'cooked_fish', 'burnt_fish');
+    },
+  },
+  {
+    id: 'bake_potato',
+    name: 'Bake a Potato',
+    blurb: 'Bake a raw potato with a goblet of oil and a slab of butter. Your Cooking skill decides how it turns out.',
+    timeTicks: 1,
+    available: (run) =>
+      countItem(run, 'potato') >= 1 && countItem(run, 'cooking_oil') >= 1 && countItem(run, 'slab_of_butter') >= 1,
+    effect: (_g, run) => {
+      if (countItem(run, 'potato') < 1 || countItem(run, 'cooking_oil') < 1 || countItem(run, 'slab_of_butter') < 1) {
+        pushLog(run, 'You need a potato, a goblet of oil, and a slab of butter to bake it.', 'bad');
+        return;
       }
+      doCook(run, ['potato', 'cooking_oil', 'slab_of_butter'], 'baked_potato', 'burnt_potato');
     },
   },
   {

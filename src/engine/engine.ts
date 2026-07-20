@@ -13,7 +13,7 @@ import { nextFloat } from './rng';
 import { META_UNLOCKS } from './unlocks';
 import { canJoinShadow } from './alignment';
 import { advancement, completeAdvance } from './ranks';
-import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
+import { processBusinesses, invest, BUSINESSES, ownedLevel, ownsAnyBusiness } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { tickSurvival, heal } from './survival';
 import { deedById } from './deeds';
@@ -192,7 +192,14 @@ export function dispatch(game: GameState, cmd: Command): void {
   switch (cmd.type) {
     case 'setActivity': {
       if (!run.alive || run.stocksUntil !== null) break;
-      run.activity = cmd.id ? { id: cmd.id, progress: 0 } : null;
+      const id = cmd.id;
+      if (id) {
+        // once you own an enterprise, the begging life is behind you
+        if (id === 'beg' && ownsAnyBusiness(run)) break;
+        // you can only work an enterprise you actually own
+        if (id.startsWith('work_') && ownedLevel(run, id.slice(5)) < 1) break;
+      }
+      run.activity = id ? { id, progress: 0 } : null;
       break;
     }
 

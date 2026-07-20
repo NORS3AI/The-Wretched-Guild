@@ -31,7 +31,17 @@ export const ITEMS: Record<string, ItemDef> = {
   herbs: { id: 'herbs', name: 'Healing Herbs', kind: 'herb', heal: 1, water: 15, value: 10, blurb: 'Feverfew and comfrey — eat them to soothe wounds and wet the throat.' },
   firewood: { id: 'firewood', name: 'Bundle of Firewood', kind: 'goods', value: 5, blurb: 'Deadfall gathered from the wood.' },
   scrap: { id: 'scrap', name: 'Salvaged Scrap', kind: 'goods', value: 7, blurb: 'Bent nails, rags, a cracked buckle — worth a copper to someone.' },
-  cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish.' },
+  cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish or bake a potato.' },
+  slab_of_butter: { id: 'slab_of_butter', name: 'Slab of Butter', kind: 'goods', value: 3, buy: 6, blurb: 'Churned fresh. Needed to bake a potato.' },
+  // hard-labour spoils
+  wooden_log: { id: 'wooden_log', name: 'Wooden Log', kind: 'goods', value: 3, blurb: 'Felled and split. Good timber.' },
+  coal: { id: 'coal', name: 'Coal', kind: 'goods', value: 3, blurb: 'Black rock that burns hot. Hewn from the seam.' },
+  iron_ore: { id: 'iron_ore', name: 'Iron Ore', kind: 'goods', value: 1, blurb: 'Raw ore, streaked with rust. Worth a copper.' },
+  wheat_seeds: { id: 'wheat_seeds', name: 'Wheat Seeds', kind: 'goods', value: 2, blurb: 'A handful of seed-corn from the tilled field.' },
+  // potatoes: raw is an ingredient; bake it for a meal
+  potato: { id: 'potato', name: 'Potato', kind: 'food', value: 1, blurb: 'Earthy and raw. Bake it with oil and butter to make it food.' },
+  baked_potato: { id: 'baked_potato', name: 'Baked Potato', kind: 'food', food: 15, value: 8, blurb: 'Crisp-skinned and steaming, dressed in butter.' },
+  burnt_potato: { id: 'burnt_potato', name: 'Burnt Potato', kind: 'goods', value: 0, blurb: 'A blackened lump of charcoal. Worthless.' },
   // market-stall wares (drop while working a stall)
   pastry: { id: 'pastry', name: 'Pastry', kind: 'food', food: 25, water: 20, value: 5, blurb: 'A flaky little pastry from the stall.' },
   cake: { id: 'cake', name: 'Honey Cake', kind: 'food', food: 35, water: 25, value: 9, blurb: 'Rich, sweet, and moist with honey.' },
@@ -41,7 +51,7 @@ export const ITEMS: Record<string, ItemDef> = {
 };
 
 /** Items the town vendor stocks for sale (during shop hours). */
-export const VENDOR_STOCK = ['cooking_oil'];
+export const VENDOR_STOCK = ['cooking_oil', 'slab_of_butter'];
 
 /** Can this item be eaten for food/water/health? */
 export function isEdible(def: ItemDef): boolean {

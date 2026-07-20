@@ -3,7 +3,7 @@
 // ventures are quiet; illicit ones pay more but generate Heat, which the law
 // eventually answers (see lawEnforcement in engine.ts).
 
-import type { RunState } from './types';
+import type { AttrKey, RunState } from './types';
 import type { FactionId } from './factions';
 import { factionById } from './factions';
 import { gainStanding } from './helpers';
@@ -22,6 +22,14 @@ export interface BusinessDef {
   maxLevel: number;
   reqRank: number;
   reqStanding: number; // in its own faction
+  /** an attribute the player must have grown to before this appears (optional) */
+  reqAttr?: { key: AttrKey; min: number };
+  /** base coin per cycle when the player WORKS the enterprise (before the
+   *  ×(1.5 + 0.5·level) ownership multiplier); the attribute working trains */
+  workYield: [number, number];
+  workTrains: AttrKey;
+  /** the verb shown on the work button, e.g. "Work", "Tend", "Run" */
+  workVerb: string;
 }
 
 export const BUSINESSES: BusinessDef[] = [
@@ -39,6 +47,9 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 1,
     reqStanding: 0,
+    workYield: [1, 4],
+    workTrains: 'wits',
+    workVerb: 'Work',
   },
   {
     id: 'alehouse',
@@ -54,6 +65,10 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 2,
     reqStanding: 10,
+    reqAttr: { key: 'charm', min: 3 },
+    workYield: [2, 6],
+    workTrains: 'charm',
+    workVerb: 'Tend',
   },
   {
     id: 'fencing_den',
@@ -69,6 +84,10 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 3,
     reqStanding: 15,
+    reqAttr: { key: 'stealth', min: 5 },
+    workYield: [3, 8],
+    workTrains: 'stealth',
+    workVerb: 'Run',
   },
   {
     id: 'craft_shop',
@@ -84,6 +103,10 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 4,
     reqStanding: 20,
+    reqAttr: { key: 'wits', min: 8 },
+    workYield: [3, 7],
+    workTrains: 'wits',
+    workVerb: 'Run',
   },
   {
     id: 'smugglers_wharf',
@@ -99,6 +122,10 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 7,
     reqStanding: 40,
+    reqAttr: { key: 'stealth', min: 15 },
+    workYield: [5, 12],
+    workTrains: 'stealth',
+    workVerb: 'Run',
   },
   {
     id: 'trade_house',
@@ -114,6 +141,10 @@ export const BUSINESSES: BusinessDef[] = [
     maxLevel: 50,
     reqRank: 8,
     reqStanding: 45,
+    reqAttr: { key: 'wits', min: 25 },
+    workYield: [6, 14],
+    workTrains: 'wits',
+    workVerb: 'Run',
   },
 ];
 
@@ -134,6 +165,7 @@ export interface Requirements {
   rankOk: boolean;
   standingOk: boolean;
   alignmentOk: boolean;
+  attrOk: boolean;
   ok: boolean;
 }
 
@@ -141,7 +173,25 @@ export function meetsRequirements(run: RunState, def: BusinessDef): Requirements
   const rankOk = run.rank >= def.reqRank;
   const standingOk = run.factions[def.faction] >= def.reqStanding;
   const alignmentOk = factionById(def.faction).admits(run.alignment);
-  return { rankOk, standingOk, alignmentOk, ok: rankOk && standingOk && alignmentOk };
+  const attrOk = !def.reqAttr || run.attrs[def.reqAttr.key] >= def.reqAttr.min;
+  return { rankOk, standingOk, alignmentOk, attrOk, ok: rankOk && standingOk && alignmentOk && attrOk };
+}
+
+/** Enterprises the player may see: prerequisites (rank/standing/alignment/attr)
+ *  met, or already owned. Coin is NOT a gate — you see the price and save for it. */
+export function visibleBusinesses(run: RunState): BusinessDef[] {
+  return BUSINESSES.filter((b) => ownedLevel(run, b.id) > 0 || meetsRequirements(run, b).ok);
+}
+
+/** Does the player own any enterprise at all? (Owning one ends the begging life.) */
+export function ownsAnyBusiness(run: RunState): boolean {
+  return BUSINESSES.some((b) => ownedLevel(run, b.id) > 0);
+}
+
+/** The ownership yield multiplier when working an enterprise: ×2 at L1, ×2.5 at
+ *  L2, ×3 at L3 … (×(1.5 + 0.5·level)). */
+export function workMultiplier(level: number): number {
+  return level >= 1 ? 1.5 + 0.5 * level : 1;
 }
 
 export function canInvest(run: RunState, def: BusinessDef): boolean {

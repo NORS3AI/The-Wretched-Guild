@@ -19,9 +19,11 @@ beyond it to the secret seat of the Master of the World.
   your choices. The forged-warrant "arrest" is gated to the **Lawful** (the Frollo
   route); the Shadow Guild refuses the Lawful Good; the Church admits no Chaotic.
 - **Factions & the rank ladder.** Five factions, each gated by alignment. Climb a
-  100-rung ladder (first 15 rungs live) gated on coin + standing, with your
-  **title themed by the path you chose** — a Cutpurse and an Almstaker stand on
-  the same rung.
+  100-rung ladder (**first 30 rungs, six bands, live**) on a steep coin curve that
+  demands a *second* faction's standing at the higher rungs — with your **title
+  themed by the path you chose** (a Cutpurse and an Almstaker stand on the same
+  rung). Crossing into each new band is a **Rite of Passage**: an RPG-dialogue
+  Encounter where you choose *how* you rise, shaping your alignment.
 - **Economy & businesses.** Buy and upgrade ventures — Market Stall, Alehouse,
   Fencing Den, Craftsman's Shop, Smuggler's Wharf, Trade House — that earn
   **passive income** each tick. Illicit ones pay more but raise **Heat**, and the

@@ -65,6 +65,11 @@ function migrate(data: unknown): GameState {
     if (typeof g.run.guildUnpaidTicks !== 'number') g.run.guildUnpaidTicks = 0;
     g.version = 4;
   }
+  // v4 → v5: rites of passage on the extended ladder.
+  if (g.version < 5) {
+    if (!g.run.milestones) g.run.milestones = {};
+    g.version = 5;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

@@ -295,6 +295,9 @@ function finishEscape(
   return { text: 'They corner you, and you fight your way clear through a haze of blood and pain. You live — barely — but you are broken and every guard knows your face.', next: null };
 }
 
+import { MILESTONES } from './milestones';
+
 export const ENCOUNTERS: Record<string, EncounterDef> = {
   [CONTRACT.id]: CONTRACT,
+  ...MILESTONES,
 };

@@ -165,9 +165,17 @@ export function dispatch(game: GameState, cmd: Command): void {
     }
 
     case 'seekAdvancement': {
-      if (!run.alive) break;
+      if (!run.alive || run.encounter) break;
       const adv = advancement(run);
       if (!adv.eligible || adv.nextRank === null) break;
+      // crossing into a new band demands a Rite of Passage (§13)
+      if (adv.milestone && !adv.milestonePassed) {
+        const rite = ENCOUNTERS[adv.milestone];
+        if (rite) {
+          run.encounter = { defId: rite.id, nodeId: rite.start, lastOutcomeText: rite.intro };
+        }
+        break;
+      }
       run.rank = adv.nextRank;
       pushLog(run, `You rise in the world. You are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
       break;

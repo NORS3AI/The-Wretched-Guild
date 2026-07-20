@@ -84,3 +84,9 @@ export function peakStanding(standing: Record<FactionId, number>): number {
   for (const id of FACTION_IDS) peak = Math.max(peak, standing[id]);
   return peak;
 }
+
+/** Second-highest standing — higher ranks demand breadth, not just one patron. */
+export function secondPeakStanding(standing: Record<FactionId, number>): number {
+  const vals = FACTION_IDS.map((id) => standing[id]).sort((a, b) => b - a);
+  return vals[1] ?? 0;
+}

@@ -35,15 +35,32 @@
         </div>
         <div class="req" class:met={adv.standingMet}>
           <span class="tick">{adv.standingMet ? '✓' : '○'}</span>
-          <span>Standing in any faction</span>
+          <span>Top faction standing</span>
           <span class="req-val">{Math.floor(adv.peak)} / {adv.req.minStanding}</span>
         </div>
+        {#if adv.req.minSecond > 0}
+          <div class="req" class:met={adv.secondMet}>
+            <span class="tick">{adv.secondMet ? '✓' : '○'}</span>
+            <span>Second faction standing</span>
+            <span class="req-val">{Math.floor(adv.second)} / {adv.req.minSecond}</span>
+          </div>
+        {/if}
+        {#if adv.milestone && !adv.milestonePassed}
+          <div class="rite-note">⚜ A Rite of Passage awaits at this rung.</div>
+        {/if}
         <button
           class="btn primary advance-btn"
+          class:rite={adv.eligible && adv.milestone && !adv.milestonePassed}
           disabled={!adv.eligible}
           onclick={() => actions.seekAdvancement()}
         >
-          {adv.eligible ? 'Seek Advancement →' : 'Not Yet Worthy'}
+          {#if !adv.eligible}
+            Not Yet Worthy
+          {:else if adv.milestone && !adv.milestonePassed}
+            Undertake the Rite →
+          {:else}
+            Seek Advancement →
+          {/if}
         </button>
       </div>
     {/if}
@@ -139,6 +156,17 @@
   .advance-btn {
     width: 100%;
     margin-top: 10px;
+  }
+  .advance-btn.rite {
+    border-color: var(--blood);
+    color: var(--gold-bright);
+    background: rgba(140, 47, 47, 0.14);
+  }
+  .rite-note {
+    margin-top: 8px;
+    font-size: 0.76rem;
+    color: var(--blood-bright);
+    font-style: italic;
   }
   .atmax {
     font-size: 0.85rem;

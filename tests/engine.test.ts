@@ -108,8 +108,41 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.factions.commons = 5;
   dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 3, standing 0
   assert(g.run.rank === 2, 'advances to rung 2 once coin/standing are met');
-  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs coin 10 — not met
+  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs coin 12 — not met
   assert(g.run.rank === 2, 'stops at the next unmet requirement');
+}
+
+// 6b) Crossing into a new band opens a Rite of Passage, which advances on a
+//     rising choice — a lived RPG-dialogue promotion.
+{
+  const g = newGame();
+  g.run.rank = 5;
+  g.run.coin = 200;
+  g.run.factions.shadow = 30;
+  dispatch(g, { type: 'seekAdvancement' }); // rank 6 is a rite
+  assert(g.run.rank === 5, 'a rite does not auto-advance — it opens an encounter');
+  assert(g.run.encounter?.defId === 'rite_crossroads', "the Beggar's Crossroads rite opens");
+
+  // pick a rising choice (index 0) → advance and mark the rite passed
+  dispatch(g, { type: 'chooseEncounter', index: 0 });
+  assert(g.run.rank === 6, 'the rite advances the rank on a rising choice');
+  assert(g.run.milestones['rite_crossroads'] === true, 'the rite is marked as undertaken');
+  assert(g.run.encounter === null, 'the rite encounter closes');
+}
+
+// 6c) Higher rungs demand a second faction's standing (breadth), and the ladder
+//     now runs to 30.
+{
+  const g = newGame();
+  g.run.rank = 15;
+  g.run.milestones['rite_trial'] = true; // pretend the rite is done
+  g.run.coin = 100000;
+  g.run.factions.shadow = 100; // top standing maxed
+  dispatch(g, { type: 'seekAdvancement' }); // rank 16 needs a SECOND faction ≥ 20
+  assert(g.run.rank === 15, 'a maxed single faction is not enough for the Notable band');
+  g.run.factions.merchants = 25;
+  dispatch(g, { type: 'seekAdvancement' });
+  assert(g.run.rank === 16, 'breadth across two factions unlocks the higher rung');
 }
 
 // 7) A higher rank yields more Legacy on death.

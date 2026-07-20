@@ -2,8 +2,12 @@
   import { gameStore, actions } from './game';
   import { ACTIVITIES } from '../engine/activities';
   import { REAL_MS_PER_TICK } from '../engine/timeconst';
+  import { CONTRACTS } from '../engine/contracts';
 
   const game = gameStore;
+
+  // The waiting mark, so the offer names who the Guild wants dealt with.
+  $: mark = $game.run.contractTargetId ? CONTRACTS[$game.run.contractTargetId] : null;
 
   // The fill glides smoothly over each cycle's real duration (ticks × tick time,
   // divided by speed) via a CSS animation, rather than jumping per tick.
@@ -20,9 +24,10 @@
       <div class="panel-title">A Whisper in the Dark</div>
       <div class="contract-body">
         <p class="muted">
-          A hooded factor of the Shadow Guild waits for you. There is work — bloody
-          work — and coppers for the doing of it. The offer keeps; open it whenever
-          you like and slip away to decide later.
+          A hooded factor of the Shadow Guild waits for you. There is bloody work —
+          {#if mark}a mark called <strong class="markname">{mark.title}</strong> — {/if}and
+          coppers for the doing of it. The offer keeps; open it whenever you like and
+          slip away to decide later.
         </p>
         <button class="btn primary" onclick={() => actions.acceptContract()}>
           Read the Contract →
@@ -86,6 +91,10 @@
   }
   .contract .panel-title {
     color: var(--blood-bright);
+  }
+  .markname {
+    color: var(--blood-bright);
+    font-style: italic;
   }
   .acts {
     display: grid;

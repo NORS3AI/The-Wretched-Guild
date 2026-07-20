@@ -526,5 +526,84 @@ console.log('The Wretched Guild — engine tests\n');
   assert(play(12345) === play(12345), 'the same seed reproduces identical state');
 }
 
+// 17) Contract roster: a killed mark is gone for good; a spared mark returns,
+//     and choices only nudge alignment a little (the slow burn).
+{
+  const g = newGame();
+  g.run.contractAvailable = true;
+  g.run.contractTargetId = 'contract_taxman';
+  dispatch(g, { type: 'acceptContract' });
+  const moralsBefore = g.run.alignment.morals;
+  const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
+  const bribeIdx = approach.choices.findIndex((c) => c.tag === '[20 coppers]');
+  g.run.coin = 100;
+  dispatch(g, { type: 'chooseEncounter', index: bribeIdx }); // → deed
+  dispatch(g, { type: 'chooseEncounter', index: 1 }); // blade — kill → escape
+  const drop = moralsBefore - g.run.alignment.morals;
+  assert(drop > 0 && drop < 1.0, `a single killing is a slow burn, not a lurch (Δmorals ${drop.toFixed(2)})`);
+  assert(g.run.contractFates['contract_taxman'] === 'dead', 'killing a mark records it dead');
+
+  // dead marks are never offered again
+  const { eligibleTargets } = await import('../src/engine/contracts');
+  assert(!eligibleTargets(g.run).some((t) => t.id === 'contract_taxman'), 'a dead mark leaves the roster for good');
+}
+
+// 17b) Sparing a mark leaves it alive and still robbable.
+{
+  const g = newGame();
+  g.run.contractAvailable = true;
+  g.run.contractTargetId = 'contract_taxman';
+  dispatch(g, { type: 'acceptContract' });
+  g.run.attrs.stealth = 8;
+  const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
+  dispatch(g, { type: 'chooseEncounter', index: 0 }); // slip over the wall
+  // may go to deed or deed_alert; get to a node with a Spare option
+  let node = g.run.encounter?.nodeId;
+  if (node === 'deed_alert') {
+    // no spare here — restart cleanly with a bribe route instead
+    const g2 = newGame();
+    g2.run.contractAvailable = true;
+    g2.run.contractTargetId = 'contract_taxman';
+    g2.run.coin = 100;
+    dispatch(g2, { type: 'acceptContract' });
+    const bribeIdx = approach.choices.findIndex((c) => c.tag === '[20 coppers]');
+    dispatch(g2, { type: 'chooseEncounter', index: bribeIdx });
+    const deed = ENCOUNTERS['contract_taxman'].nodes['deed'];
+    const spareIdx = deed.choices.findIndex((c) => c.tag === '[Good]');
+    dispatch(g2, { type: 'chooseEncounter', index: spareIdx });
+    assert(g2.run.contractFates['contract_taxman'] === 'spared', 'sparing a mark records it spared');
+    const { eligibleTargets } = await import('../src/engine/contracts');
+    assert(eligibleTargets(g2.run).some((t) => t.id === 'contract_taxman'), 'a spared mark can be robbed again');
+  } else {
+    const deed = ENCOUNTERS['contract_taxman'].nodes['deed'];
+    const spareIdx = deed.choices.findIndex((c) => c.tag === '[Good]');
+    dispatch(g, { type: 'chooseEncounter', index: spareIdx });
+    assert(g.run.contractFates['contract_taxman'] === 'spared', 'sparing a mark records it spared');
+    const { eligibleTargets } = await import('../src/engine/contracts');
+    assert(eligibleTargets(g.run).some((t) => t.id === 'contract_taxman'), 'a spared mark can be robbed again');
+  }
+}
+
+// 17c) The Guild pays for the kill, not the getaway: a successful contract pays
+//      the full promised fee (the "melt into the night → only 20 of 40" bug).
+{
+  const g = newGame();
+  g.run.contractAvailable = true;
+  g.run.contractTargetId = 'contract_taxman';
+  g.run.coin = 100;
+  g.run.attrs.stealth = 40; // a clean, certain escape
+  g.run.heat = 0;
+  dispatch(g, { type: 'acceptContract' });
+  const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
+  const bribeIdx = approach.choices.findIndex((c) => c.tag === '[20 coppers]');
+  const coinAfterBribe = 100 - 20;
+  dispatch(g, { type: 'chooseEncounter', index: bribeIdx }); // → deed (coin 80)
+  dispatch(g, { type: 'chooseEncounter', index: 1 }); // blade → escape
+  const before = g.run.coin;
+  dispatch(g, { type: 'chooseEncounter', index: 0 }); // melt into the night
+  assert(before === coinAfterBribe, `bribe cost 20 before the deed (coin ${before})`);
+  assert(g.run.coin - before === 40, `melting into the night pays the full 40-copper fee (+${g.run.coin - before})`);
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

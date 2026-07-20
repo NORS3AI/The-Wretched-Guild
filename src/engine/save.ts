@@ -128,6 +128,14 @@ function migrate(data: unknown): GameState {
     if (!g.settings) g.settings = defaultSettings();
     g.version = 11;
   }
+  // v11 → v12: the contract roster — per-mark fate + which mark is on offer.
+  if (g.version < 12) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.contractTargetId === 'undefined') r.contractTargetId = null;
+    if (typeof r.contractsOffered !== 'number') r.contractsOffered = 0;
+    if (!r.contractFates) r.contractFates = {};
+    g.version = 12;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

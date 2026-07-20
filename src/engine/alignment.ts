@@ -49,6 +49,20 @@ export function driftBearing(run: RunState, ethicsDir: number, moralsDir: number
   shiftAlignment(run, ethicsDir === 0 ? 0 : ethicsDir * mag(), moralsDir === 0 ? 0 : moralsDir * mag());
 }
 
+/** A deliberate RPG-choice's bearing nudge — the slow burn (§6, design fork). A
+ *  single murder is bad, evil, chaotic — but it moves you only a little. Each
+ *  non-zero axis shifts a random 0.1–0.4 in the chosen direction, so your
+ *  alignment is the sum of a hundred choices, never one. `ethicsDir`/`moralsDir`
+ *  are the signs of the intent (-1, 0, +1); magnitude is deliberately small. */
+export function sway(run: RunState, ethicsDir: number, moralsDir: number): void {
+  const mag = () => 0.1 + nextFloat(run) * 0.3; // 0.1–0.4
+  shiftAlignment(
+    run,
+    ethicsDir === 0 ? 0 : Math.sign(ethicsDir) * mag(),
+    moralsDir === 0 ? 0 : Math.sign(moralsDir) * mag(),
+  );
+}
+
 function resist(current: number, delta: number): number {
   if (delta === 0) return 0;
   const sameDir = Math.sign(current) === Math.sign(delta);

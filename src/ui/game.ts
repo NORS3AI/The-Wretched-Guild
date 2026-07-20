@@ -18,6 +18,7 @@ function hidden(): boolean {
 // loss). A separate store so it never touches the save.
 export const dangerFlash = writable(0);
 export const settingsOpen = writable(false);
+export const patchOpen = writable(false);
 let lastStarveHits = 0;
 function checkFlash(): void {
   if (game.run.starveHits > lastStarveHits) {

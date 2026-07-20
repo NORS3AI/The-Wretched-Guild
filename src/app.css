@@ -1,21 +1,25 @@
 :root {
+  /* A Diablo III-inspired palette: deep, smoky darks under a burnished, molten
+     gold — every scrap of text glows like candlelit parchment or hammered metal. */
   --bg: #14100c;
   --bg-panel: #1e1812;
   --bg-panel-2: #251d15;
-  --ink: #e8dcc4;
-  --ink-dim: #a99b80;
-  --ink-faint: #6f6350;
+  --ink: #e7d3a3; /* burnished gold-parchment — the base of all text */
+  --ink-dim: #b39b6e;
+  --ink-faint: #7a6a4c;
   --gold: #c9a227;
-  --gold-bright: #e8c34a;
+  --gold-bright: #f0c74a;
   --blood: #8c2f2f;
-  --blood-bright: #c04a3f;
-  --green: #6f8f4e;
+  --blood-bright: #d24a37;
+  --green: #7c9a4e;
   --border: #3a2f22;
   --border-light: #4c3d2b;
   --shadow: rgba(0, 0, 0, 0.5);
 
-  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
-    Georgia, serif;
+  /* Cinzel — an inscriptional Roman serif — for the whole game (loaded in
+     index.html). Serif fallbacks keep it legible before the webfont arrives. */
+  font-family: 'Cinzel', 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Book Antiqua', Georgia, serif;
   color: var(--ink);
   background: var(--bg);
   font-size: 16px;

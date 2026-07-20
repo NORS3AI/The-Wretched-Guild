@@ -4,6 +4,7 @@
 import type { GameState, RunState } from './types';
 import { activityById } from './activities';
 import { ENCOUNTERS } from './encounters';
+import { CONTRACTS, pickContractTarget, contractById, wasSpared } from './contracts';
 import { newRun } from './state';
 import { CONTRACT_COOLDOWN } from './state';
 import { die, commitToMeta } from './death';
@@ -85,12 +86,21 @@ export function advanceTick(game: GameState): void {
   // the law answers accumulated notoriety (§10)
   if (lawEnforcement(game, run)) return;
 
-  // contract offers
+  // contract offers — a fresh mark is drawn from the roster (the killed are gone
+  // for good; the spared may come round again).
   if (!run.contractAvailable) {
     run.contractCooldown--;
     if (run.contractCooldown <= 0) {
-      run.contractAvailable = true;
-      pushLog(run, 'A hooded factor of the Shadow Guild is asking for you. There is work.', 'system');
+      const target = pickContractTarget(run);
+      if (target) {
+        run.contractAvailable = true;
+        run.contractTargetId = target.id;
+        run.contractsOffered = (run.contractsOffered ?? 0) + 1;
+        pushLog(run, 'A hooded factor of the Shadow Guild is asking for you. There is work.', 'system');
+      } else {
+        // no living marks left to offer — try again later
+        run.contractCooldown = CONTRACT_COOLDOWN;
+      }
     }
   }
 
@@ -190,8 +200,15 @@ export function dispatch(game: GameState, cmd: Command): void {
       // Opening the offer does NOT consume it — the player can read it and slip
       // away to decide later (the offer stays as a scroll to return to). It is
       // only spent once they commit to an approach (see the contract's choices).
-      const def = ENCOUNTERS['contract_taxman'];
-      run.encounter = { defId: def.id, nodeId: def.start, lastOutcomeText: def.intro };
+      const targetId = run.contractTargetId ?? 'contract_taxman';
+      const def = CONTRACTS[targetId] ?? CONTRACTS['contract_taxman'];
+      // a mark spared before is offered again with a knowing nod to the fact.
+      const target = contractById(def.id);
+      const intro =
+        target && wasSpared(run, def.id)
+          ? `${target.name} still draws breath, and still deserves the knife. The Guild wants the job finished this time. ${def.intro}`
+          : def.intro;
+      run.encounter = { defId: def.id, nodeId: def.start, lastOutcomeText: intro };
       break;
     }
 

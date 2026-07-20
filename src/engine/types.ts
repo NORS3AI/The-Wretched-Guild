@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -132,8 +132,14 @@ export interface RunState {
 
   /** a contract is waiting on the board to be accepted */
   contractAvailable: boolean;
+  /** which mark the waiting contract is for (null when none) */
+  contractTargetId: string | null;
   /** ticks until the next contract is offered */
   contractCooldown: number;
+  /** how many contracts have been offered this life (first is always Osric) */
+  contractsOffered: number;
+  /** the fate of each mark this life: killed marks never return, spared can */
+  contractFates: Record<string, 'dead' | 'spared'>;
 
   legacyThisRun: number;
 }

@@ -12,12 +12,18 @@
   import WarningModal from './ui/WarningModal.svelte';
   import FlashOverlay from './ui/FlashOverlay.svelte';
   import SettingsModal from './ui/SettingsModal.svelte';
-  import { illicitWarning, settingsOpen } from './ui/game';
+  import PatchNotesModal from './ui/PatchNotesModal.svelte';
+  import { illicitWarning, settingsOpen, patchOpen } from './ui/game';
+  import { GAME_VERSION } from './ui/patchNotes';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
 
   const game = gameStore;
 </script>
+
+<button class="version-badge" title="Chronicle of Changes" onclick={() => patchOpen.set(true)}>
+  {GAME_VERSION}
+</button>
 
 <header class="masthead">
   <h1>The Wretched Guild</h1>
@@ -64,9 +70,33 @@
   <SettingsModal />
 {/if}
 
+{#if $patchOpen}
+  <PatchNotesModal />
+{/if}
+
 <FlashOverlay />
 
 <style>
+  .version-badge {
+    position: fixed;
+    top: 8px;
+    right: 10px;
+    z-index: 80;
+    background: rgba(10, 7, 4, 0.7);
+    color: var(--gold);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .version-badge:hover {
+    color: var(--gold-bright);
+    border-color: var(--gold);
+  }
   .masthead {
     text-align: center;
     padding: 22px 0 10px;

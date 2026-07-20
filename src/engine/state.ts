@@ -79,7 +79,10 @@ export function newRun(meta: MetaState): RunState {
     stocksUntil: null,
     warmUntil: 0,
     contractAvailable: false,
+    contractTargetId: null,
     contractCooldown: CONTRACT_FIRST_OFFER,
+    contractsOffered: 0,
+    contractFates: {},
     legacyThisRun: 0,
   };
   run.hp = maxHp(run);

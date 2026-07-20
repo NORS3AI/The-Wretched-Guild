@@ -7,7 +7,7 @@
 import type { EncounterDef, EncOutcome } from './encounters';
 import type { RunState } from './types';
 import { completeAdvance } from './ranks';
-import { shiftAlignment, ethicsBand, moralsBand } from './alignment';
+import { sway, ethicsBand, moralsBand } from './alignment';
 import { pushLog } from './helpers';
 import { riskRoll } from './checks';
 import { damage } from './survival';
@@ -38,7 +38,7 @@ const crossroads: EncounterDef = {
           label: '"Whatever it takes. I\'ll claw up over anyone in my way."',
           tag: '[Chaotic Evil]',
           resolve: (_g, run) => {
-            shiftAlignment(run, -8, -8);
+            sway(run, -1, -1);
             return rise(run, 'rite_crossroads', 'The old man grins, gap-toothed. "Aye. The world eats the soft. Go on, then — climb over the bones." You rise, harder of heart.');
           },
         },
@@ -46,7 +46,7 @@ const crossroads: EncounterDef = {
           label: '"By honest sweat and coin, and no other way."',
           tag: '[Lawful Good]',
           resolve: (_g, run) => {
-            shiftAlignment(run, 8, 8);
+            sway(run, 1, 1);
             run.factions.commons = Math.min(100, run.factions.commons + 5);
             return rise(run, 'rite_crossroads', 'He snorts, but there is respect in it. "Rare, that. We\'ll see how long it lasts." You rise, and the common folk mark you as one of their own.');
           },
@@ -82,7 +82,7 @@ const master: EncounterDef = {
           gate: (r) => ethicsBand(r.alignment) !== 'Chaotic',
           gateHint: 'Only one who honours oaths may swear this',
           resolve: (_g, run) => {
-            shiftAlignment(run, 10, 0);
+            sway(run, 1, 0);
             run.factions.crown = Math.min(100, run.factions.crown + 6);
             return rise(run, 'rite_master', 'You kneel and swear. His mark is worth more than gold — doors of office swing open. You rise as a sworn man.');
           },
@@ -91,7 +91,7 @@ const master: EncounterDef = {
           label: 'Take his patronage — and privately plan to bury him with it.',
           tag: '[Evil]',
           resolve: (_g, run) => {
-            shiftAlignment(run, -6, -12);
+            sway(run, -1, -1);
             run.coin += 40;
             return rise(run, 'rite_master', 'You smile, and mean none of it. His purse fattens yours today; his throat waits for another night. You rise, a viper in his sleeve.');
           },
@@ -100,7 +100,7 @@ const master: EncounterDef = {
           label: 'Refuse. You\'ll answer to no master but yourself.',
           tag: '[Chaotic]',
           resolve: (_g, run) => {
-            shiftAlignment(run, -10, 4);
+            sway(run, -1, 1);
             return rise(run, 'rite_master', 'You turn your back on the offered hand. Harder, this road, and yours alone. You rise unbound.');
           },
         },
@@ -129,7 +129,7 @@ const trial: EncounterDef = {
           gate: (r) => moralsBand(r.alignment) === 'Evil' || ethicsBand(r.alignment) === 'Chaotic',
           gateHint: 'Only the Evil or Chaotic have the stomach for this',
           resolve: (_g, run) => {
-            shiftAlignment(run, -6, -12);
+            sway(run, -1, -1);
             run.factions.shadow = Math.min(100, run.factions.shadow + 8);
             run.heat = Math.min(100, run.heat + 15);
             return rise(run, 'rite_trial', 'A rival is found cold in his bed. No one can prove your hand — but everyone knows. You rise, feared.');
@@ -141,7 +141,7 @@ const trial: EncounterDef = {
           gate: (r) => r.factions.church >= 30,
           gateHint: 'Requires 30 standing with the Church',
           resolve: (_g, run) => {
-            shiftAlignment(run, 6, 6);
+            sway(run, 1, 1);
             run.factions.church = Math.min(100, run.factions.church + 8);
             return rise(run, 'rite_trial', 'Your words fill the nave and spill into the street. Men weep; the bishop takes note. You rise, revered.');
           },
@@ -152,7 +152,7 @@ const trial: EncounterDef = {
           gate: (r) => r.factions.merchants >= 30,
           gateHint: 'Requires 30 standing with the Merchant Guilds',
           resolve: (_g, run) => {
-            shiftAlignment(run, -4, -8);
+            sway(run, -1, -1);
             run.factions.merchants = Math.min(100, run.factions.merchants + 8);
             run.coin += 120;
             return rise(run, 'rite_trial', 'By the time he understands, his warehouses are yours and his name is dust. You rise, and grow rich in the rising.');
@@ -199,7 +199,7 @@ const gambit: EncounterDef = {
               run.coin = Math.max(0, run.coin - 2000);
               return { text: 'The baron calls your bluff and sends men to your door. You escape, but poorer and hunted. The gambit fails — try again when you are stronger.', next: null };
             }
-            shiftAlignment(run, -6, -8);
+            sway(run, -1, -1);
             return rise(run, 'rite_gambit', 'The baron reads your letter, goes grey, and yields. His influence is yours to wield. You rise into true power.');
           },
         },
@@ -209,7 +209,7 @@ const gambit: EncounterDef = {
           gate: (r) => r.factions.crown >= 50,
           gateHint: 'Requires 50 standing with the Crown',
           resolve: (_g, run) => {
-            shiftAlignment(run, 6, 0);
+            sway(run, 1, 0);
             run.factions.crown = Math.min(100, run.factions.crown + 6);
             return rise(run, 'rite_gambit', 'Vows are exchanged, lands entailed, and your blood mingles with the mighty. You rise, legitimate at last.');
           },
@@ -256,7 +256,7 @@ const ascent: EncounterDef = {
               if (!run.alive) return { text: 'You reach too far into the dark, and something reaches back. It closes its hand, and you are gone.', next: null };
               return { text: 'You reach too far into the dark and something reaches back. Bloodied, you retreat with your life and little else. The halls remain closed — for now.', next: null };
             }
-            shiftAlignment(run, -8, -6);
+            sway(run, -1, -1);
             return rise(run, 'rite_ascent', 'The whisper-lords take your measure and find you worthy of their table. You rise into the true, hidden power of the realm.');
           },
         },
@@ -266,7 +266,7 @@ const ascent: EncounterDef = {
           gate: (r) => r.factions.church >= 80 || r.factions.crown >= 80,
           gateHint: 'Requires 80 standing with the Church or the Crown',
           resolve: (_g, run) => {
-            shiftAlignment(run, 6, 0);
+            sway(run, 1, 0);
             return rise(run, 'rite_ascent', 'Robed and ringed, you are raised before the assembled great. You rise into the highest circles of England.');
           },
         },

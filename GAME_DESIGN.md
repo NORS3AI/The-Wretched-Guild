@@ -374,6 +374,22 @@ choice-driven contract — the whole game works.
 
 ---
 
+## 17b. Procedural Towns (planned)
+
+Towns/villages are **procedurally generated** — the count of people, buildings,
+and their purposes varies per town. This turns institutions into *contested
+territory*:
+
+- If a town has **no church/parish**, a player who founds one becomes the
+  **monopoly faith** — every villager is theirs to shepherd (and exploit).
+- If a church **already exists**, founding a rival parish means **competing for
+  the same souls** who already practise another faith — materially harder:
+  slower conversions, hostile clergy, split tithes.
+
+The same contested-monopoly logic generalises to other buildings/trades (the
+only smith, the only alehouse, the only fence in town), so *where* you rise
+matters as much as *how*. Scheduled alongside the world-state work (§9, M2+).
+
 ## 18. Open Questions
 
 - **Alignment fluidity:** fully fluid (redeem/corrupt anytime) vs **sticky**

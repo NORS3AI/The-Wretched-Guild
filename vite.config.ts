@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
-// GitHub Pages serves this project site from https://<user>.github.io/The-Wretched-Guild/
-// so the base path must match the repo name. Build output goes to /docs on `main`.
+// A RELATIVE base ('./') makes the built assets load no matter what path the
+// site is served from — project page (/The-Wretched-Guild/), a custom domain,
+// or a differently-cased URL. This avoids the classic GitHub Pages 404 where an
+// absolute base path doesn't match the actual repo URL. Output goes to /docs.
 export default defineConfig({
   plugins: [svelte()],
-  base: '/The-Wretched-Guild/',
+  base: './',
   build: {
     outDir: 'docs',
     emptyOutDir: true,

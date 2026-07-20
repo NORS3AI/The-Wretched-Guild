@@ -41,12 +41,15 @@ Nothing here is sacred — argue with it.
 
 ---
 
-## 3. The Core Loop — Two Modes of Play
+## 3. The Core Loop — One Life, Two Rhythms
 
-The game breathes between two textures. Getting the *split* right is the whole
-design.
+There are **no game modes and no class select**. Every player begins as a
+penniless beggar and becomes whatever their repeated choices make them — thief,
+churchman, merchant, farmer, assassin, king. The game is a single unified
+experience; it simply *breathes* between two rhythms. Getting the *split* right
+is the whole design.
 
-### 3a. The Idle Layer — the economy of time
+### 3a. The Idle Rhythm — the economy of time
 Low-stakes, tick-resolved, background. **Begging, labor** (farm/fish/log/hunt),
 **passive businesses, training, laying low.** You assign it and time carries it:
 
@@ -58,7 +61,7 @@ Low-stakes, tick-resolved, background. **Begging, labor** (farm/fish/log/hunt),
 This is where resources and time accrue *between* the interesting bits. Nobody
 wants to hand-play a fishing trip.
 
-### 3b. The Interactive Layer — the set pieces
+### 3b. The Interactive Rhythm — the set pieces
 High-stakes, hand-played. **Assassin contracts, church jobs, heists, court
 intrigue, moral dilemmas.** These arrive as **RPG-choice Encounters** (§8): a
 narrative prompt and a handful of pre-written options you choose between, like

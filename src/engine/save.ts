@@ -11,9 +11,11 @@ import { emptyStanding } from './factions';
 const SAVE_KEY = 'wretched-guild/save';
 
 // Offline is generous but bounded, so a week away doesn't fast-forward you to
-// death — and encounters never auto-resolve while you were gone.
-const OFFLINE_TICK_MS = 3000; // one tick of idle progress per 3 real seconds
-const OFFLINE_MAX_TICKS = 1200; // ~1 hour of real time, at most
+// death — and encounters never auto-resolve while you were gone. Uses the same
+// real-time-per-tick as live play, so a day away = a day of progress.
+import { REAL_MS_PER_TICK } from './timeconst';
+const OFFLINE_TICK_MS = REAL_MS_PER_TICK; // 50 s of real time per tick
+const OFFLINE_MAX_TICKS = 288; // at most ~12 in-game days while away
 
 export function saveGame(game: GameState): void {
   game.lastSavedAt = Date.now();

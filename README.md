@@ -31,11 +31,16 @@ beyond it to the secret seat of the Master of the World.
 
 ## What's playable now (M0–M4)
 
-- **Two modes of play.** An *idle layer* (Beg, Honest Labour, Pick Pockets, Serve
-  at the Chapel, Work a Market Stall, Lay Low) that accrues coin, attributes, and
-  faction standing over ticks — and an *interactive layer*: a hand-played
-  RPG-choice **contract** ("A Debt in Coin and Blood") with gated choices, a risk
-  roll, and a real death vector.
+- **One life, from beggar to whatever you make of it.** *Every* player starts the
+  same way — a penniless beggar in the gutter — and becomes what their choices
+  make them. There are no classes to pick and no modes to choose: begging,
+  labour, theft, prayer, trade, or the blade are all just things you *do*, and
+  what you do repeatedly is what you become.
+- **Two rhythms, one game.** Everyday grind and survival *idle* in the background
+  (Beg, Labour, Pick Pockets, Serve at the Chapel, Work a Market Stall, gather,
+  Lay Low), while the moments that matter — contracts, church jobs, rites of
+  passage — are *hand-played* RPG-choice **encounters** with gated choices, risk
+  rolls, and real death vectors.
 - **Emergent alignment.** A hidden Law↔Chaos / Good↔Evil compass that drifts from
   your choices. The forged-warrant "arrest" is gated to the **Lawful** (the Frollo
   route); the Shadow Guild refuses the Lawful Good; the Church admits no Chaotic.

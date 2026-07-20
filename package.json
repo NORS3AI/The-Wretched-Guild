@@ -1,0 +1,23 @@
+{
+  "name": "the-wretched-guild",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A medieval rags-to-regicide systems sim.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "esbuild tests/engine.test.ts --bundle --platform=node --format=esm --outfile=.test-out/engine.mjs --log-level=warning && node .test-out/engine.mjs"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tsconfig/svelte": "^5.0.4",
+    "esbuild": "^0.28.1",
+    "svelte": "^5.19.0",
+    "svelte-check": "^4.1.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11"
+  }
+}

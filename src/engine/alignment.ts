@@ -1,0 +1,64 @@
+// The D&D compass (§6). Alignment emerges from cumulative choices; a pure
+// function maps the two axes onto the 9 classic cells and the path gates.
+
+import type { Alignment, RunState } from './types';
+
+export const ALIGN_BAND = 33; // |value| > 33 → committed to a side
+
+export type Ethics = 'Lawful' | 'Neutral' | 'Chaotic';
+export type Morals = 'Good' | 'Neutral' | 'Evil';
+
+export function ethicsBand(a: Alignment): Ethics {
+  if (a.ethics > ALIGN_BAND) return 'Lawful';
+  if (a.ethics < -ALIGN_BAND) return 'Chaotic';
+  return 'Neutral';
+}
+
+export function moralsBand(a: Alignment): Morals {
+  if (a.morals > ALIGN_BAND) return 'Good';
+  if (a.morals < -ALIGN_BAND) return 'Evil';
+  return 'Neutral';
+}
+
+/** e.g. "Lawful Evil", "True Neutral". */
+export function alignmentName(a: Alignment): string {
+  const e = ethicsBand(a);
+  const m = moralsBand(a);
+  if (e === 'Neutral' && m === 'Neutral') return 'True Neutral';
+  return `${e} ${m}`;
+}
+
+function clamp(v: number): number {
+  return Math.max(-100, Math.min(100, v));
+}
+
+/** Apply a choice's weight. "Sticky": the further you already lean into a
+ *  corner, the more a same-direction nudge is dampened, so escaping a
+ *  reputation is slow (design fork §18 — leaning sticky). */
+export function shiftAlignment(run: RunState, dEthics: number, dMorals: number): void {
+  const a = run.alignment;
+  a.ethics = clamp(a.ethics + resist(a.ethics, dEthics));
+  a.morals = clamp(a.morals + resist(a.morals, dMorals));
+}
+
+function resist(current: number, delta: number): number {
+  if (delta === 0) return 0;
+  const sameDir = Math.sign(current) === Math.sign(delta);
+  // deeper commitment resists further movement in the SAME direction;
+  // movement toward the opposite pole is unhindered (corruption/redemption).
+  const commit = Math.abs(current) / 100; // 0..1
+  const damp = sameDir ? 1 - 0.6 * commit : 1;
+  return delta * damp;
+}
+
+// ── Path gates (§9). Institutions of Law gate on lawfulness, not goodness. ────
+
+/** Church & Crown demand order: not Chaotic. (Frollo — Lawful Evil — qualifies.) */
+export function canHoldLawfulOffice(a: Alignment): boolean {
+  return ethicsBand(a) !== 'Chaotic';
+}
+
+/** The blade refuses the saint: Shadow Guild rejects the purely Lawful Good. */
+export function canJoinShadow(a: Alignment): boolean {
+  return !(ethicsBand(a) === 'Lawful' && moralsBand(a) === 'Good');
+}

@@ -1,0 +1,147 @@
+<script lang="ts">
+  import { gameStore, actions } from './game';
+  import { ACTIVITIES } from '../engine/activities';
+
+  const game = gameStore;
+
+  function progressPct(id: string): number {
+    const run = $game.run;
+    if (!run.activity || run.activity.id !== id) return 0;
+    const def = ACTIVITIES.find((a) => a.id === id);
+    if (!def) return 0;
+    return (run.activity.progress / def.ticks) * 100;
+  }
+</script>
+
+<div class="stack">
+  {#if $game.run.contractAvailable}
+    <div class="panel contract">
+      <div class="panel-title">A Whisper in the Dark</div>
+      <div class="contract-body">
+        <p class="muted">
+          A hooded factor of the Shadow Guild waits for you. There is work — bloody
+          work — and coin for the doing of it.
+        </p>
+        <button class="btn primary" onclick={() => actions.acceptContract()}>
+          Hear the Contract →
+        </button>
+      </div>
+    </div>
+  {/if}
+
+  <div class="panel">
+    <div class="panel-title">Ply Your Trade</div>
+    <div class="acts">
+      {#each ACTIVITIES as act}
+        {@const active = $game.run.activity?.id === act.id}
+        <button
+          class="act"
+          class:active
+          onclick={() => actions.setActivity(active ? null : act.id)}
+        >
+          <div class="act-head">
+            <span class="act-name">{act.name}</span>
+            <span class="act-path">{act.path}</span>
+          </div>
+          <p class="act-blurb">{act.blurb}</p>
+          <div class="act-bar">
+            <div class="act-fill" style="width:{progressPct(act.id)}%"></div>
+          </div>
+          <div class="act-status">
+            {active ? 'Working… (click to stop)' : 'Idle'}
+          </div>
+        </button>
+      {/each}
+    </div>
+  </div>
+</div>
+
+<style>
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .contract-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .contract-body p {
+    margin: 0;
+  }
+  .contract {
+    border-color: var(--blood);
+  }
+  .contract .panel-title {
+    color: var(--blood-bright);
+  }
+  .acts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+  @media (max-width: 560px) {
+    .acts {
+      grid-template-columns: 1fr;
+    }
+  }
+  .act {
+    text-align: left;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 11px 12px;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .act:hover {
+    border-color: var(--border-light);
+  }
+  .act.active {
+    border-color: var(--gold);
+    background: rgba(201, 162, 39, 0.07);
+  }
+  .act-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .act-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+  }
+  .act-path {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+  }
+  .act-blurb {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    min-height: 2.4em;
+  }
+  .act-bar {
+    height: 5px;
+    background: #0f0b07;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .act-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.2s linear;
+  }
+  .act-status {
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+  }
+</style>

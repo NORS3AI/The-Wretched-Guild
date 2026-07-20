@@ -3,7 +3,7 @@
 import type { GameState } from './types';
 import { SAVE_VERSION } from './types';
 import { storage } from './storage';
-import { newGame } from './state';
+import { newGame, defaultSettings } from './state';
 import { advanceTick } from './engine';
 import { bindLog, pushLog } from './helpers';
 import { emptyStanding } from './factions';
@@ -118,6 +118,15 @@ function migrate(data: unknown): GameState {
   if (g.version < 10) {
     if (g.meta && typeof g.meta.illicitWarningSeen !== 'boolean') g.meta.illicitWarningSeen = false;
     g.version = 10;
+  }
+  // v10 → v11: starvation/filth clocks and UI settings.
+  if (g.version < 11) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.starveClock !== 'number') r.starveClock = 0;
+    if (typeof r.filthClock !== 'number') r.filthClock = 0;
+    if (typeof r.starveHits !== 'number') r.starveHits = 0;
+    if (!g.settings) g.settings = defaultSettings();
+    g.version = 11;
   }
   g.version = SAVE_VERSION;
   return g;

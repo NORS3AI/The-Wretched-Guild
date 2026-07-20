@@ -52,7 +52,7 @@
           {/if}
         </span>
       </div>
-      <div class="hearts">
+      <div class="hearts" class:starving={$game.run.needs.food <= 0}>
         {#each heartPhases as col}
           <div
             class="sprite heart-sprite"
@@ -96,7 +96,7 @@
         <div class="attr">
           <span class="attr-name">{row.label}</span>
           <div class="bar slim">
-            <div class="fill attr-fill" style="width:{($game.run.attrs[row.key] / 40) * 100}%"></div>
+            <div class="fill attr-fill" style="width:{$game.run.attrs[row.key]}%"></div>
           </div>
           <span class="attr-val">{$game.run.attrs[row.key].toFixed(1)}</span>
         </div>
@@ -147,7 +147,22 @@
   .hearts {
     display: flex;
     gap: 4px;
-    padding: 2px 0;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+  }
+  .hearts.starving {
+    border-color: var(--blood-bright);
+    animation: starvepulse 1s ease-in-out infinite;
+  }
+  @keyframes starvepulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(200, 40, 30, 0);
+    }
+    50% {
+      box-shadow: 0 0 8px 2px rgba(200, 40, 30, 0.7);
+    }
   }
   .heart-sprite {
     width: 26px;

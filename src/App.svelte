@@ -10,7 +10,9 @@
   import EncounterView from './ui/EncounterView.svelte';
   import StocksPanel from './ui/StocksPanel.svelte';
   import WarningModal from './ui/WarningModal.svelte';
-  import { illicitWarning } from './ui/game';
+  import FlashOverlay from './ui/FlashOverlay.svelte';
+  import SettingsModal from './ui/SettingsModal.svelte';
+  import { illicitWarning, settingsOpen } from './ui/game';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
 
@@ -57,6 +59,12 @@
 {#if $illicitWarning}
   <WarningModal />
 {/if}
+
+{#if $settingsOpen}
+  <SettingsModal />
+{/if}
+
+<FlashOverlay />
 
 <style>
   .masthead {

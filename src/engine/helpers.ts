@@ -22,13 +22,18 @@ export function pushLog(run: RunState, text: string, kind: LogEntry['kind'] = 'p
   if (activeLog.length > LOG_LIMIT) activeLog.splice(0, activeLog.length - LOG_LIMIT);
 }
 
-/** Attributes grow slowly through use — a random 0.03–0.06 per action (the
- *  "quick study" teaching speeds it up). The `amount` argument is retained for
- *  call-site intent but no longer sets the size of the gain. */
+/** Attributes range 0–100. Grow slowly through use — a random 0.03–0.06 per
+ *  action (the "quick study" teaching speeds it up). */
 export function trainAttr(run: RunState, key: AttrKey, _amount = 1): void {
   const mult = run.learnings && run.learnings['quick_study'] ? 1.5 : 1;
   const gain = (0.03 + nextFloat(run) * 0.03) * mult;
-  run.attrs[key] = Math.min(40, run.attrs[key] + gain);
+  run.attrs[key] = Math.min(100, run.attrs[key] + gain);
+}
+
+/** Raise an attribute by a random amount in [lo, hi], capped at 100 — for the
+ *  chance-based per-activity bonuses. */
+export function raiseAttr(run: RunState, key: AttrKey, lo: number, hi: number): void {
+  run.attrs[key] = Math.min(100, run.attrs[key] + lo + nextFloat(run) * (hi - lo));
 }
 
 /** Build faction standing — but only if your alignment admits the path (§9).

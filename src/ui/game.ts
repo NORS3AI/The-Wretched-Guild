@@ -14,6 +14,18 @@ function hidden(): boolean {
   return typeof document !== 'undefined' && document.visibilityState === 'hidden';
 }
 
+// Bumped whenever the player should see a red danger flash (a starvation heart-
+// loss). A separate store so it never touches the save.
+export const dangerFlash = writable(0);
+export const settingsOpen = writable(false);
+let lastStarveHits = 0;
+function checkFlash(): void {
+  if (game.run.starveHits > lastStarveHits) {
+    if (game.settings?.screenFlash) dangerFlash.update((n) => n + 1);
+    lastStarveHits = game.run.starveHits;
+  }
+}
+
 // The loop fires every REAL_MS_PER_TICK (0.5s) and processes `speed` ticks each
 // time, so 1× is a lively ~2 ticks/sec and 10× rips through downtime.
 const TICK_MS = REAL_MS_PER_TICK;
@@ -45,6 +57,7 @@ setInterval(() => {
         if (!game.run.alive || game.run.encounter) break;
       }
       notify();
+      checkFlash();
     }
     saveAcc += TICK_MS;
     if (saveAcc >= 5000) {
@@ -69,6 +82,7 @@ if (typeof window !== 'undefined') {
       saveGame(game); // anchor lastSavedAt so time-away is measured from here
     } else {
       catchUpOffline(game); // simulate what happened while we were hidden
+      lastStarveHits = game.run.starveHits; // don't flash for offline progress
       saveGame(game);
       notify();
     }
@@ -95,6 +109,7 @@ function run(cmd: Command): void {
     illicitWarning.set(true);
   }
   saveGame(game);
+  lastStarveHits = game.run.starveHits; // commands don't flash; only ticks do
   notify();
 }
 
@@ -122,6 +137,11 @@ export const actions = {
   },
   togglePause: () => {
     game.paused = !game.paused;
+    notify();
+  },
+  toggleSetting: (id: string) => {
+    game.settings = { ...game.settings, [id]: !game.settings[id] };
+    saveGame(game);
     notify();
   },
   acknowledgeIllicitWarning: () => {

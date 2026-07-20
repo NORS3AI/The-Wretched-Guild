@@ -3,9 +3,10 @@
 
 import type { AttrKey, RunState } from './types';
 import { nextInt, nextFloat, chance } from './rng';
-import { pushLog, trainAttr, gainStanding } from './helpers';
+import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS } from './items';
+import { ownedLevel } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
 import { driftBearing, shiftAlignment } from './alignment';
 import { gainSkill } from './skills';
@@ -31,8 +32,8 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 6, // 12 seconds at 1×
     trains: 'charm',
     complete(run) {
-      trainAttr(run, 'charm', 0.12);
       gainStanding(run, 'commons', 0.15);
+      if (chance(run, 0.05)) raiseAttr(run, 'charm', 0.1, 0.3); // 5% → +0.1–0.3 Charm
       const roll = nextFloat(run);
       if (roll < 0.9) {
         run.coin += 1;
@@ -61,9 +62,9 @@ export const ACTIVITIES: ActivityDef[] = [
     complete(run) {
       const coin = nextInt(run, 2, 4);
       run.coin += coin;
-      trainAttr(run, 'brawn');
       gainStanding(run, 'commons', 0.5);
       driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
+      if (chance(run, 0.1)) raiseAttr(run, 'brawn', 0.1, 0.4); // 10% → +0.1–0.4 Brawn
       pushLog(run, `A day's labour earns you ${coin} copper.`, 'coin');
     },
   },
@@ -75,7 +76,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 5,
     trains: 'stealth',
     complete(run) {
-      trainAttr(run, 'stealth', 0.2);
+      trainAttr(run, 'stealth');
       // caught? scales with heat, mitigated by stealth.
       const caughtP = Math.max(0.05, 0.18 + run.heat / 400 - run.attrs.stealth / 120);
       if (chance(run, caughtP)) {
@@ -88,6 +89,7 @@ export const ACTIVITIES: ActivityDef[] = [
         run.heat = Math.min(100, run.heat + 1);
         driftBearing(run, -1, 0); // thieving pulls you toward Chaos
         gainStanding(run, 'shadow', 0.4);
+        if (chance(run, 0.1)) raiseAttr(run, 'luck', 0.05, 0.1); // 10% on a lift → +Luck
         pushLog(run, `You lift ${coin} copper from an unguarded purse.`, 'coin');
       }
     },
@@ -124,11 +126,16 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 7,
     trains: 'wits',
     complete(run) {
-      const coin = nextInt(run, 1, 4);
+      // owning a Market Stall business multiplies your takings: L1 ×2, L2 ×2.5,
+      // L3 ×3 … (×(1.5 + 0.5·level)).
+      const lvl = ownedLevel(run, 'market_stall');
+      const mult = lvl >= 1 ? 1.5 + 0.5 * lvl : 1;
+      const base = nextInt(run, 1, 4);
+      const coin = Math.round(base * mult);
       run.coin += coin;
-      trainAttr(run, 'wits', 0.2);
+      trainAttr(run, 'wits');
       gainStanding(run, 'merchants', 0.5);
-      pushLog(run, `A day at the stall turns ${coin} coin of profit.`, 'coin');
+      pushLog(run, `A day at the stall turns ${coin} copper of profit${lvl >= 1 ? ` (×${mult.toFixed(1)} from your stall)` : ''}.`, 'coin');
     },
   },
   {

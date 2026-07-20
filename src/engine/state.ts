@@ -28,7 +28,7 @@ export function newMeta(): MetaState {
 export function newRun(meta: MetaState): RunState {
   const startCoin = 0 + (meta.unlocks['stashed_coin'] ? 30 : 0) + Math.floor(meta.vault);
   const heartsBonus = meta.unlocks['hardened'] ? 1 : 0;
-  const startLuck = meta.unlocks['beggars_luck'] ? 5 : 2;
+  const startLuck = meta.unlocks['beggars_luck'] ? 5 : 0;
 
   const run: RunState = {
     seed: freshSeed(),
@@ -41,6 +41,9 @@ export function newRun(meta: MetaState): RunState {
     heartsBonus,
     needs: { food: 80, water: 80, comfort: 80, hygiene: 70, relief: 90 },
     illness: 'none',
+    starveClock: 0,
+    filthClock: 0,
+    starveHits: 0,
     waterskinCharges: 4,
     waterskinMax: 4,
     pockets: [
@@ -51,15 +54,16 @@ export function newRun(meta: MetaState): RunState {
     coin: startCoin,
     peakCoin: startCoin,
     heat: 0,
+    // attributes start at 0 and cap at 100, grown slowly through use
     attrs: {
-      cunning: 3,
-      brawn: 3,
-      charm: 3,
-      stealth: 3,
-      piety: 3,
-      wits: 3,
+      cunning: 0,
+      brawn: 0,
+      charm: 0,
+      stealth: 0,
+      piety: 0,
+      wits: 0,
       luck: startLuck,
-      vitality: 3,
+      vitality: 0,
     },
     alignment: { ethics: 0, morals: 0 },
     skills: emptySkills(),
@@ -98,5 +102,10 @@ export function newGame(): GameState {
     paused: false,
     speed: 1,
     lastSavedAt: Date.now(),
+    settings: defaultSettings(),
   };
+}
+
+export function defaultSettings(): Record<string, boolean> {
+  return { screenFlash: true, coinMessages: true, idleMessages: true };
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { gameStore, actions } from './game';
+  import { gameStore, actions, settingsOpen } from './game';
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
   import { alignmentName } from '../engine/alignment';
   import { formatMoney } from '../engine/money';
@@ -58,6 +58,7 @@
         {s}×
       </button>
     {/each}
+    <button class="btn gear" title="Settings" onclick={() => settingsOpen.set(true)}>⚙</button>
   </div>
 </div>
 
@@ -117,5 +118,9 @@
     border-color: var(--gold);
     color: var(--gold-bright);
     background: rgba(201, 162, 39, 0.12);
+  }
+  .btn.gear {
+    padding: 6px 9px;
+    font-size: 0.95rem;
   }
 </style>

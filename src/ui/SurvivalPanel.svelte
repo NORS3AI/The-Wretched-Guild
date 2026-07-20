@@ -22,21 +22,20 @@
     return '';
   }
 
-  // hide the weather-inappropriate remedy
-  function deedHidden(id: string): boolean {
-    if (id === 'seek_warmth') return climate !== 'cold';
-    if (id === 'seek_shade') return climate !== 'hot';
-    return false;
-  }
-
-  function deedEnabled(id: string): boolean {
-    if (run.stocksUntil !== null) return false; // imprisoned — cannot act
-    const d = DEEDS.find((x) => x.id === id);
-    if (!d) return false;
-    if (d.available && !d.available(run)) return false;
-    if (d.cost && run.coin < d.cost) return false;
+  // Reactive so the list re-derives when the weather or run state changes
+  // (a plain function wouldn't — Svelte can't see `climate`/`run` inside it,
+  // which is why cold used to still show "Seek Shade").
+  $: deedRows = DEEDS.filter((d) => {
+    if (d.id === 'seek_warmth') return climate === 'cold';
+    if (d.id === 'seek_shade') return climate === 'hot';
     return true;
-  }
+  }).map((d) => ({
+    def: d,
+    enabled:
+      run.stocksUntil === null &&
+      (!d.available || d.available(run)) &&
+      !(d.cost && run.coin < d.cost),
+  }));
 </script>
 
 <div class="panel">
@@ -96,18 +95,16 @@
     <!-- deeds -->
     <div class="section-label">Tend to Yourself</div>
     <div class="deeds">
-      {#each DEEDS as d}
-        {#if !deedHidden(d.id)}
-          <button
-            class="btn deed"
-            disabled={!deedEnabled(d.id)}
-            title={d.blurb}
-            onclick={() => actions.doDeed(d.id)}
-          >
-            {d.name}
-            {#if d.timeTicks > 0}<span class="time">· {d.timeTicks}h</span>{/if}
-          </button>
-        {/if}
+      {#each deedRows as row (row.def.id)}
+        <button
+          class="btn deed"
+          disabled={!row.enabled}
+          title={row.def.blurb}
+          onclick={() => actions.doDeed(row.def.id)}
+        >
+          {row.def.name}
+          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+        </button>
       {/each}
     </div>
   </div>

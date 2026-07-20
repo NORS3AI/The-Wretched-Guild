@@ -80,11 +80,30 @@ export function tickSurvival(game: GameState, run: RunState): boolean {
   else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.22 * hardy);
   else n.comfort = clampNeed(n.comfort + 0.2); // mild, or cold-but-warm
 
-  // starvation, thirst, exposure each gnaw at the hearts
-  if (n.food <= 0 && chance(run, 0.03)) {
-    damage(game, run, 1, 'starved to death in the gutter');
-    if (!run.alive) return true;
-    pushLog(run, 'Your empty belly cramps — hunger gnaws a wound into you.', 'bad');
+  // Starvation: while food is empty, lose a quarter-heart every 4 hours (ticks).
+  if (n.food <= 0) {
+    run.starveClock++;
+    if (run.starveClock >= 4) {
+      run.starveClock = 0;
+      run.starveHits++; // signals the screen flash
+      damage(game, run, 1, 'starved to death in the gutter');
+      if (!run.alive) return true;
+      pushLog(run, 'Your empty belly cramps — starvation gnaws a wound into you. Find food!', 'bad');
+    }
+  } else {
+    run.starveClock = 0;
+  }
+  // Filth: while fully filthy, lose a quarter-heart every 8 hours.
+  if (n.hygiene <= 0) {
+    run.filthClock++;
+    if (run.filthClock >= 8) {
+      run.filthClock = 0;
+      damage(game, run, 1, 'rotted away in your own filth');
+      if (!run.alive) return true;
+      pushLog(run, 'Sores fester on your filthy skin. You must wash.', 'bad');
+    }
+  } else {
+    run.filthClock = 0;
   }
   if (n.water <= 0 && chance(run, 0.045)) {
     damage(game, run, 1, 'dead of thirst');

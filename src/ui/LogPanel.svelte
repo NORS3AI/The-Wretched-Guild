@@ -3,6 +3,13 @@
 
   const game = gameStore;
 
+  // Filter the log by the message settings (coin / idle-flavour lines).
+  $: entries = $game.log.filter((e) => {
+    if (e.kind === 'coin' && $game.settings?.coinMessages === false) return false;
+    if (e.kind === 'plain' && $game.settings?.idleMessages === false) return false;
+    return true;
+  });
+
   // Auto-scroll to the newest entry via a self-contained action — decoupled from
   // the reactive graph so it can never feed back into an update loop.
   function autoscroll(node: HTMLElement) {
@@ -17,7 +24,7 @@
 <div class="panel log-panel">
   <div class="panel-title">Chronicle</div>
   <div class="log scroll" use:autoscroll>
-    {#each $game.log as entry}
+    {#each entries as entry}
       <div class="entry {entry.kind}">
         <span class="day faint">d{Math.floor(entry.tick / 24) + 1}</span>
         <span class="text">{entry.text}</span>

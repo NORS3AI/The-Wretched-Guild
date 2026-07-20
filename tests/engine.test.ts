@@ -490,14 +490,15 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.skills['cooking'] > cook0, 'cooking builds the Cooking skill');
 }
 
-// 15k) Attributes gain a small random 0.03–0.06 per action.
+// 15k) Honest Labour occasionally raises Brawn (10% chance, +0.1–0.4 each).
 {
   const g = newGame();
   const before = g.run.attrs.brawn;
   dispatch(g, { type: 'setActivity', id: 'labor' });
-  ff(g, 8); // one labour cycle
+  ff(g, 8 * 60); // many labour cycles — a gain becomes near-certain
   const gain = g.run.attrs.brawn - before;
-  assert(gain > 0 && gain < 0.5, `a single action gives a small attribute gain (${gain.toFixed(3)})`);
+  assert(gain > 0, `honest labour builds brawn over time (${gain.toFixed(3)})`);
+  assert(g.run.attrs.brawn <= 100, `brawn is capped at 100 (${g.run.attrs.brawn.toFixed(1)})`);
 }
 
 // 15l) Serving at the Chapel can raise Good (morals), not Lawful.

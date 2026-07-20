@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -89,6 +89,11 @@ export interface RunState {
   /** survival state (§ beggar phase) */
   needs: Needs;
   illness: Illness;
+  /** hours accumulated toward the next starvation / filth heart-loss */
+  starveClock: number;
+  filthClock: number;
+  /** count of starvation heart-losses this life — drives the screen flash */
+  starveHits: number;
   waterskinCharges: number;
   waterskinMax: number;
   pockets: (ItemStack | null)[];
@@ -160,4 +165,6 @@ export interface GameState {
   paused: boolean;
   speed: number; // 1 | 2 | 4
   lastSavedAt: number; // epoch ms — used for offline catch-up
+  /** UI/gameplay toggles (screen flash, message verbosity, …) */
+  settings: Record<string, boolean>;
 }

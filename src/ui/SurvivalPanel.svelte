@@ -30,6 +30,7 @@
   }
 
   function deedEnabled(id: string): boolean {
+    if (run.stocksUntil !== null) return false; // imprisoned — cannot act
     const d = DEEDS.find((x) => x.id === id);
     if (!d) return false;
     if (d.available && !d.available(run)) return false;

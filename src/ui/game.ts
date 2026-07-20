@@ -75,6 +75,7 @@ export const actions = {
   acceptContract: () => run({ type: 'acceptContract' }),
   chooseEncounter: (index: number) => run({ type: 'chooseEncounter', index }),
   seekAdvancement: () => run({ type: 'seekAdvancement' }),
+  payStocks: () => run({ type: 'payStocks' }),
   investBusiness: (id: string) => run({ type: 'investBusiness', id }),
   recruitMember: (id: string) => run({ type: 'recruitMember', id }),
   dismissMember: (id: string) => run({ type: 'dismissMember', id }),

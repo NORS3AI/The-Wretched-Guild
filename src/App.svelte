@@ -8,6 +8,7 @@
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
+  import StocksPanel from './ui/StocksPanel.svelte';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
 
@@ -29,7 +30,9 @@
   </aside>
 
   <section class="center">
-    {#if $game.run.encounter}
+    {#if $game.run.stocksUntil !== null}
+      <StocksPanel />
+    {:else if $game.run.encounter}
       <EncounterView />
     {:else}
       <div class="col">

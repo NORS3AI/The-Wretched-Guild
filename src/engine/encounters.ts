@@ -11,6 +11,15 @@ import { riskRoll } from './checks';
 import { shiftAlignment, ethicsBand } from './alignment';
 import { pushLog, trainAttr, gainStanding } from './helpers';
 import { damage } from './survival';
+import { CONTRACT_COOLDOWN } from './state';
+
+/** Called the moment the player commits to an approach — the offer is spent and
+ *  the timer for the next one begins. Deferring (backing out) never calls this,
+ *  so the offer stays available as a scroll to return to. */
+function commitContract(run: RunState): void {
+  run.contractAvailable = false;
+  run.contractCooldown = CONTRACT_COOLDOWN;
+}
 
 export interface EncChoice {
   label: string;
@@ -51,7 +60,7 @@ export const CONTRACT: EncounterDef = {
   id: 'contract_taxman',
   title: 'A Debt in Coin and Blood',
   intro:
-    'A hooded factor of the Shadow Guild finds you in a tavern nook. "A tax-collector named Osric bleeds this parish dry and skims the rest. Certain parties want him silenced. Forty coin. Do this well, and doors open."',
+    'A hooded factor of the Shadow Guild finds you in a tavern nook. "A tax-collector named Osric bleeds this parish dry and skims the rest. Certain parties want him silenced. Forty coppers. Do this well, and doors open."',
   start: 'approach',
   nodes: {
     approach: {
@@ -64,6 +73,7 @@ export const CONTRACT: EncounterDef = {
           gate: (r) => r.attrs.stealth >= 6,
           gateHint: 'Requires Stealth 6',
           resolve: (game, run) => {
+            commitContract(run);
             trainAttr(run, 'stealth', 0.3);
             shiftAlignment(run, -6, 0); // trespass — a touch of Chaos
             const roll = riskRoll(run, run.attrs.stealth, 8);
@@ -88,6 +98,7 @@ export const CONTRACT: EncounterDef = {
           gate: (r) => r.attrs.charm >= 6,
           gateHint: 'Requires Charm 6',
           resolve: (game, run) => {
+            commitContract(run);
             trainAttr(run, 'charm', 0.3);
             const roll = riskRoll(run, run.attrs.charm, 7);
             if (roll.tier === 'disaster') {
@@ -104,15 +115,16 @@ export const CONTRACT: EncounterDef = {
           },
         },
         {
-          label: 'Bribe the gate-guard (5 coin)',
-          tag: '[5 coin]',
-          gate: (r) => r.coin >= 5,
-          gateHint: 'Requires 5 coin',
+          label: 'Bribe the gate-guard (20 coppers)',
+          tag: '[20 coppers]',
+          gate: (r) => r.coin >= 20,
+          gateHint: 'Requires 20 coppers',
           resolve: (game, run) => {
-            run.coin -= 5;
+            commitContract(run);
+            run.coin -= 20;
             shiftAlignment(run, -3, -2);
             return {
-              text: 'Silver changes hands. The guard studies the middle distance with great interest as you walk past him into the house.',
+              text: 'Copper changes hands. The guard studies the middle distance with great interest as you walk past him into the house.',
               next: 'deed',
             };
           },
@@ -121,6 +133,7 @@ export const CONTRACT: EncounterDef = {
           label: 'Kick in the door and take him by force',
           tag: '[Chaotic]',
           resolve: (game, run) => {
+            commitContract(run);
             shiftAlignment(run, -14, -6);
             run.heat = Math.min(100, run.heat + 15);
             return {
@@ -128,6 +141,13 @@ export const CONTRACT: EncounterDef = {
               next: 'deed_alert',
             };
           },
+        },
+        {
+          label: 'Slip away — decide on this another time',
+          resolve: (_game, _run) => ({
+            text: 'You pocket the offer for now. The factor said it would keep — the scroll waits whenever you are ready.',
+            next: null,
+          }),
         },
       ],
     },
@@ -275,8 +295,8 @@ function finishEscape(
     run.coin += pay;
     run.heat = Math.min(100, run.heat + 10);
     gainStanding(run, 'shadow', pay >= 40 ? 12 : 4);
-    pushLog(run, `Contract fulfilled. The Guild pays ${pay} coin into your palm.`, 'good');
-    return { text: `You are three streets away before the first scream. ${pay} coin, and a name that now means something in the dark.`, next: null };
+    pushLog(run, `Contract fulfilled. The Guild pays ${pay} coppers into your palm.`, 'good');
+    return { text: `You are three streets away before the first scream. ${pay} coppers, and a name that now means something in the dark.`, next: null };
   }
   if (roll.tier === 'complication') {
     const half = Math.floor(pay / 2);

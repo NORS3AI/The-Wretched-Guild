@@ -2,10 +2,11 @@
 // yields, then the activity repeats until the player changes it.
 
 import type { AttrKey, RunState } from './types';
-import { nextInt, chance } from './rng';
+import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS } from './items';
+import { TICKS_PER_DAY } from './timeconst';
 
 export interface ActivityDef {
   id: string;
@@ -24,24 +25,28 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'beg',
     name: 'Beg in the Square',
     path: 'Commons',
-    blurb: 'A trickle of coin from the pitying and the pious. Builds Charm.',
-    ticks: 6,
+    blurb: 'A copper from the pitying and the pious — but begging is a crime, and the watch is watching.',
+    ticks: 6, // 12 seconds at 1×
     trains: 'charm',
     complete(run) {
-      trainAttr(run, 'charm', 0.15);
-      gainStanding(run, 'commons', 0.2);
-      // rarely, a beggar is robbed of what little they have
-      if (chance(run, 0.05)) {
-        const lost = Math.min(run.coin, nextInt(run, 1, 4));
-        run.coin -= lost;
-        pushLog(run, lost > 0 ? `A bigger beggar shakes ${lost} copper out of you.` : 'A bigger beggar shakes you down, but finds nothing.', 'bad');
-        return;
+      trainAttr(run, 'charm', 0.12);
+      gainStanding(run, 'commons', 0.15);
+      const roll = nextFloat(run);
+      if (roll < 0.9) {
+        run.coin += 1;
+        pushLog(run, 'A passer-by drops a copper into your palm.', 'coin');
+      } else if (roll < 0.98) {
+        pushLog(run, 'You are cursed at and given nothing.', 'plain');
+      } else {
+        // 2% caught — then a scramble to get away
+        if (chance(run, 0.45)) {
+          pushLog(run, 'A bailiff lunges for you — you twist free and vanish into the crowd!', 'bad');
+        } else {
+          run.stocksUntil = run.tick + TICKS_PER_DAY; // one day
+          run.activity = null;
+          pushLog(run, 'The watch seizes you for vagrancy and claps you in the stocks for a day.', 'bad');
+        }
       }
-      // luck widens the alms you can catch
-      const coin = nextInt(run, 0, 1 + Math.floor(run.attrs.luck / 8));
-      run.coin += coin;
-      if (coin > 0) pushLog(run, `You beg a passer-by for ${coin} copper.`, 'coin');
-      else pushLog(run, 'You are cursed at and given nothing.', 'plain');
     },
   },
   {

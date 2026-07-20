@@ -49,14 +49,24 @@ export function advanceTick(game: GameState): void {
   // survival: hunger, thirst, cold, filth, and sickness (§ beggar phase)
   if (tickSurvival(game, run)) return;
 
+  // release from the stocks once the day is served — a ruinous ordeal
+  if (run.stocksUntil !== null && run.tick >= run.stocksUntil) {
+    run.stocksUntil = null;
+    run.needs.food = Math.min(run.needs.food, 12);
+    run.needs.water = Math.min(run.needs.water, 8);
+    run.needs.hygiene = Math.min(run.needs.hygiene, 5);
+    run.needs.relief = 0;
+    pushLog(run, 'You are let out of the stocks at last — filthy, starving, and half-dead of thirst.', 'bad');
+  }
+
   // owned ventures earn passively (§11)
   processBusinesses(run);
 
   // the Guild works in parallel (§12)
   processGuild(game, run);
 
-  // idle activity
-  if (run.activity) {
+  // idle activity (suspended while imprisoned)
+  if (run.activity && run.stocksUntil === null) {
     const def = activityById(run.activity.id);
     if (def) {
       run.activity.progress++;
@@ -136,6 +146,7 @@ export type Command =
   | { type: 'acceptContract' }
   | { type: 'chooseEncounter'; index: number }
   | { type: 'seekAdvancement' }
+  | { type: 'payStocks' }
   | { type: 'investBusiness'; id: string }
   | { type: 'recruitMember'; id: string }
   | { type: 'dismissMember'; id: string }
@@ -151,13 +162,21 @@ export function dispatch(game: GameState, cmd: Command): void {
 
   switch (cmd.type) {
     case 'setActivity': {
-      if (!run.alive) break;
+      if (!run.alive || run.stocksUntil !== null) break;
       run.activity = cmd.id ? { id: cmd.id, progress: 0 } : null;
       break;
     }
 
+    case 'payStocks': {
+      if (run.stocksUntil === null || run.coin < 50) break;
+      run.coin -= 50;
+      run.stocksUntil = null;
+      pushLog(run, 'You press 50 copper into a gaoler\'s waiting palm and are quietly let go, spared the worst of it.', 'plain');
+      break;
+    }
+
     case 'acceptContract': {
-      if (!run.alive || !run.contractAvailable || run.encounter) break;
+      if (!run.alive || !run.contractAvailable || run.encounter || run.stocksUntil !== null) break;
       // the Shadow Guild's path gate (§9): the Lawful Good are turned away.
       if (!canJoinShadow(run.alignment)) {
         pushLog(run, 'The factor studies your honest face, spits, and melts away. The Guild has no use for a saint.', 'bad');
@@ -165,9 +184,11 @@ export function dispatch(game: GameState, cmd: Command): void {
         run.contractCooldown = CONTRACT_COOLDOWN;
         break;
       }
+      // Opening the offer does NOT consume it — the player can read it and slip
+      // away to decide later (the offer stays as a scroll to return to). It is
+      // only spent once they commit to an approach (see the contract's choices).
       const def = ENCOUNTERS['contract_taxman'];
       run.encounter = { defId: def.id, nodeId: def.start, lastOutcomeText: def.intro };
-      run.contractAvailable = false;
       break;
     }
 
@@ -233,7 +254,7 @@ export function dispatch(game: GameState, cmd: Command): void {
     }
 
     case 'doDeed': {
-      if (!run.alive || run.encounter) break;
+      if (!run.alive || run.encounter || run.stocksUntil !== null) break;
       const deed = deedById(cmd.id);
       if (!deed) break;
       if (deed.available && !deed.available(run)) break;
@@ -268,9 +289,9 @@ export function dispatch(game: GameState, cmd: Command): void {
           lastOutcomeText: outcome.text,
         };
       } else {
-        // encounter over
+        // encounter over. (Contract offer consumption + cooldown are handled by
+        // the contract's committing choices, not here, so deferring keeps it.)
         run.encounter = null;
-        run.contractCooldown = CONTRACT_COOLDOWN;
         pushLog(run, outcome.text, 'plain');
       }
       break;

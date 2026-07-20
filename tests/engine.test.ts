@@ -117,12 +117,12 @@ console.log('The Wretched Guild — engine tests\n');
   dispatch(g, { type: 'seekAdvancement' });
   assert(g.run.rank === 1, 'cannot advance without meeting requirements');
 
-  g.run.coin = 5;
-  g.run.factions.commons = 5;
-  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 3, standing 0
+  g.run.coin = 15;
+  g.run.factions.commons = 0;
+  dispatch(g, { type: 'seekAdvancement' }); // rank 2 needs coin 15, standing 0
   assert(g.run.rank === 2, 'advances to rung 2 once coin/standing are met');
-  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs coin 12 — not met
-  assert(g.run.rank === 2, 'stops at the next unmet requirement');
+  dispatch(g, { type: 'seekAdvancement' }); // rank 3 needs standing 3 — not met
+  assert(g.run.rank === 2, 'stops at the next unmet requirement (standing)');
 }
 
 // 6b) Crossing into a new band opens a Rite of Passage, which advances on a
@@ -313,6 +313,66 @@ console.log('The Wretched Guild — engine tests\n');
   assert(formatMoney(40) === '40c', 'small sums read in copper');
   assert(formatMoney(1250) === '1s 250c', '1250 copper = 1 shilling 250 copper');
   assert(formatMoney(3_000_000) === '3si', 'a million copper reads in silver');
+}
+
+// 15b) Beggar → next advancement costs 15 coppers.
+{
+  const g = newGame();
+  g.run.coin = 14;
+  dispatch(g, { type: 'seekAdvancement' });
+  assert(g.run.rank === 1, 'cannot advance to rung 2 with 14 coppers');
+  g.run.coin = 15;
+  dispatch(g, { type: 'seekAdvancement' });
+  assert(g.run.rank === 2, 'advances to rung 2 with 15 coppers');
+}
+
+// 15c) The Shadow Guild offer is deferrable — reading it and slipping away keeps
+//      it available; committing to an approach consumes it.
+{
+  const g = newGame();
+  g.run.contractAvailable = true;
+  dispatch(g, { type: 'acceptContract' });
+  assert(g.run.encounter?.defId === 'contract_taxman', 'reading the contract opens it');
+  assert(g.run.contractAvailable === true, 'the offer is NOT consumed just by reading it');
+
+  // the "slip away — decide later" choice is the last one on the approach node
+  const approach = ENCOUNTERS['contract_taxman'].nodes['approach'];
+  const deferIdx = approach.choices.length - 1;
+  dispatch(g, { type: 'chooseEncounter', index: deferIdx });
+  assert(g.run.encounter === null, 'slipping away closes the encounter');
+  assert(g.run.contractAvailable === true, 'the offer remains available to return to');
+
+  // reopen and commit (kick the door — always available), which consumes it
+  dispatch(g, { type: 'acceptContract' });
+  dispatch(g, { type: 'chooseEncounter', index: 3 }); // kick in the door
+  assert(g.run.contractAvailable === false, 'committing to an approach consumes the offer');
+}
+
+// 15d) Getting caught begging can land you in the stocks; you can pay 50 coppers
+//      to leave, and waiting it out wrecks your needs.
+{
+  const g = newGame();
+  // force the stocks directly (the beg roll is probabilistic)
+  g.run.stocksUntil = g.run.tick + 24;
+  g.run.activity = { id: 'beg', progress: 0 };
+  // imprisoned: cannot start a new activity or deed
+  dispatch(g, { type: 'setActivity', id: 'labor' });
+  assert(g.run.activity?.id === 'beg' || g.run.activity === null, 'cannot switch activities while imprisoned');
+
+  // pay to leave
+  g.run.coin = 60;
+  dispatch(g, { type: 'payStocks' });
+  assert(g.run.stocksUntil === null, 'paying 50 coppers frees you from the stocks');
+  assert(g.run.coin === 10, 'the 50-copper fine is deducted');
+
+  // waiting it out instead: needs are wrecked on release
+  const g2 = newGame();
+  g2.run.stocksUntil = g2.run.tick + 24;
+  g2.run.needs.food = 90;
+  g2.run.needs.water = 90;
+  for (let i = 0; i < 30; i++) advanceTick(g2); // serve the sentence, no tending
+  assert(g2.run.stocksUntil === null, 'the sentence ends on its own');
+  assert(g2.run.needs.food <= 12 && g2.run.needs.water <= 8, `release leaves needs wrecked (food ${g2.run.needs.food.toFixed(1)}, water ${g2.run.needs.water.toFixed(1)})`);
 }
 
 // 16) Determinism — same seed + same commands reproduce identical state.

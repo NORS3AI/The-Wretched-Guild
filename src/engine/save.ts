@@ -95,6 +95,13 @@ function migrate(data: unknown): GameState {
     if (g.meta && typeof g.meta.tokens !== 'number') g.meta.tokens = 0;
     g.version = 6;
   }
+  // v6 → v7: the stocks (imprisonment).
+  if (g.version < 7) {
+    if (typeof (g.run as unknown as Record<string, unknown>).stocksUntil === 'undefined') {
+      g.run.stocksUntil = null;
+    }
+    g.version = 7;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

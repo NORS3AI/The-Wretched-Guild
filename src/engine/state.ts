@@ -69,6 +69,7 @@ export function newRun(meta: MetaState): RunState {
     guildUnpaidTicks: 0,
     activity: null,
     encounter: null,
+    stocksUntil: null,
     contractAvailable: false,
     contractCooldown: CONTRACT_FIRST_OFFER,
     legacyThisRun: 0,

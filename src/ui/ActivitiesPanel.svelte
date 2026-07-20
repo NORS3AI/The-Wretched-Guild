@@ -1,15 +1,16 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
   import { ACTIVITIES } from '../engine/activities';
+  import { REAL_MS_PER_TICK } from '../engine/timeconst';
 
   const game = gameStore;
 
-  function progressPct(id: string): number {
-    const run = $game.run;
-    if (!run.activity || run.activity.id !== id) return 0;
+  // The fill glides smoothly over each cycle's real duration (ticks × tick time,
+  // divided by speed) via a CSS animation, rather than jumping per tick.
+  function fillDurationMs(id: string): number {
     const def = ACTIVITIES.find((a) => a.id === id);
-    if (!def) return 0;
-    return (run.activity.progress / def.ticks) * 100;
+    const ticks = def?.ticks ?? 1;
+    return (ticks * REAL_MS_PER_TICK) / Math.max(1, $game.speed);
   }
 </script>
 
@@ -20,10 +21,11 @@
       <div class="contract-body">
         <p class="muted">
           A hooded factor of the Shadow Guild waits for you. There is work — bloody
-          work — and coin for the doing of it.
+          work — and coppers for the doing of it. The offer keeps; open it whenever
+          you like and slip away to decide later.
         </p>
         <button class="btn primary" onclick={() => actions.acceptContract()}>
-          Hear the Contract →
+          Read the Contract →
         </button>
       </div>
     </div>
@@ -45,7 +47,14 @@
           </div>
           <p class="act-blurb">{act.blurb}</p>
           <div class="act-bar">
-            <div class="act-fill" style="width:{progressPct(act.id)}%"></div>
+            {#if active}
+              <div
+                class="act-fill filling"
+                style="animation-duration:{fillDurationMs(act.id)}ms; animation-play-state:{$game.paused ? 'paused' : 'running'}"
+              ></div>
+            {:else}
+              <div class="act-fill"></div>
+            {/if}
           </div>
           <div class="act-status">
             {active ? 'Working… (click to stop)' : 'Idle'}
@@ -137,8 +146,21 @@
   }
   .act-fill {
     height: 100%;
+    width: 0;
     background: var(--gold);
-    transition: width 0.2s linear;
+  }
+  .act-fill.filling {
+    animation-name: fill;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes fill {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
   }
   .act-status {
     font-size: 0.68rem;

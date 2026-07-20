@@ -76,7 +76,7 @@ export interface RankReq {
 const REQS: RankReq[] = [
   { minCoin: 0, minStanding: 0, minSecond: 0 }, // 0 unused
   { minCoin: 0, minStanding: 0, minSecond: 0 }, // 1 start
-  { minCoin: 3, minStanding: 0, minSecond: 0 }, // 2
+  { minCoin: 15, minStanding: 0, minSecond: 0 }, // 2 — beggar → next: 15 coppers
   { minCoin: 12, minStanding: 4, minSecond: 0 }, // 3
   { minCoin: 30, minStanding: 9, minSecond: 0 }, // 4
   { minCoin: 60, minStanding: 15, minSecond: 0 }, // 5

@@ -13,8 +13,14 @@
   $: availableLegacy = $game.meta.legacy + pendingLegacy;
   $: availableTokens = Math.round(($game.meta.tokens + pendingTokens) * 4) / 4;
 
-  function affordable(u: (typeof META_UNLOCKS)[number]): boolean {
-    return u.currency === 'tokens' ? availableTokens >= u.cost : availableLegacy >= u.cost;
+  // For a leveled unlock: current level, next cost (null = maxed), affordability.
+  function unlockState(u: (typeof META_UNLOCKS)[number]) {
+    const level = $game.meta.unlocks[u.id] ?? 0;
+    const maxed = level >= u.costs.length;
+    const cost = maxed ? null : u.costs[level];
+    const pool = u.currency === 'tokens' ? availableTokens : availableLegacy;
+    const canAfford = cost !== null && pool >= cost;
+    return { level, max: u.costs.length, maxed, cost, canAfford };
   }
 </script>
 
@@ -44,25 +50,29 @@
 
       <div class="shop">
         {#each META_UNLOCKS as u}
-          {@const owned = $game.meta.unlocks[u.id]}
-          {@const canAfford = affordable(u)}
-          <div class="unlock" class:owned>
+          {@const s = unlockState(u)}
+          <div class="unlock" class:owned={s.maxed}>
             <div class="unlock-head">
-              <span class="unlock-name">{u.name}</span>
-              {#if owned}
-                <span class="owned-tag">Owned</span>
+              <span class="unlock-name">
+                {u.name}
+                {#if u.costs.length > 1}<span class="lvl faint">· Lv {s.level}/{s.max}</span>{/if}
+              </span>
+              {#if s.maxed}
+                <span class="owned-tag">Maxed</span>
               {:else}
-                <span class="cost" class:token={u.currency === 'tokens'}>{u.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
+                <span class="cost" class:token={u.currency === 'tokens'}>{s.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
               {/if}
             </div>
-            <p class="unlock-blurb">{u.blurb}</p>
-            {#if !owned}
+            <p class="unlock-blurb">{u.blurb} <span class="faint">({u.perLevel} per level)</span></p>
+            {#if !s.maxed}
               <button
                 class="btn"
-                disabled={!canAfford}
+                disabled={!s.canAfford}
                 onclick={() => actions.buyUnlock(u.id)}
               >
-                {canAfford ? 'Invest' : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
+                {s.canAfford
+                  ? `${s.level > 0 ? 'Raise' : 'Invest'} — ${s.cost} ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'} (${u.perLevel})`
+                  : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
               </button>
             {/if}
           </div>

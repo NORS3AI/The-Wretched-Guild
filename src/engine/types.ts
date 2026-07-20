@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -164,7 +164,8 @@ export interface MetaState {
   tokens: number; // Wretched Tokens — rare prestige, in 0.25 steps
   /** the one-time permadeath warning has been shown & acknowledged */
   illicitWarningSeen: boolean;
-  unlocks: Record<string, boolean>;
+  /** meta-unlocks by id → level owned (0 = not bought) */
+  unlocks: Record<string, number>;
 }
 
 export interface LogEntry {

@@ -403,15 +403,17 @@ export function dispatch(game: GameState, cmd: Command): void {
     case 'buyUnlock': {
       const def = META_UNLOCKS.find((u) => u.id === cmd.id);
       if (!def) break;
-      if (game.meta.unlocks[def.id]) break;
+      const level = game.meta.unlocks[def.id] ?? 0;
+      if (level >= def.costs.length) break; // already maxed
+      const cost = def.costs[level];
       if (def.currency === 'tokens') {
-        if (game.meta.tokens < def.cost) break;
-        game.meta.tokens = Math.round((game.meta.tokens - def.cost) * 4) / 4;
+        if (game.meta.tokens < cost) break;
+        game.meta.tokens = Math.round((game.meta.tokens - cost) * 4) / 4;
       } else {
-        if (game.meta.legacy < def.cost) break;
-        game.meta.legacy -= def.cost;
+        if (game.meta.legacy < cost) break;
+        game.meta.legacy -= cost;
       }
-      game.meta.unlocks[def.id] = true;
+      game.meta.unlocks[def.id] = level + 1;
       break;
     }
   }

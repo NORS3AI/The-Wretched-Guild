@@ -37,6 +37,18 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '4:45 PM MST',
+    title: 'A Lucky Start & a Fairer Pan',
+    changes: [
+      'Cooking (and any skill\'s success roll) now has a 0.5% floor at skill 0 — no dish is ever a guaranteed failure, so you can always, rarely, learn by doing.',
+      'Meta-unlocks are now leveled ladders, bought a rung at a time with Legacy:',
+      'A Coin in the Lining — each new wretch is passed 15 copper (a single upgrade).',
+      'Hardened Stock — +1 heart per level, up to 7 (costs 8, 50, 300, 800, 3,000, 15,000, 50,000).',
+      'Beggar\'s Luck — +2 Luck per level, up to 16 (costs 1, 1, 2, 3, 5, 10, 25, 60, 150, 400, 900, 2,000, 5,000, 15,000, 45,000, 100,000).',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '4:15 PM MST',
     title: 'Skills, Labour & the Rise of Enterprise',
     changes: [

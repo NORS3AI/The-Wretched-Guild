@@ -146,6 +146,16 @@ function migrate(data: unknown): GameState {
     if (typeof r.merchantCooldown !== 'number') r.merchantCooldown = 60;
     g.version = 13;
   }
+  // v13 → v14: meta-unlocks became leveled (boolean → level count).
+  if (g.version < 14) {
+    const u = g.meta?.unlocks as Record<string, unknown> | undefined;
+    if (u) {
+      for (const k of Object.keys(u)) {
+        if (typeof u[k] === 'boolean') u[k] = u[k] ? 1 : 0;
+      }
+    }
+    g.version = 14;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

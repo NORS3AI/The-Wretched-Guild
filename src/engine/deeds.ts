@@ -18,11 +18,8 @@ import { TICKS_PER_DAY } from './timeconst';
 function doCook(run: RunState, ingredients: string[], cookedId: string, burntId: string): void {
   const res = cookRoll(run, 'cooking');
   if (res === 'failed') {
-    // couldn't manage it — the ingredients are spared, but the fumble still
-    // teaches a little (otherwise a cook of skill 0, who can never succeed,
-    // could never learn to cook at all).
-    gainSkill(run, 'cooking', 1);
-    pushLog(run, 'You cannot get the cooking right at all — but you learn from the fumble. At least the ingredients are spared.', 'plain');
+    // couldn't manage it — the ingredients are spared for another attempt.
+    pushLog(run, 'You cannot get the cooking right at all — at least the ingredients are spared for another try.', 'plain');
     return;
   }
   for (const ing of ingredients) removeItem(run, ing, 1);

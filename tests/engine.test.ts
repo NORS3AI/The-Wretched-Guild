@@ -483,12 +483,14 @@ console.log('The Wretched Guild — engine tests\n');
   assert(countItem(g.run, 'firewood') === 1, 'the campfire burns one firewood');
   assert(g.run.skills['firemaking'] > fire0, 'making a fire builds Firemaking');
 
-  // cooking needs a fish AND a goblet of cooking oil, and your Cooking skill —
-  // which starts at 0 — decides the outcome. Practise it up from nothing.
+  // cooking needs a fish AND a goblet of cooking oil, and your Cooking skill
+  // decides the outcome. A successful cook raises the skill; keep at it until one
+  // lands. (Start at a middling skill so a success is reasonably quick.)
   g.run.pockets = [null, null, null, null];
-  g.run.skills['cooking'] = 0;
+  g.run.skills['cooking'] = 50;
+  const cookStart = g.run.skills['cooking'];
   let everProduced = false;
-  for (let n = 0; n < 120 && g.run.skills['cooking'] < 60; n++) {
+  for (let n = 0; n < 200 && g.run.skills['cooking'] <= cookStart; n++) {
     if (countItem(g.run, 'fish') < 1) addItem(g.run, 'fish', 1);
     if (countItem(g.run, 'cooking_oil') < 1) addItem(g.run, 'cooking_oil', 1);
     dispatch(g, { type: 'doDeed', id: 'cook_fish' });
@@ -499,8 +501,8 @@ console.log('The Wretched Guild — engine tests\n');
       if (p && (p.item === 'cooked_fish' || p.item === 'burnt_fish')) g.run.pockets[i] = null;
     }
   }
-  assert(g.run.skills['cooking'] > 0, `practice builds the Cooking skill up from 0 (now ${g.run.skills['cooking'].toFixed(0)})`);
-  assert(everProduced, 'cooking eventually produces a dish (cooked or burnt)');
+  assert(g.run.skills['cooking'] > cookStart, `a successful cook builds the Cooking skill (now ${g.run.skills['cooking'].toFixed(0)})`);
+  assert(everProduced, 'cooking produces a dish (cooked or burnt)');
 
   // raw river fish is no longer edible; the cooked one is
   const raw = itemDef('fish')!;
@@ -676,11 +678,13 @@ console.log('The Wretched Guild — engine tests\n');
   for (let i = 0; i < 50; i++) if (cookRoll(g.run, 'cooking') !== 'cooked') allCooked = false;
   assert(allCooked, 'at Cooking 100 every dish comes out right (no burns)');
 
-  // at skill 0 a cook can never succeed (it burns or fails)
+  // at skill 0 a cook succeeds only very rarely — a 0.5% floor, not zero
   g.run.skills['cooking'] = 0;
-  let noSuccess = true;
-  for (let i = 0; i < 50; i++) if (cookRoll(g.run, 'cooking') === 'cooked') noSuccess = false;
-  assert(noSuccess, 'at Cooking 0 no dish comes out right');
+  let successes = 0;
+  const trials = 6000;
+  for (let i = 0; i < trials; i++) if (cookRoll(g.run, 'cooking') === 'cooked') successes++;
+  assert(successes > 0, 'at Cooking 0 a dish can still, rarely, come out right (0.5% floor)');
+  assert(successes < trials * 0.05, `at Cooking 0 success is rare, ~0.5% (got ${(100 * successes / trials).toFixed(2)}%)`);
 }
 
 // 19) Enterprises: the market stall can only be worked once owned, and working
@@ -720,6 +724,44 @@ console.log('The Wretched Guild — engine tests\n');
   assert(versionForOrdinal(10) === 'v0.1.0-alpha', '0.0.9 rolls to v0.1.0-alpha');
   assert(versionForOrdinal(999) === 'v0.99.9-alpha', 'the 999th is v0.99.9-alpha');
   assert(versionForOrdinal(1000) === 'v1.0.0-alpha', '0.99.9 rolls to v1.0.0-alpha');
+}
+
+// 22) Leveled meta-unlocks: each level costs the next rung of the ladder and
+//     stacks its effect into every future life.
+{
+  const { newRun } = await import('../src/engine/state');
+  const g = newGame();
+  g.meta.legacy = 100000;
+
+  // Hardened Stock: +1 heart per level, ladder 8, 50, 300, …
+  dispatch(g, { type: 'buyUnlock', id: 'hardened' });
+  assert(g.meta.unlocks['hardened'] === 1, 'buying Hardened Stock reaches level 1');
+  assert(g.meta.legacy === 100000 - 8, 'level 1 costs 8 Legacy');
+  dispatch(g, { type: 'buyUnlock', id: 'hardened' });
+  assert(g.meta.unlocks['hardened'] === 2, 'a second purchase reaches level 2');
+  assert(g.meta.legacy === 100000 - 8 - 50, 'level 2 costs the next rung, 50 Legacy');
+  const bornHard = newRun(g.meta);
+  assert(bornHard.heartsBonus === 2, 'two levels of Hardened Stock grant +2 hearts at birth');
+
+  // Beggar's Luck: +2 Luck per level
+  const h = newGame();
+  h.meta.legacy = 100;
+  dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 1, cost 1
+  dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 2, cost 1
+  dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 3, cost 2
+  assert(h.meta.unlocks['beggars_luck'] === 3, "Beggar's Luck climbs to level 3");
+  assert(h.meta.legacy === 100 - 1 - 1 - 2, "the ladder charges 1, 1, 2 Legacy");
+  const bornLucky = newRun(h.meta);
+  assert(bornLucky.attrs.luck === 6, 'three levels of +2 Luck begin life at Luck 6');
+
+  // A Coin in the Lining: a single level worth 15 copper at birth
+  const c = newGame();
+  c.meta.legacy = 10;
+  dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' });
+  assert(c.meta.unlocks['stashed_coin'] === 1, 'A Coin in the Lining is bought');
+  dispatch(c, { type: 'buyUnlock', id: 'stashed_coin' }); // no second level
+  assert(c.meta.unlocks['stashed_coin'] === 1, 'A Coin in the Lining has only one level');
+  assert(newRun(c.meta).coin === 15, 'each new wretch is passed 15 copper');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

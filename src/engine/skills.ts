@@ -53,14 +53,18 @@ function burnChance(skill: number): number {
   return 0.6;
 }
 
-/** Roll a cooking attempt. Success chance is the skill % itself; the burn chance
- *  follows the curve above; whatever probability is left is a flat failure (you
- *  can't manage the dish at all and keep your ingredients). At skill 1 that's
- *  1% cooked / 60% burnt / 39% failed; at 50 it's 50 / 25 / 25; at 100, always
- *  cooked. */
+/** The base success floor: even at skill 0 there is a 0.5% chance a dish comes
+ *  out right, so no skill is ever a hard soft-lock. */
+export const SKILL_FLOOR = 0.005;
+
+/** Roll a cooking attempt. Success chance is the skill % itself (floored at
+ *  0.5% so skill 0 can still, rarely, succeed); the burn chance follows the
+ *  curve above; whatever probability is left is a flat failure (you can't
+ *  manage the dish and keep your ingredients). At skill 0 that's 0.5% cooked /
+ *  60% burnt / 39.5% failed; at 50 it's 50 / 25 / 25; at 100, always cooked. */
 export function cookRoll(run: RunState, id = 'cooking'): CookResult {
   const s = Math.max(0, Math.min(100, skillLevel(run, id)));
-  const successP = s / 100;
+  const successP = Math.max(SKILL_FLOOR, s / 100);
   const burnP = Math.min(burnChance(s), 1 - successP);
   const r = nextFloat(run);
   if (r < successP) return 'cooked';

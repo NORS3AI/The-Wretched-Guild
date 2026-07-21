@@ -25,12 +25,9 @@ beyond it to the secret seat of the Master of the World.
 - **Needs to watch.** Food, Water, Comfort (cold/heat exposure), Hygiene, and
   Relief each drain over days. Let them hit zero and they gnaw your hearts away.
 - **Deeds.** *Eat*, *Drink* (waterskin, 2 days' worth), *Relieve Yourself*, *Wash
-  at the Well* (quick but you might be chased off), *Walk to the River* (eats the
+  at the Well* (quick but you might be chased off), *Wash-up at the River* (eats the
   day, but returns you clean, watered, and — building the body over the mind —
   **+Brawn +Vitality, −Wits −Charm**), *Seek Warmth/Shade*, and *See a Doctor*.
-- **Wander the Village** to see what the day turns up — clergy alms, an odd job,
-  salvage, a **teaching** (a semi-upgrade like Sharp Eye, Quick Study, Hardy), or
-  trouble (robbed, beaten, pelted with filth). **Luck** tilts the odds.
 - **Gathering** activities (Forage, Fish, Scavenge) fill your **two pockets** with
   food, herbs, and salvage.
 - **Real coin.** Copper → shilling → silver → crown → … → diamond (each ×1000).

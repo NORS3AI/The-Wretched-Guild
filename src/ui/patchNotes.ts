@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '7:15 PM MST',
+    title: 'Tidying the Deeds',
+    changes: [
+      'Removed "Wander the Village" from Tend to Yourself.',
+      'Renamed "Walk to the River" to "Wash-up at the River".',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '6:30 PM MST',
     title: 'The Crafting Bench',
     changes: [

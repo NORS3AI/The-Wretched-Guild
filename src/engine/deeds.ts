@@ -1,14 +1,13 @@
 // One-shot "deeds" of the beggar phase — eat, drink, wash, seek warmth, see a
-// doctor, wander the village. Unlike looping activities, a deed happens once and
-// costs a chunk of time (the engine advances that many ticks, so needs decay
-// while you walk to the river). Wandering rolls the opportunity table.
+// doctor. Unlike looping activities, a deed happens once and costs a chunk of
+// time (the engine advances that many ticks, so needs decay while you walk to
+// the river).
 
 import type { GameState, RunState } from './types';
-import { nextFloat, nextInt, chance } from './rng';
+import { nextFloat, chance } from './rng';
 import { pushLog, trainAttr } from './helpers';
-import { damage, heal, maxHp, climateNow } from './survival';
+import { heal, climateNow } from './survival';
 import { ITEMS, itemDef, addItem, removeItem, countItem, guardShielded } from './items';
-import { has, randomUnlearned } from './learnings';
 import { gainSkill, cookRoll, type CookResult } from './skills';
 import { TICKS_PER_DAY } from './timeconst';
 
@@ -187,7 +186,7 @@ export const DEEDS: DeedDef[] = [
   },
   {
     id: 'wash_river',
-    name: 'Walk to the River',
+    name: 'Wash-up at the River',
     blurb: 'A long walk that eats the day — but you return clean, watered, and stronger.',
     timeTicks: 14,
     effect: (_g, run) => {
@@ -334,86 +333,8 @@ export const DEEDS: DeedDef[] = [
       pushLog(run, wasIll !== 'none' ? 'The physician bleeds you and dresses your ills. The sickness lifts.' : 'The physician tends your hurts. You feel steadier.', 'good');
     },
   },
-  {
-    id: 'wander',
-    name: 'Wander the Village',
-    blurb: 'Walk the lanes and see what the day turns up — work, charity, salvage, or trouble.',
-    timeTicks: 4,
-    effect: (game, run) => wander(game, run),
-  },
 ];
 
 export function deedById(id: string): DeedDef | undefined {
   return DEEDS.find((d) => d.id === id);
-}
-
-// ── The wandering opportunity table (Luck-weighted) ─────────────────────────
-
-function wander(game: GameState, run: RunState): void {
-  // luck and teachings tilt the roll toward fortune
-  let luck = run.attrs.luck / 100;
-  if (has(run, 'sharp_eye')) luck += 0.12;
-  const badGuard = has(run, 'street_smart') ? 0.5 : 1;
-
-  const roll = nextFloat(run) + luck * 0.5;
-
-  // good outcomes first (higher roll), trouble at the low end
-  if (roll > 0.82) {
-    // a teaching — rare and precious
-    const learn = randomUnlearned(run);
-    if (learn) {
-      run.learnings[learn.id] = true;
-      pushLog(run, `An old hand takes a shine to you and teaches you something: ${learn.name}.`, 'good');
-      return;
-    }
-    // already learned everything — fall through to alms
-  }
-  if (roll > 0.66) {
-    const alms = nextInt(run, 4, 12);
-    run.coin += alms;
-    if (chance(run, 0.4) && addItem(run, 'bread', 1)) {
-      pushLog(run, `A clergyman takes pity — ${alms} copper and a crust of bread.`, 'coin');
-    } else {
-      pushLog(run, `A clergyman takes pity and presses ${alms} copper into your hand.`, 'coin');
-    }
-    return;
-  }
-  if (roll > 0.5) {
-    // odd job hauling for a merchant
-    const pay = nextInt(run, 6, 16);
-    run.coin += pay;
-    run.factions.merchants = Math.min(100, run.factions.merchants + 0.5);
-    trainAttr(run, 'brawn', 0.15);
-    pushLog(run, `A merchant hires your back for the afternoon — ${pay} copper.`, 'coin');
-    return;
-  }
-  if (roll > 0.34) {
-    // salvage / forage find
-    const finds = ['scrap', 'roots', 'firewood'];
-    const id = finds[nextInt(run, 0, finds.length - 1)];
-    if (addItem(run, id, 1)) pushLog(run, `You scavenge a ${ITEMS[id].name.toLowerCase()} from the gutters.`, 'good');
-    else pushLog(run, `You find a ${ITEMS[id].name.toLowerCase()}, but your pockets are full.`, 'plain');
-    return;
-  }
-  if (roll > 0.2 * badGuard) {
-    pushLog(run, 'You wander the lanes and find only mud, cold looks, and misery.', 'plain');
-    return;
-  }
-
-  // trouble
-  const kind = nextFloat(run);
-  if (kind < 0.45) {
-    const lost = Math.min(run.coin, nextInt(run, 3, 10));
-    run.coin -= lost;
-    pushLog(run, lost > 0 ? `A cutpurse robs you of ${lost} copper in a blind alley.` : 'A cutpurse tries you, but your purse is already empty.', 'bad');
-  } else if (kind < 0.8) {
-    damage(game, run, nextInt(run, 1, 2), 'beaten to death in a village lane');
-    if (run.alive) {
-      run.heat = Math.min(100, run.heat + 3);
-      pushLog(run, 'Toughs corner you and give you a beating for sport.', 'bad');
-    }
-  } else {
-    run.needs.hygiene = clamp100(run.needs.hygiene - 20);
-    pushLog(run, 'Louts pelt you with filth and refuse. You are left fouled and shaken.', 'bad');
-  }
 }

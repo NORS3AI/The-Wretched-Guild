@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '9:00 AM MST',
+    title: 'Tidier Empty Events',
+    changes: [
+      'Trimmed the flavor text on an empty Events tab down to a plain "No events right now."',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '1:55 AM MST',
     title: 'Rank Buttons in the Dev Panel',
     changes: [

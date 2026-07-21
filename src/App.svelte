@@ -108,10 +108,7 @@
       {#if !eventsAlert}
         <div class="panel">
           <div class="panel-title">Events</div>
-          <p class="no-events">
-            Nothing stirs just now. Events, wandering merchants, contracts, and Rites of
-            Passage will gather here when they arise.
-          </p>
+          <p class="no-events">No events right now.</p>
         </div>
       {/if}
     {:else if effectiveTab === 'wretch'}

@@ -178,7 +178,8 @@ export const DEEDS: DeedDef[] = [
     name: 'Make a Campfire',
     blurb: 'Burn a bundle of firewood to warm yourself in just an hour — far quicker than begging a hearth.',
     timeTicks: 1,
-    reveal: (run) => climateNow(run) === 'cold',
+    // only offered when it's cold AND you actually hold firewood to burn
+    reveal: (run) => climateNow(run) === 'cold' && countItem(run, 'firewood') >= 1,
     available: (run) => countItem(run, 'firewood') >= 1,
     effect: (_g, run) => {
       if (!removeItem(run, 'firewood', 1)) {

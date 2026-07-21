@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '7:05 PM MST',
+    title: 'No Fire Without Firewood',
+    changes: [
+      '"Make a Campfire" no longer appears at all unless you\'re holding firewood to burn (it still only shows in the cold). No more offering a fire you can\'t light.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '6:45 PM MST',
     title: 'The Wretch Takes a Tab',
     changes: [

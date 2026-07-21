@@ -37,6 +37,17 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '11:55 PM MST',
+    title: 'Craft While You Toil',
+    changes: [
+      'Crafting no longer competes with Ply Your Trade or your enterprises — it runs in its own parallel slot. Start a craft at the bench AND work a trade or a venture at the same time; both progress together. Crafting is something MORE you do, not instead.',
+      'Foremen are now assigned by hand: in the Household, pick exactly which enterprise each foreman runs (a venture can be run by only one foreman at a time). They no longer auto-pick your grandest — you command where they go.',
+      'Kitchen servants now hone your OWN Cooking as they work, rising all the way to 100% over time — so the mastery is yours to earn even once your household does the cooking.',
+      'Hid Cunning, Charm, Piety, and Vitality from the Attributes list for now; they\'ll return when they come into play.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '11:20 PM MST',
     title: 'Prodigies Among the Sworn',
     changes: [

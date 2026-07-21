@@ -168,6 +168,7 @@ function run(cmd: Command): void {
 
 export const actions = {
   setActivity: (id: string | null) => run({ type: 'setActivity', id }),
+  setCraftActivity: (id: string | null) => run({ type: 'setCraftActivity', id }),
   acceptContract: () => run({ type: 'acceptContract' }),
   declineContract: () => run({ type: 'declineContract' }),
   dismissEncounter: () => run({ type: 'dismissEncounter' }),
@@ -186,6 +187,8 @@ export const actions = {
   hireServant: (id: string) => run({ type: 'hireServant', id }),
   dismissServant: (id: string) => run({ type: 'dismissServant', id }),
   setLabourerTrade: (slot: number, id: string | null) => run({ type: 'setLabourerTrade', slot, id }),
+  setForemanEnterprise: (foremanId: string, businessId: string | null) =>
+    run({ type: 'setForemanEnterprise', foremanId, businessId }),
   assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
   rerollRecruits: () => run({ type: 'rerollRecruits' }),
   doDeed: (id: string) => run({ type: 'doDeed', id }),

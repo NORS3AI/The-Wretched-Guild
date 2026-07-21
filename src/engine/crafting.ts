@@ -141,7 +141,7 @@ function makeCraftActivity(r: CraftRecipe): ActivityDef {
     complete(run) {
       // re-checked every loop: stop cleanly the moment the stock runs out
       if (!canCraft(run, r)) {
-        run.activity = null;
+        run.craftActivity = null;
         pushLog(run, `You run out of stock at the bench — the ${r.name.toLowerCase()} goes unfinished.`, 'plain');
         return;
       }

@@ -1494,7 +1494,7 @@ console.log('The Wretched Guild — engine tests\n');
   const board = recipeById('craft_oak_board')!;
   assert(canCraft(g2.run, board), 'with 5 oak logs you can craft boards');
   const lumBefore = skillLevel(g2.run, 'lumberyard');
-  dispatch(g2, { type: 'setActivity', id: 'craft_oak_board' });
+  dispatch(g2, { type: 'setCraftActivity', id: 'craft_oak_board' });
   ff(g2, board.ticks);
   assert(countItem(g2.run, 'oak_board') === 2, 'a craft yields 2 oak boards');
   assert(countItem(g2.run, 'wooden_log') === 0, 'a craft consumes the 5 logs');
@@ -1540,7 +1540,7 @@ console.log('The Wretched Guild — engine tests\n');
   addItem(g.run, 'wheat_seeds', 5);
   const grain = recipeById('craft_grain_pouch')!;
   assert(canCraft(g.run, grain), 'with seeds and a bucket of water you can mill grain');
-  dispatch(g, { type: 'setActivity', id: 'craft_grain_pouch' });
+  dispatch(g, { type: 'setCraftActivity', id: 'craft_grain_pouch' });
   ff(g, grain.ticks);
   assert(countItem(g.run, 'grain_pouch') === 1, 'milling yields a pouch of grain');
   assert(countItem(g.run, 'bucket') === 1 && countItem(g.run, 'bucket_water') === 0, 'the empty bucket is handed back');
@@ -1688,6 +1688,67 @@ console.log('The Wretched Guild — engine tests\n');
   const before = g.run.coin;
   processServants(g, g.run);
   assert(Math.abs(g.run.coin - before - expected) < 1e-6, `labourers earn their assigned trades' coin (${(g.run.coin - before).toFixed(2)} ≈ ${expected.toFixed(2)})`);
+}
+
+// 57) Crafting runs in PARALLEL with a trade — both advance at once, in
+//     separate slots; starting a craft never stops your trade.
+{
+  const g = newGame();
+  g.run.coin = 40; // Fell Timber open
+  g.run.craftingUnlocked = true;
+  g.run.pockets = new Array(8).fill(null);
+  addItem(g.run, 'wooden_log', 5);
+  dispatch(g, { type: 'setActivity', id: 'fell_timber' });
+  dispatch(g, { type: 'setCraftActivity', id: 'craft_oak_board' });
+  assert(g.run.activity?.id === 'fell_timber' && g.run.craftActivity?.id === 'craft_oak_board', 'a trade and a craft run in separate slots at once');
+  const coin0 = g.run.coin;
+  ff(g, 8); // Fell Timber cycle = 8 ticks; craft_oak_board = 5 ticks
+  assert(g.run.coin > coin0, 'the trade still earns coin while crafting');
+  assert(countItem(g.run, 'oak_board') === 2, 'the craft produces boards in parallel');
+  assert(g.run.activity?.id === 'fell_timber', 'the trade keeps running alongside the craft');
+  // setActivity refuses craft ids; setCraftActivity refuses trade ids
+  dispatch(g, { type: 'setActivity', id: 'craft_oak_board' });
+  assert(g.run.activity?.id === 'fell_timber', 'a craft cannot be set into the trade slot');
+}
+
+// 58) A foreman runs the enterprise the player assigns; one venture per foreman.
+{
+  const { workCoinPerTick, businessById } = await import('../src/engine/businesses');
+  const { processServants } = await import('../src/engine/servants');
+  const g = newGame();
+  g.run.rank = 100;
+  g.run.alignment = { ethics: -50, morals: -50 }; // free, ×2.2, no wage
+  g.run.businesses = { market_stall: 3, alehouse: 2 };
+  dispatch(g, { type: 'hireServant', id: 'foreman1' });
+  dispatch(g, { type: 'setForemanEnterprise', foremanId: 'foreman1', businessId: 'alehouse' });
+  assert(g.run.foremanEnterprises.foreman1 === 'alehouse', 'the player assigns a foreman an enterprise');
+
+  const expected = workCoinPerTick(businessById('alehouse')!, 2) * 2.2;
+  const before = g.run.coin;
+  processServants(g, g.run);
+  assert(Math.abs(g.run.coin - before - expected) < 1e-6, `the foreman earns the assigned enterprise's coin (${(g.run.coin - before).toFixed(2)} ≈ ${expected.toFixed(2)})`);
+
+  // assigning the same venture to the other foreman clears it from the first
+  dispatch(g, { type: 'hireServant', id: 'foreman2' });
+  dispatch(g, { type: 'setForemanEnterprise', foremanId: 'foreman2', businessId: 'alehouse' });
+  assert(g.run.foremanEnterprises.foreman1 === null && g.run.foremanEnterprises.foreman2 === 'alehouse', 'a venture is run by only one foreman at a time');
+}
+
+// 59) Kitchen servants hone the player's own Cooking as they cook, up to 100%.
+{
+  const { processServants } = await import('../src/engine/servants');
+  const g = newGame();
+  g.run.rank = 100;
+  g.run.alignment = { ethics: -50, morals: -50 };
+  dispatch(g, { type: 'hireServant', id: 'kitchen' });
+  g.run.skills['cooking'] = 0;
+  g.run.pockets = new Array(10).fill(null);
+  g.run.larder = new Array(6).fill(null);
+  for (let n = 0; n < 150; n++) {
+    if (countItem(g.run, 'fish') < 1) addItem(g.run, 'fish', 1);
+    processServants(g, g.run);
+  }
+  assert(g.run.skills['cooking'] === 100, `kitchen work takes Cooking to a full 100% (${g.run.skills['cooking']})`);
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

@@ -7,15 +7,13 @@
 
   const game = gameStore;
 
+  // Cunning, Charm, Piety, and Vitality are hidden for now — kept out of the
+  // Attributes list until they come into play later.
   const attrRows = [
-    { key: 'cunning', label: 'Cunning' },
     { key: 'brawn', label: 'Brawn' },
-    { key: 'charm', label: 'Charm' },
     { key: 'stealth', label: 'Stealth' },
-    { key: 'piety', label: 'Piety' },
     { key: 'wits', label: 'Wits' },
     { key: 'luck', label: 'Luck' },
-    { key: 'vitality', label: 'Vitality' },
   ] as const;
 </script>
 

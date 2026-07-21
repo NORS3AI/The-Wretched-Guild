@@ -223,6 +223,24 @@ function migrate(data: unknown): GameState {
     if (!Array.isArray(r.labourerTrades)) r.labourerTrades = [null, null, null];
     g.version = 21;
   }
+  // v21 → v22: foremen are assigned to enterprises the player chooses.
+  if (g.version < 22) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (!r.foremanEnterprises || typeof r.foremanEnterprises !== 'object') r.foremanEnterprises = {};
+    g.version = 22;
+  }
+  // v22 → v23: crafting runs in its own parallel activity slot.
+  if (g.version < 23) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.craftActivity === 'undefined') r.craftActivity = null;
+    // an in-progress craft on an old save lived in `activity` — move it across
+    const act = r.activity as { id?: string } | null;
+    if (act && typeof act.id === 'string' && act.id.startsWith('craft_')) {
+      r.craftActivity = act;
+      r.activity = null;
+    }
+    g.version = 23;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

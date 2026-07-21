@@ -7,8 +7,12 @@
     servantMultiplier,
     totalServantWage,
     LABOURER_SLOTS,
+    FOREMAN_IDS,
+    advancedBusinesses,
+    servantById,
   } from '../engine/servants';
   import { LABOUR_TRADES, tradeCoinPerTick } from '../engine/activities';
+  import { workCoinPerTick, businessById } from '../engine/businesses';
   import { formatMoney } from '../engine/money';
 
   const game = gameStore;
@@ -22,11 +26,20 @@
   const slots = Array.from({ length: LABOURER_SLOTS }, (_, i) => i);
   const tradeById = (id: string) => LABOUR_TRADES.find((t) => t.id === id);
 
+  // Foremen: which are hired, the owned enterprises to choose from, current picks.
+  $: hiredForemen = FOREMAN_IDS.filter((id) => !!run.servants?.[id]);
+  $: ownedEnterprises = advancedBusinesses(run); // grandest first
+  $: foremanPick = run.foremanEnterprises ?? {};
+
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   function onPickTrade(slot: number, e: Event) {
     const val = (e.target as HTMLSelectElement).value;
     actions.setLabourerTrade(slot, val === '' ? null : val);
+  }
+  function onPickEnterprise(foremanId: string, e: Event) {
+    const val = (e.target as HTMLSelectElement).value;
+    actions.setForemanEnterprise(foremanId, val === '' ? null : val);
   }
 </script>
 
@@ -70,6 +83,35 @@
         </div>
       {/each}
     </div>
+
+    {#if hiredForemen.length > 0}
+      <div class="labourers">
+        <div class="section-label">Foremen — assign their enterprises</div>
+        <p class="la-hint faint">
+          Set each foreman to run one of your enterprises — he works it as though you did{#if mult > 1}, ×{mult.toFixed(1)} as hard{/if}. A venture can be run by only one foreman at a time.
+        </p>
+        {#if ownedEnterprises.length === 0}
+          <p class="la-hint faint">You own no enterprises yet — acquire one for a foreman to run.</p>
+        {/if}
+        {#each hiredForemen as fid}
+          {@const chosen = foremanPick[fid] ?? ''}
+          {@const def = chosen ? businessById(chosen) : null}
+          {@const level = chosen ? (run.businesses?.[chosen] ?? 0) : 0}
+          <div class="la-row">
+            <span class="la-fname">{servantById(fid)?.name ?? fid}</span>
+            <select class="la-select" onchange={(e) => onPickEnterprise(fid, e)}>
+              <option value="" selected={chosen === ''}>— Idle —</option>
+              {#each ownedEnterprises as b}
+                <option value={b.def.id} selected={chosen === b.def.id}>{b.def.name} (lvl {b.level})</option>
+              {/each}
+            </select>
+            <span class="la-income">
+              {#if def && level > 0}+{formatMoney(workCoinPerTick(def, level) * mult)}/tick{:else}—{/if}
+            </span>
+          </div>
+        {/each}
+      </div>
+    {/if}
 
     {#if labourersHired}
       <div class="labourers">
@@ -224,6 +266,13 @@
     width: 16px;
     font-size: 0.78rem;
     flex-shrink: 0;
+  }
+  .la-fname {
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 96px;
   }
   .la-select {
     flex: 1;

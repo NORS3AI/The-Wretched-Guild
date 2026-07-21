@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 23;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -145,6 +145,9 @@ export interface RunState {
   /** the three Ply-Your-Trade tasks the rank-100 labourers work, by activity id
    *  (null = an empty slot). The player chooses these in the Household. */
   labourerTrades: (string | null)[];
+  /** which enterprise each foreman is set to run, by foreman servant id →
+   *  business id (null/absent = idle). The player assigns these in the Household. */
+  foremanEnterprises: Record<string, string | null>;
   /** the Guild roster and the current pool of candidates (§12) */
   members: Member[];
   recruits: Member[];
@@ -152,6 +155,9 @@ export interface RunState {
   guildUnpaidTicks: number;
 
   activity: ActiveActivity | null;
+  /** a SEPARATE, parallel activity slot just for the Crafting benches — crafting
+   *  runs alongside your trade or enterprise work, not instead of it. */
+  craftActivity: ActiveActivity | null;
   encounter: EncounterRuntime | null;
 
   /** if imprisoned, the tick at which the stocks release you (null = free) */

@@ -71,7 +71,7 @@
     {/if}
     <div class="recipes">
       {#each recipes as r (r.id)}
-        {@const active = run.activity?.id === r.id}
+        {@const active = run.craftActivity?.id === r.id}
         {@const craftable = canCraft(run, r)}
         {@const out = itemDef(r.output.item)}
         <div class="recipe" class:active class:dim={!craftable && !active}>
@@ -109,7 +109,7 @@
               class="btn craftbtn"
               class:primary={craftable && !active}
               disabled={!active && !craftable}
-              onclick={() => actions.setActivity(active ? null : r.id)}
+              onclick={() => actions.setCraftActivity(active ? null : r.id)}
             >
               {active ? 'Working… (stop)' : craftable ? 'Craft' : 'Need stock'}
             </button>

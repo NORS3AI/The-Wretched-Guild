@@ -9,8 +9,9 @@ import type { GameState, RunState } from './types';
 import { ethicsBand, moralsBand } from './alignment';
 import { countItem, removeItem, addItem, hasRoom } from './items';
 import { bestRawGame, GAME_ROAST } from './deeds';
-import { BUSINESSES, ownedLevel, workCoinPerTick, type BusinessDef } from './businesses';
+import { BUSINESSES, businessById, ownedLevel, workCoinPerTick, type BusinessDef } from './businesses';
 import { activityById, tradeCoinPerTick } from './activities';
+import { gainSkill } from './skills';
 import { pushLog } from './helpers';
 
 export interface ServantGroup {
@@ -26,8 +27,8 @@ export const SERVANT_GROUPS: ServantGroup[] = [
   { id: 'steward', name: 'Table Stewards', reqRank: 60, wage: 0.8, blurb: 'Feed and water you the instant either need falls to half (51%).' },
   { id: 'bath', name: 'Bath Servants', reqRank: 70, wage: 0.8, blurb: 'Draw hot water and bathe you at half hygiene (51%).' },
   { id: 'chamber', name: 'Chamber Servants', reqRank: 80, wage: 0.8, blurb: 'Change your chamber pots, relieving you at half (51%).' },
-  { id: 'foreman1', name: 'Head Foreman', reqRank: 90, wage: 3, blurb: 'Runs your grandest enterprise — and switches to a finer one the moment you acquire it, abandoning a humbler venture. Frees you to work another venture or a trade.' },
-  { id: 'foreman2', name: 'Second Foreman', reqRank: 95, wage: 5, blurb: 'Runs your second-grandest enterprise the very same way, shifting as your holdings grow.' },
+  { id: 'foreman1', name: 'Head Foreman', reqRank: 90, wage: 3, blurb: 'Runs any one enterprise you assign him, as though you worked it yourself — freeing you for another venture or a trade.' },
+  { id: 'foreman2', name: 'Second Foreman', reqRank: 95, wage: 5, blurb: 'Runs a second enterprise of your choosing the very same way.' },
   { id: 'labourers', name: 'Trade Labourers', reqRank: 100, wage: 8, blurb: 'Work three of your Ply-Your-Trade tasks alongside whatever you are doing.' },
 ];
 
@@ -92,10 +93,8 @@ export function dismissServant(run: RunState, id: string): boolean {
 }
 
 /** Owned businesses, MOST ADVANCED first — ranked by the grandeur of the venture
- *  itself (its base cost / tier), not by how far you have levelled it. So the
- *  foremen always tend your finest buildings, and the moment you acquire a grander
- *  one they abandon a humbler venture (the market stall first) to run it instead.
- *  Level only breaks ties between two ventures of the same standing. */
+ *  itself (its base cost / tier), not by how far you have levelled it; level only
+ *  breaks ties. Used to order the enterprise list when assigning a foreman. */
 export function advancedBusinesses(run: RunState): { def: BusinessDef; level: number }[] {
   return BUSINESSES.map((def) => ({ def, level: ownedLevel(run, def.id) }))
     .filter((b) => b.level > 0)
@@ -104,6 +103,9 @@ export function advancedBusinesses(run: RunState): { def: BusinessDef; level: nu
 
 /** How many Ply-Your-Trade tasks the rank-100 labourers work at once. */
 export const LABOURER_SLOTS = 3;
+
+/** The foreman servant ids that can each be assigned an enterprise to run. */
+export const FOREMAN_IDS = ['foreman1', 'foreman2'] as const;
 
 /** Run the whole household for one tick: wages, chores, and the working staff. */
 export function processServants(game: GameState, run: RunState): void {
@@ -125,18 +127,25 @@ export function processServants(game: GameState, run: RunState): void {
 
   const mult = servantMultiplier(run);
 
-  // Kitchen: cook one raw catch per tick — skilled hands, no oil needed.
+  // Kitchen: cook one raw catch per tick — skilled hands, no oil needed. Working
+  // alongside them hones your OWN Cooking a little each time, rising to a full
+  // 100% in the end (so the mastery is yours to earn even once you've stopped
+  // cooking by hand).
   if (run.servants.kitchen) {
+    let cooked = false;
     if (countItem(run, 'fish') >= 1 && hasRoom(run, 'cooked_fish')) {
       removeItem(run, 'fish', 1);
       addItem(run, 'cooked_fish', 1);
+      cooked = true;
     } else {
       const raw = bestRawGame(run);
       if (raw && hasRoom(run, GAME_ROAST[raw])) {
         removeItem(run, raw, 1);
         addItem(run, GAME_ROAST[raw], 1);
+        cooked = true;
       }
     }
+    if (cooked) gainSkill(run, 'cooking', 1); // capped at 100 by gainSkill
   }
 
   // Stewards, bath, chamber: keep the body's needs from ever falling past half.
@@ -147,11 +156,18 @@ export function processServants(game: GameState, run: RunState): void {
   if (run.servants.bath && run.needs.hygiene <= 51) run.needs.hygiene = 100;
   if (run.servants.chamber && run.needs.relief <= 51) run.needs.relief = 100;
 
-  // Foremen run your top ventures forever, as though you worked them yourself.
-  if (run.servants.foreman1 || run.servants.foreman2) {
-    const top = advancedBusinesses(run);
-    if (run.servants.foreman1 && top[0]) run.coin += workCoinPerTick(top[0].def, top[0].level) * mult;
-    if (run.servants.foreman2 && top[1]) run.coin += workCoinPerTick(top[1].def, top[1].level) * mult;
+  // Foremen run the enterprise the player has assigned each of them, as though you
+  // worked it yourself. An unassigned foreman (or one set to a venture you no
+  // longer own) simply stands idle.
+  for (const fid of FOREMAN_IDS) {
+    if (!run.servants[fid]) continue;
+    const bizId = run.foremanEnterprises?.[fid];
+    if (!bizId) continue;
+    const level = ownedLevel(run, bizId);
+    if (level < 1) continue;
+    const def = businessById(bizId);
+    if (!def) continue;
+    run.coin += workCoinPerTick(def, level) * mult;
   }
 
   // Labourers ply up to three trades of the player's own choosing, each earning

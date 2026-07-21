@@ -98,6 +98,20 @@ export function advanceTick(game: GameState): void {
     }
   }
 
+  // crafting runs in PARALLEL to the trade/enterprise activity above — it is
+  // something MORE you do, not instead. Its own slot advances the same way.
+  if (run.craftActivity && run.stocksUntil === null) {
+    const def = activityById(run.craftActivity.id);
+    if (def) {
+      run.craftActivity.progress++;
+      const need = game.settings?.fastCards ? 1 : def.ticks;
+      if (run.craftActivity.progress >= need) {
+        run.craftActivity.progress = 0;
+        def.complete(run); // a craft's complete() nulls run.craftActivity when out of stock
+      }
+    }
+  }
+
   // dev "no heat": keep the player (and their Guild) forever cool
   if (game.settings?.noHeat) {
     run.heat = 0;
@@ -204,6 +218,7 @@ function rollMortality(game: GameState, run: RunState): boolean {
 
 export type Command =
   | { type: 'setActivity'; id: string | null }
+  | { type: 'setCraftActivity'; id: string | null }
   | { type: 'acceptContract' }
   | { type: 'chooseEncounter'; index: number }
   | { type: 'seekAdvancement' }
@@ -229,7 +244,8 @@ export type Command =
   | { type: 'devResetRank' }
   | { type: 'hireServant'; id: string }
   | { type: 'dismissServant'; id: string }
-  | { type: 'setLabourerTrade'; slot: number; id: string | null };
+  | { type: 'setLabourerTrade'; slot: number; id: string | null }
+  | { type: 'setForemanEnterprise'; foremanId: string; businessId: string | null };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -240,6 +256,8 @@ export function dispatch(game: GameState, cmd: Command): void {
       if (!run.alive || run.stocksUntil !== null) break;
       const id = cmd.id;
       if (id) {
+        // crafts live in their own parallel slot — never the trade slot
+        if (id.startsWith('craft_')) break;
         if (id.startsWith('work_')) {
           // you can only work an enterprise you actually own
           if (ownedLevel(run, id.slice(5)) < 1) break;
@@ -250,6 +268,18 @@ export function dispatch(game: GameState, cmd: Command): void {
         }
       }
       run.activity = id ? { id, progress: 0 } : null;
+      break;
+    }
+
+    case 'setCraftActivity': {
+      if (!run.alive || run.stocksUntil !== null) break;
+      const id = cmd.id;
+      if (id) {
+        const def = activityById(id);
+        if (!def || !id.startsWith('craft_')) break;
+        if (def.available && !def.available(run)) break; // bench open + stock in hand
+      }
+      run.craftActivity = id ? { id, progress: 0 } : null;
       break;
     }
 
@@ -361,6 +391,21 @@ export function dispatch(game: GameState, cmd: Command): void {
         }
       }
       run.labourerTrades[cmd.slot] = cmd.id;
+      break;
+    }
+
+    case 'setForemanEnterprise': {
+      if (!run.alive) break;
+      if (!run.foremanEnterprises || typeof run.foremanEnterprises !== 'object') run.foremanEnterprises = {};
+      // one enterprise per foreman — assigning it to one clears it from the other
+      if (cmd.businessId) {
+        for (const fid of Object.keys(run.foremanEnterprises)) {
+          if (fid !== cmd.foremanId && run.foremanEnterprises[fid] === cmd.businessId) {
+            run.foremanEnterprises[fid] = null;
+          }
+        }
+      }
+      run.foremanEnterprises[cmd.foremanId] = cmd.businessId;
       break;
     }
 

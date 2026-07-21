@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '7:20 PM MST',
+    title: 'A Clean Page',
+    changes: [
+      'Fixed the death-screen unlocks not updating their Level when bought — buying now correctly ticks Level 0 → 1 → 2 … and the button/cost refresh instantly.',
+      'Beginning a new life now clears the Chronicle, so each wretch starts with a fresh, empty log.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '6:55 PM MST',
     title: 'The Weight of Legacy',
     changes: [

@@ -13,14 +13,15 @@
   $: availableLegacy = $game.meta.legacy;
   $: availableTokens = $game.meta.tokens;
 
-  // For an (infinitely) leveled unlock: current level, next-level cost, afford.
-  function unlockState(u: (typeof META_UNLOCKS)[number]) {
+  // A reactive derivation (referencing $game directly) so each card re-renders
+  // the moment a purchase raises its level or spends the pool — a plain function
+  // reading $game inside its body would NOT re-run here.
+  $: unlockRows = META_UNLOCKS.map((u) => {
     const level = $game.meta.unlocks[u.id] ?? 0;
     const cost = unlockCost(u, level);
     const pool = u.currency === 'tokens' ? availableTokens : availableLegacy;
-    const canAfford = pool >= cost;
-    return { level, cost, canAfford };
-  }
+    return { u, level, cost, canAfford: pool >= cost };
+  });
 </script>
 
 <div class="overlay">
@@ -49,24 +50,24 @@
       </p>
 
       <div class="shop">
-        {#each META_UNLOCKS as u}
-          {@const s = unlockState(u)}
+        {#each unlockRows as row (row.u.id)}
+          {@const u = row.u}
           <div class="unlock">
             <div class="unlock-head">
               <span class="unlock-name">
                 {u.name}
-                <span class="lvl faint">· Level {s.level}</span>
+                <span class="lvl faint">· Level {row.level}</span>
               </span>
-              <span class="cost" class:token={u.currency === 'tokens'}>{s.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
+              <span class="cost" class:token={u.currency === 'tokens'}>{row.cost} {u.currency === 'tokens' ? 'Tokens' : 'Legacy'}</span>
             </div>
             <p class="unlock-blurb">{u.blurb} <span class="faint">({u.perLevel} per level)</span></p>
             <button
               class="btn"
-              disabled={!s.canAfford}
+              disabled={!row.canAfford}
               onclick={() => actions.buyUnlock(u.id)}
             >
-              {s.canAfford
-                ? `${s.level > 0 ? 'Raise to' : 'Invest —'} Level ${s.level + 1} · ${s.cost} ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'} (${u.perLevel})`
+              {row.canAfford
+                ? `Raise to Level ${row.level + 1} · ${row.cost} ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'} (${u.perLevel})`
                 : `Not enough ${u.currency === 'tokens' ? 'Tokens' : 'Legacy'}`}
             </button>
           </div>

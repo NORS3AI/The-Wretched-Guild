@@ -931,5 +931,18 @@ console.log('The Wretched Guild — engine tests\n');
   assert(workCoinPerTick(stall, 2) > workCoinPerTick(stall, 1), 'a higher-level stall pays more per tick worked');
 }
 
+// 27) Beginning a new life wipes the previous wretch's Chronicle.
+{
+  const g = newGame();
+  dispatch(g, { type: 'setActivity', id: 'beg' });
+  ff(g, 60); // pile up some log entries
+  assert(g.log.length > 1, 'a life accrues Chronicle entries');
+  const { die } = await import('../src/engine/death');
+  die(g, g.run, 'slain for the test');
+  dispatch(g, { type: 'beginNewLife' });
+  assert(g.log.length === 1, 'a new life starts with a fresh, single-entry Chronicle');
+  assert(g.log[0].text.includes('new wretch'), 'and that entry is the new wretch\'s opening line');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

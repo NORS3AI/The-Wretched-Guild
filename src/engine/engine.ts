@@ -407,6 +407,8 @@ export function dispatch(game: GameState, cmd: Command): void {
       // seed the next one (meta unlocks bought on the death screen shape it).
       game.meta.runsCompleted += 1;
       game.run = newRun(game.meta);
+      // a new life is a clean page — wipe the old wretch's Chronicle
+      game.log.length = 0;
       pushLog(game.run, 'A new wretch takes up the Guild\'s cause, born into the same cold mud.', 'system');
       break;
     }

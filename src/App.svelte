@@ -31,16 +31,21 @@
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
 
+  // An Events tab appears only while an encounter or the stocks is active — the
+  // game whisks the player to it automatically (see game.ts).
+  $: eventActive = $game.run.encounter !== null || $game.run.stocksUntil !== null;
+
   // The Wretch (attributes & skills) leads as its own tab. The Merchant tab is the
   // town shop — always present; it shows a "closed" sign outside 8am–6pm hours.
   $: tabs = [
-    { id: 'wretch' as SideTab, label: 'The Wretch', show: true },
-    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true },
-    { id: 'merchant' as SideTab, label: 'Merchant', show: true },
-    { id: 'needs' as SideTab, label: 'Body & Needs', show: true },
-    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked },
-    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked },
-    { id: 'reputation' as SideTab, label: 'Reputation', show: true },
+    { id: 'wretch' as SideTab, label: 'The Wretch', show: true, flag: false },
+    { id: 'events' as SideTab, label: 'Events', show: eventActive, flag: true },
+    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true, flag: false },
+    { id: 'merchant' as SideTab, label: 'Merchant', show: true, flag: false },
+    { id: 'needs' as SideTab, label: 'Body & Needs', show: true, flag: false },
+    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, flag: false },
+    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked, flag: false },
+    { id: 'reputation' as SideTab, label: 'Reputation', show: true, flag: false },
   ].filter((t) => t.show);
 
   // If the active tab has since become unavailable (e.g. a new life resets rank),
@@ -64,6 +69,7 @@
     <button
       class="tab"
       class:active={effectiveTab === tab.id}
+      class:flag={tab.flag}
       role="tab"
       aria-selected={effectiveTab === tab.id}
       onclick={() => activeTab.set(tab.id)}
@@ -75,13 +81,14 @@
 
 <main class="layout">
   <section class="center col tabpanel">
-    <!-- Stocks and encounters (events, accepted contracts, and Rites of Passage)
-         take over the main panel no matter which tab is open, so they can never
-         be triggered "invisibly" from another tab. -->
-    {#if $game.run.stocksUntil !== null}
-      <StocksPanel />
-    {:else if $game.run.encounter}
-      <EncounterView />
+    {#if effectiveTab === 'events'}
+      <!-- Events, accepted contracts, Rites of Passage, and the stocks all live
+           on their own tab; the game auto-navigates here when one opens. -->
+      {#if $game.run.stocksUntil !== null}
+        <StocksPanel />
+      {:else if $game.run.encounter}
+        <EncounterView />
+      {/if}
     {:else if effectiveTab === 'wretch'}
       <CharacterPanel />
     {:else if effectiveTab === 'merchant'}
@@ -226,6 +233,21 @@
     border-color: var(--gold);
     color: var(--gold-bright);
     background: rgba(201, 162, 39, 0.1);
+  }
+  /* the Events tab, present only while something demands attention, draws the eye */
+  .tab.flag:not(.active) {
+    border-color: var(--blood);
+    color: var(--blood-bright);
+    animation: tabflag 1.4s ease-in-out infinite;
+  }
+  @keyframes tabflag {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(140, 47, 47, 0);
+    }
+    50% {
+      box-shadow: 0 0 8px 1px rgba(160, 60, 55, 0.5);
+    }
   }
   .tabpanel {
     min-width: 0;

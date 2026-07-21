@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '8:35 PM MST',
+    title: 'An Events Tab',
+    changes: [
+      'Events now have their own tab. Random events, accepted contracts, Rites of Passage, and the stocks all appear on a glowing "Events" tab — and the game whisks you straight to it the moment one opens, then returns you to where you were once it\'s resolved. No more rites or events firing on a tab you can\'t see.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '8:10 PM MST',
     title: 'Rites You Can Actually See',
     changes: [

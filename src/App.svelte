@@ -52,23 +52,23 @@
 
 <Topbar />
 
+<div class="tabbar" role="tablist">
+  {#each tabs as tab}
+    <button
+      class="tab"
+      class:active={effectiveTab === tab.id}
+      role="tab"
+      aria-selected={effectiveTab === tab.id}
+      onclick={() => activeTab.set(tab.id)}
+    >
+      {tab.label}
+    </button>
+  {/each}
+</div>
+
 <main class="layout">
   <aside class="col leftcol">
     <CharacterPanel />
-
-    <div class="tabbar" role="tablist">
-      {#each tabs as tab}
-        <button
-          class="tab"
-          class:active={effectiveTab === tab.id}
-          role="tab"
-          aria-selected={effectiveTab === tab.id}
-          onclick={() => activeTab.set(tab.id)}
-        >
-          {tab.label}
-        </button>
-      {/each}
-    </div>
 
     <div class="tabpanel">
       {#if effectiveTab === 'enterprises'}
@@ -190,11 +190,13 @@
     min-height: 420px;
     min-width: 0;
   }
-  /* the tab strip that switches the lower-left panel */
+  /* the tab strip runs full-width beneath the top bar and switches the
+     lower-left panel */
   .tabbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
+    margin-top: 12px;
   }
   .tab {
     flex: 1 1 auto;

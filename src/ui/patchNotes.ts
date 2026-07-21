@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '12:05 PM MST',
+    title: 'Tabs Across the Top',
+    changes: [
+      'Moved the tab strip (Body & Needs, Enterprises, Wretched, Reputation) up to run full-width across the top, right under the bar of Hearts, Purse, and Bearing — so switching panels is a glance-and-tap away.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '11:15 AM MST',
     title: 'Tap to Eat & Sworn to the End',
     changes: [

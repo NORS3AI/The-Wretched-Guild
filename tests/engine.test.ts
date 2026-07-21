@@ -1769,5 +1769,28 @@ console.log('The Wretched Guild — engine tests\n');
   assert(Math.abs(workCoinPerTick(fencing, 24) - passiveIncome(fencing, 24)) < 1e-6, 'working a venture adds a second full helping of its income');
 }
 
+// 61) Crafting offers Craft 1 (one item, then stop) and Craft All (loop to empty).
+{
+  const { recipeById } = await import('../src/engine/crafting');
+  const g = newGame();
+  g.run.craftingUnlocked = true;
+  g.run.pockets = new Array(10).fill(null);
+  addItem(g.run, 'wooden_log', 15); // 3 batches' worth (5 logs each)
+  const board = recipeById('craft_oak_board')!;
+
+  // Craft 1 → one batch (2 boards), then the bench falls quiet
+  dispatch(g, { type: 'setCraftActivity', id: 'craft_oak_board', once: true });
+  ff(g, board.ticks);
+  assert(g.run.craftActivity === null, 'Craft 1 stops after a single completed craft');
+  assert(countItem(g.run, 'oak_board') === 2 && countItem(g.run, 'wooden_log') === 10, 'Craft 1 makes exactly one batch');
+
+  // Craft All → keeps going until the stock is gone
+  dispatch(g, { type: 'setCraftActivity', id: 'craft_oak_board', once: false });
+  ff(g, board.ticks * 5);
+  assert(countItem(g.run, 'wooden_log') === 0, 'Craft All consumes all the stock');
+  assert(countItem(g.run, 'oak_board') === 6, 'Craft All made every remaining batch');
+  assert(g.run.craftActivity === null, 'Craft All stops once the stock is gone');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '12:55 AM MST',
+    title: 'Craft 1 or Craft All',
+    changes: [
+      'Each crafting recipe now offers two buttons: Craft 1 makes a single item and stops, while Craft All keeps working the bench until you run out of stock.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '12:30 AM MST',
     title: 'Enterprises Reworked — Income That Scales',
     changes: [

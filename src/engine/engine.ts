@@ -107,7 +107,10 @@ export function advanceTick(game: GameState): void {
       const need = game.settings?.fastCards ? 1 : def.ticks;
       if (run.craftActivity.progress >= need) {
         run.craftActivity.progress = 0;
+        const once = run.craftActivity.once === true; // capture before complete may null it
         def.complete(run); // a craft's complete() nulls run.craftActivity when out of stock
+        // "Craft 1": stop after this single completed cycle (if it didn't already stop)
+        if (once && run.craftActivity) run.craftActivity = null;
       }
     }
   }
@@ -218,7 +221,7 @@ function rollMortality(game: GameState, run: RunState): boolean {
 
 export type Command =
   | { type: 'setActivity'; id: string | null }
-  | { type: 'setCraftActivity'; id: string | null }
+  | { type: 'setCraftActivity'; id: string | null; once?: boolean }
   | { type: 'acceptContract' }
   | { type: 'chooseEncounter'; index: number }
   | { type: 'seekAdvancement' }
@@ -279,7 +282,7 @@ export function dispatch(game: GameState, cmd: Command): void {
         if (!def || !id.startsWith('craft_')) break;
         if (def.available && !def.available(run)) break; // bench open + stock in hand
       }
-      run.craftActivity = id ? { id, progress: 0 } : null;
+      run.craftActivity = id ? { id, progress: 0, once: !!cmd.once } : null;
       break;
     }
 

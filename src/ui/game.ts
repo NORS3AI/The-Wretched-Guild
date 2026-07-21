@@ -168,7 +168,7 @@ function run(cmd: Command): void {
 
 export const actions = {
   setActivity: (id: string | null) => run({ type: 'setActivity', id }),
-  setCraftActivity: (id: string | null) => run({ type: 'setCraftActivity', id }),
+  setCraftActivity: (id: string | null, once = false) => run({ type: 'setCraftActivity', id, once }),
   acceptContract: () => run({ type: 'acceptContract' }),
   declineContract: () => run({ type: 'declineContract' }),
   dismissEncounter: () => run({ type: 'dismissEncounter' }),

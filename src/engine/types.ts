@@ -48,6 +48,9 @@ export interface ActiveActivity {
   id: string;
   /** ticks elapsed in the current cycle */
   progress: number;
+  /** crafting only: stop after a SINGLE completed cycle rather than looping
+   *  (a "Craft 1" instead of "Craft All"). Absent/false = loop until out of stock. */
+  once?: boolean;
 }
 
 /** A live, in-progress interactive encounter (§8 of the design doc). */

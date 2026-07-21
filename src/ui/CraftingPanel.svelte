@@ -105,14 +105,18 @@
           </div>
           <div class="r-foot">
             <span class="r-time">{secondsFor(r)}s</span>
-            <button
-              class="btn craftbtn"
-              class:primary={craftable && !active}
-              disabled={!active && !craftable}
-              onclick={() => actions.setCraftActivity(active ? null : r.id)}
-            >
-              {active ? 'Working… (stop)' : craftable ? 'Craft' : 'Need stock'}
-            </button>
+            <div class="r-btns">
+              {#if active}
+                <button class="btn craftbtn primary" onclick={() => actions.setCraftActivity(null)}>
+                  Working{run.craftActivity?.once ? ' (1)' : ''}… (stop)
+                </button>
+              {:else if craftable}
+                <button class="btn craftbtn" title="Craft a single one, then stop" onclick={() => actions.setCraftActivity(r.id, true)}>Craft 1</button>
+                <button class="btn craftbtn primary" title="Keep crafting until you run out of stock" onclick={() => actions.setCraftActivity(r.id, false)}>Craft All</button>
+              {:else}
+                <button class="btn craftbtn" disabled>Need stock</button>
+              {/if}
+            </div>
           </div>
         </div>
       {/each}
@@ -281,7 +285,12 @@
     color: var(--ink-faint);
     font-variant-numeric: tabular-nums;
   }
+  .r-btns {
+    display: flex;
+    gap: 5px;
+  }
   .craftbtn {
     font-size: 0.76rem;
+    white-space: nowrap;
   }
 </style>

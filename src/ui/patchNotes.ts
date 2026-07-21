@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '12:45 AM MST',
+    title: 'Auto Rank Up',
+    changes: [
+      'Dev Panel gains "Auto rank up" — climb a rung every tick with no requirements and no Rite of Passage, up to rank 100. Toggle it off when you reach the rank you want.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '12:20 AM MST',
     title: 'More Dev Toggles',
     changes: [

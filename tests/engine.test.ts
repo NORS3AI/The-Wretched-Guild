@@ -1222,6 +1222,15 @@ console.log('The Wretched Guild — engine tests\n');
   dispatch(f, { type: 'setActivity', id: multi.id });
   advance(f);
   assert(f.run.activity?.progress === 0, `fast cards: a ${multi.ticks}-tick card (${multi.id}) completes in one tick`);
+
+  // auto rank up: climb a rung each tick, no requirements
+  const r = newGame();
+  r.settings = { ...r.settings, autoRankUp: true };
+  const rank0 = r.run.rank;
+  advance(r);
+  assert(r.run.rank === rank0 + 1, `auto rank up: rose from ${rank0} to ${r.run.rank} in one tick, cost-free`);
+  for (let i = 0; i < 200; i++) advance(r);
+  assert(r.run.rank === 100, 'auto rank up: climbs to rank 100 and stops there');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

@@ -6,6 +6,7 @@
   $: godMode = $game.settings?.godMode ?? false;
   $: noHeat = $game.settings?.noHeat ?? false;
   $: fastCards = $game.settings?.fastCards ?? false;
+  $: autoRankUp = $game.settings?.autoRankUp ?? false;
 </script>
 
 <div class="overlay">
@@ -39,6 +40,14 @@
         <span class="opt-text">
           <span class="opt-name">Fast cards</span>
           <span class="opt-desc faint">Every Ply Your Trade and enterprise-work cycle finishes in a single tick.</span>
+        </span>
+      </label>
+
+      <label class="opt" class:on={autoRankUp}>
+        <input type="checkbox" checked={autoRankUp} onchange={() => actions.toggleSetting('autoRankUp')} />
+        <span class="opt-text">
+          <span class="opt-name">Auto rank up</span>
+          <span class="opt-desc faint">Climb a rung every tick with no requirements and no Rite of Passage — up to rank 100. Toggle off when you reach the rank you want.</span>
         </span>
       </label>
 

@@ -12,7 +12,7 @@ import { bindLog, pushLog } from './helpers';
 import { nextFloat } from './rng';
 import { META_UNLOCKS, unlockCost } from './unlocks';
 import { canJoinShadow } from './alignment';
-import { advancement, completeAdvance } from './ranks';
+import { advancement, completeAdvance, devAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel, ownsAnyBusiness } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { tickSurvival, heal } from './survival';
@@ -95,6 +95,9 @@ export function advanceTick(game: GameState): void {
     run.heat = 0;
     for (const m of run.members) m.heat = 0;
   }
+
+  // dev "auto rank up": climb one rung each tick, free of cost or rite
+  if (game.settings?.autoRankUp) devAdvance(run);
 
   // the law answers accumulated notoriety (§10)
   if (lawEnforcement(game, run)) return;

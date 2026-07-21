@@ -175,3 +175,14 @@ export function completeAdvance(run: RunState, milestoneId?: string): void {
   run.rank = next;
   pushLog(run, `You rise in the world — you are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
 }
+
+/** Dev-only: rise one rung at no cost and with no Rite — the auto-rank-up cheat.
+ *  Any Rite of Passage for the new rung is marked passed automatically. */
+export function devAdvance(run: RunState): void {
+  if (run.rank >= MAX_RANK) return;
+  const next = run.rank + 1;
+  const milestone = MILESTONE_RANKS[next];
+  if (milestone) run.milestones[milestone] = true;
+  run.rank = next;
+  pushLog(run, `You rise in the world — you are now a ${rankTitle(run)} (rank ${run.rank}).`, 'good');
+}

@@ -87,36 +87,8 @@ function bestRawGame(run: RunState): string | null {
 }
 
 export const DEEDS: DeedDef[] = [
-  {
-    id: 'eat',
-    name: 'Eat',
-    blurb: 'Eat the most filling food from your larder.',
-    timeTicks: 0,
-    // only foods that actually restore the belly — a raw fish is not one (cook it first)
-    available: (run) => [...run.larder, ...run.pockets].some((p) => p && (itemDef(p.item)?.food ?? 0) > 0),
-    effect: (_g, run) => {
-      // pick the food with the highest food value, from the larder or pockets
-      let best: string | null = null;
-      let bestFood = 0;
-      for (const p of [...run.larder, ...run.pockets]) {
-        if (!p) continue;
-        const def = itemDef(p.item);
-        if ((def?.food ?? 0) > bestFood) {
-          bestFood = def!.food ?? 0;
-          best = p.item;
-        }
-      }
-      if (!best) {
-        pushLog(run, 'You have nothing fit to eat — raw fish must be cooked first.', 'bad');
-        return;
-      }
-      const def = ITEMS[best];
-      removeItem(run, best, 1);
-      run.needs.food = clamp100(run.needs.food + bestFood);
-      if (def.water) run.needs.water = clamp100(run.needs.water + def.water);
-      pushLog(run, `You eat a ${def.name.toLowerCase()}. The hunger eases.`, 'good');
-    },
-  },
+  // Eating no longer lives here — you eat by tapping a food in your larder or
+  // pockets directly (see SurvivalPanel). Drinking stays a deed, from the skin.
   {
     id: 'drink',
     name: 'Drink',

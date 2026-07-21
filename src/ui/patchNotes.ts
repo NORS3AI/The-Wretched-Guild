@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '11:15 AM MST',
+    title: 'Tap to Eat & Sworn to the End',
+    changes: [
+      'Eating is simpler now: just tap a food in your Larder or Pockets to eat it. The separate "Eat" button beside Drink is gone — the item itself is the button.',
+      'Sworn Guild members no longer walk out over unpaid wages, nor are they picked off at random on risky work. A member is only ever lost when their own Heat boils over to 100 (then the watch takes them) — or when you dismiss them yourself. Keep them cool (Lay Low) and they stay loyal.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '9:30 AM MST',
     title: 'Tabs & the Long Console',
     changes: [

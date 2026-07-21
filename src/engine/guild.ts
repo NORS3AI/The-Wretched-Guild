@@ -5,13 +5,12 @@
 import type { GameState, Member, RunState } from './types';
 import type { FactionId } from './factions';
 import { factionById } from './factions';
-import { nextInt, nextFloat, chance } from './rng';
+import { nextInt, nextFloat } from './rng';
 import { pushLog } from './helpers';
 
 export const GUILD_MIN_RANK = 3; // no one follows a nobody
 export const RECRUIT_SLOTS = 3;
 export const REROLL_COST = 5;
-const UNPAID_GRACE = 240; // ~10 in-game days of missed wages before someone walks
 
 /** Roster capacity grows as you rise. */
 export function maxMembers(rank: number): number {
@@ -177,7 +176,8 @@ export function processGuild(game: GameState, run: RunState): void {
     m.skill = Math.min(40, m.skill + 0.015);
   }
 
-  // wages
+  // wages — unpaid members grumble but stay sworn to the Guild; only their own
+  // Heat reaching a boil (or the player's hand) ever forces one out.
   const wages = totalUpkeep(run);
   if (wages > 0) {
     if (run.coin >= wages) {
@@ -186,25 +186,17 @@ export function processGuild(game: GameState, run: RunState): void {
     } else {
       run.coin = 0;
       run.guildUnpaidTicks++;
-      if (run.guildUnpaidTicks > UNPAID_GRACE && run.members.length > 0) {
-        // the priciest wretch, unpaid, walks
-        const quitter = run.members.reduce((a, b) => (b.upkeep > a.upkeep ? b : a));
-        dismissMember(run, quitter.id);
-        run.guildUnpaidTicks = 0;
-        pushLog(run, `${quitter.name}, unpaid too long, abandons the Guild.`, 'bad');
-      }
     }
   }
 
-  // risk: members on dirty work can be taken by the watch
+  // A sworn member is only lost when their own Heat boils over to 100 — then the
+  // watch takes them and the Guild is exposed a little more. Nothing else forces
+  // a member out; only the player's hand (dismiss) does otherwise.
   for (const m of [...run.members]) {
-    const job = m.job ? jobById(m.job) : null;
-    if (!job || !job.risky) continue;
-    const p = 0.0004 + m.heat / 9000;
-    if (chance(run, p)) {
+    if (m.heat >= 100) {
       dismissMember(run, m.id);
       run.heat = Math.min(100, run.heat + 8);
-      pushLog(run, `${m.name} is seized by the watch mid-job — the Guild is exposed a little more.`, 'bad');
+      pushLog(run, `${m.name}, too hot to hide, is seized by the watch — the Guild is exposed a little more.`, 'bad');
     }
   }
 

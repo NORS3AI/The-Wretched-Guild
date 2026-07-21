@@ -10,6 +10,7 @@ import { computeTokens } from '../src/engine/death';
 import { formatMoney } from '../src/engine/money';
 import { rankTitle } from '../src/engine/ranks';
 import { addItem, countItem, MAX_STACK, itemDef, isEdible } from '../src/engine/items';
+import { processGuild } from '../src/engine/guild';
 
 // Advance one tick, then dismiss any random town event that popped up (it would
 // otherwise halt the sim and stall the fast-forward loops below). Tests that
@@ -318,7 +319,7 @@ console.log('The Wretched Guild — engine tests\n');
   const e = newGame();
   e.run.needs.food = 20;
   e.run.larder = [{ item: 'bread', qty: 1 }, null, null, null, null, null];
-  dispatch(e, { type: 'doDeed', id: 'eat' });
+  dispatch(e, { type: 'eatItem', id: 'bread' });
   assert(e.run.needs.food > 20, `eating bread restores food (20 -> ${e.run.needs.food})`);
   assert(!e.run.larder.some((p) => p && p.item === 'bread'), 'the bread is consumed');
 
@@ -1081,6 +1082,24 @@ console.log('The Wretched Guild — engine tests\n');
   ff(g, 6); // one Lay Low cycle
   assert(g.run.members[0].heat <= 8, `laying low cools a member's Heat by 2 (10 -> ${g.run.members[0].heat})`);
   assert(g.run.members[1].heat === 0, 'a member with no Heat stays at 0 (never negative)');
+
+  // sworn members stay put no matter how long wages go unpaid — only their own
+  // Heat boiling to 100 (or the player's hand) ever forces one out.
+  {
+    const gg = newGame();
+    gg.run.rank = 3;
+    gg.run.coin = 0;
+    gg.run.members = [
+      { id: 'a', name: 'Poorpaid', archetype: 'Tough', skill: 10, alignment: { ethics: 0, morals: -20 }, job: null, upkeep: 5, heat: 40 },
+      { id: 'b', name: 'Boiling', archetype: 'Thug', skill: 10, alignment: { ethics: 0, morals: -20 }, job: null, upkeep: 5, heat: 100 },
+    ];
+    processGuild(gg, gg.run);
+    assert(gg.run.members.some((m) => m.id === 'a'), 'an unpaid member below boiling Heat is NOT removed');
+    assert(!gg.run.members.some((m) => m.id === 'b'), 'a member at 100 Heat is seized by the watch');
+    // and the player can always dismiss by hand
+    dispatch(gg, { type: 'dismissMember', id: 'a' });
+    assert(gg.run.members.length === 0, 'the player can dismiss a sworn member by hand');
+  }
 
   // time flows with an encounter open
   const h = newGame();

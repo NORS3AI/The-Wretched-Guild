@@ -77,14 +77,18 @@
         {@const def = slot ? itemDef(slot.item) : null}
         <div class="slot" class:empty={!slot}>
           {#if slot && def}
-            <div class="slot-top">
-              <span class="slot-name" title={def.blurb}>{def.name}</span>
-              {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
-            </div>
+            {#if isEdible(def)}
+              <button class="slot-top eat" title="Tap to eat · {def.blurb}" onclick={() => actions.eatItem(slot.item)}>
+                <span class="slot-name">{def.name}</span>
+                {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+              </button>
+            {:else}
+              <div class="slot-top">
+                <span class="slot-name" title={def.blurb}>{def.name}</span>
+                {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+              </div>
+            {/if}
             <div class="slot-actions">
-              {#if isEdible(def)}
-                <button class="mini" title="Eat" onclick={() => actions.eatItem(slot.item)}>Eat</button>
-              {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
               </button>
@@ -106,14 +110,18 @@
         {@const def = slot ? itemDef(slot.item) : null}
         <div class="slot" class:empty={!slot}>
           {#if slot && def}
-            <div class="slot-top">
-              <span class="slot-name" title={def.blurb}>{def.name}</span>
-              {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
-            </div>
+            {#if isEdible(def)}
+              <button class="slot-top eat" title="Tap to eat · {def.blurb}" onclick={() => actions.eatItem(slot.item)}>
+                <span class="slot-name">{def.name}</span>
+                {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+              </button>
+            {:else}
+              <div class="slot-top">
+                <span class="slot-name" title={def.blurb}>{def.name}</span>
+                {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+              </div>
+            {/if}
             <div class="slot-actions">
-              {#if isEdible(def)}
-                <button class="mini" title="Eat" onclick={() => actions.eatItem(slot.item)}>Eat</button>
-              {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
               </button>
@@ -274,6 +282,25 @@
     justify-content: space-between;
     align-items: baseline;
     gap: 6px;
+  }
+  /* an edible slot's name row is itself the Eat button — tap the food to eat it */
+  button.slot-top.eat {
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: var(--ink);
+    padding: 2px 4px;
+    margin: -2px -4px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  button.slot-top.eat:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(120, 160, 70, 0.1);
   }
   .slot-name {
     line-height: 1.2;

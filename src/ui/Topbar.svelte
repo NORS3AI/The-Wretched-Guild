@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { gameStore, actions, settingsOpen, bearingOpen, legacyOpen } from './game';
+  import { gameStore, actions, settingsOpen, bearingOpen, legacyOpen, purseOpen } from './game';
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
   import { alignmentName, ethicsBand, moralsBand } from '../engine/alignment';
   import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
-  import { formatMoney } from '../engine/money';
+  import { formatMoney, wealthLadder } from '../engine/money';
   import { hourOfDay, formatClock, dayPart } from '../engine/time';
   import heartsUrl from '../assets/hearts.png';
 
@@ -35,6 +35,12 @@
     return (v + 100) / 2;
   }
 
+  // The wealth ladder (copper → diamond), tagged with what the purse has reached,
+  // shown top-down from the loftiest coin to the humble copper.
+  $: ladder = wealthLadder($game.run.coin).slice().reverse();
+  $: nextGoal = ladder.filter((r) => !r.reached).at(-1)?.name ?? null;
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
   function seasonOf(day: number): string {
     const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
     const perYear = TICKS_PER_DAY * 12; // days per year = 12
@@ -58,9 +64,39 @@
     <span class="label">Age</span>
     <span class="val">{$game.run.ageYears}</span>
   </div>
-  <div class="stat">
+  <div class="stat purse-stat">
     <span class="label">Purse</span>
-    <span class="val gold">{formatMoney($game.run.coin)}</span>
+    <button class="val gold purse-btn" title="See the coin of the realm" onclick={() => purseOpen.update((v) => !v)}>
+      {formatMoney($game.run.coin)}
+      <span class="caret">{$purseOpen ? '▴' : '▾'}</span>
+    </button>
+    {#if $purseOpen}
+      <div class="purse-pop">
+        <div class="pop-title">The Coin of the Realm</div>
+        <div class="pop-sub faint">You hold {formatMoney($game.run.coin)} · {Math.floor($game.run.coin)} copper</div>
+        <div class="ladder">
+          {#each ladder as rung}
+            <div class="rung" class:reached={rung.reached} class:next={rung.name === nextGoal}>
+              <div class="rung-main">
+                <span class="rung-name">{cap(rung.name)}</span>
+                <span class="rung-worth faint">
+                  {#if rung.below}= 1,000 {rung.below}{:else}the base coin{/if}
+                </span>
+              </div>
+              <span class="rung-status">
+                {#if rung.reached}
+                  <span class="have">✓ ×{rung.have.toLocaleString()}</span>
+                {:else if rung.name === nextGoal}
+                  <span class="goal">next goal</span>
+                {:else}
+                  <span class="locked">○</span>
+                {/if}
+              </span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
   <div class="stat">
     <span class="label">Heat</span>
@@ -151,7 +187,8 @@
   .stat.wide {
     min-width: 130px;
   }
-  .bearing-stat {
+  .bearing-stat,
+  .purse-stat {
     position: relative;
   }
   .label {
@@ -166,6 +203,112 @@
   }
   .val.gold {
     color: var(--gold-bright);
+  }
+  /* Purse value is a button revealing the wealth ladder */
+  .purse-btn {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: -5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color 0.15s;
+  }
+  .purse-btn:hover {
+    border-color: var(--gold);
+  }
+  .purse-btn .caret {
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .purse-pop {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    z-index: 60;
+    width: 250px;
+    max-height: 360px;
+    overflow-y: auto;
+    background: var(--bg-panel);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px 4px 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  }
+  .pop-title {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--gold);
+    padding: 0 8px;
+  }
+  .pop-sub {
+    font-size: 0.72rem;
+    padding: 2px 8px 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+  .ladder {
+    display: flex;
+    flex-direction: column;
+  }
+  .rung {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 4px;
+  }
+  .rung.reached {
+    background: rgba(201, 162, 39, 0.08);
+  }
+  .rung.next {
+    background: rgba(201, 162, 39, 0.14);
+    outline: 1px solid var(--border-light);
+  }
+  .rung-main {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .rung-name {
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+  }
+  .rung.reached .rung-name {
+    color: var(--gold-bright);
+    font-weight: 600;
+  }
+  .rung.next .rung-name {
+    color: var(--ink);
+  }
+  .rung-worth {
+    font-size: 0.66rem;
+  }
+  .rung-status {
+    font-size: 0.74rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .rung-status .have {
+    color: var(--gold);
+  }
+  .rung-status .goal {
+    color: var(--ink);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .rung-status .locked {
+    color: var(--ink-faint);
   }
   .val.align {
     font-size: 0.98rem;

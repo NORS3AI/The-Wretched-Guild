@@ -27,6 +27,8 @@ export type SideTab = 'trade' | 'merchant' | 'needs' | 'enterprises' | 'wretched
 export const activeTab = writable<SideTab>('trade');
 // The topbar's Bearing button toggles a small popover with the alignment axes.
 export const bearingOpen = writable(false);
+// The topbar's Purse button toggles a popover with the full wealth ladder.
+export const purseOpen = writable(false);
 let lastStarveHits = 0;
 function checkFlash(): void {
   if (game.run.starveHits > lastStarveHits) {

@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '4:20 PM MST',
+    title: 'The Coin of the Realm',
+    changes: [
+      'Tap your Purse in the top bar to see the whole wealth ladder — copper, shilling, silver, crown, triton, gold, platinum, amethyst, topaz, emerald, ruby, sapphire, diamond. Each rung is 1,000 of the one below it.',
+      'The ladder marks what your coin has reached (with how many of each you hold) and what still lies above, so you can always see your next milestone of wealth — right up to a king\'s diamond.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '3:45 PM MST',
     title: 'The Town Merchant',
     changes: [

@@ -56,3 +56,30 @@ export function highestDenom(copper: number): string {
   }
   return 'copper';
 }
+
+export interface WealthRung {
+  name: string;
+  short: string;
+  value: number;
+  /** name of the denomination one step below (null for copper, the base). */
+  below: string | null;
+  /** has the player ever amassed at least one of this denomination right now? */
+  reached: boolean;
+  /** how many whole units of this denomination the amount contains. */
+  have: number;
+}
+
+/** The full wealth ladder, copper → diamond, tagged with what the given purse has
+ *  reached — so the player can see how far their coin climbs and what lies above. */
+export function wealthLadder(copper: number): WealthRung[] {
+  const amt = Math.floor(Math.max(0, copper));
+  const ascending = [...DENOMS].reverse(); // copper (base) up to diamond
+  return ascending.map((d, i) => ({
+    name: d.name,
+    short: d.short,
+    value: d.value,
+    below: i > 0 ? ascending[i - 1].name : null,
+    reached: amt >= d.value,
+    have: Math.floor(amt / d.value),
+  }));
+}

@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '5:00 PM MST',
+    title: 'Ledger, Enterprises & a Longer Chronicle',
+    changes: [
+      'The Chronicle now keeps far more history (up to 400 lines) and — the real fix — no longer yanks you back to the newest line when you scroll up to read older entries. Scroll back freely; it only sticks to the bottom when you are already there.',
+      'Enterprises now appear once you can afford their Base Cost and have the faction standing (and your bearing fits the faction). The old Attribute and Rank gates are gone — coin and standing are the whole of it.',
+      'Re-priced the ventures to a grander scale: Alehouse 250c · Fencing Den 2 shillings · Craftsman\'s Shop 5 silver · Smuggler\'s Wharf 1 crown · Trade House 200 triton. (The Market Stall still opens the road at 50 copper.) Costs now show in proper denominations.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '4:20 PM MST',
     title: 'The Coin of the Realm',
     changes: [

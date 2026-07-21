@@ -10,14 +10,25 @@
     return true;
   });
 
-  // Auto-scroll to the newest entry via a self-contained action — decoupled from
-  // the reactive graph so it can never feed back into an update loop.
+  // Auto-scroll to the newest entry — but ONLY when the reader is already at the
+  // bottom. If they've scrolled up to read older history, new lines no longer
+  // yank them back down, so the whole Chronicle stays reviewable.
   function autoscroll(node: HTMLElement) {
-    const toBottom = () => (node.scrollTop = node.scrollHeight);
-    const obs = new MutationObserver(toBottom);
+    const atBottom = () => node.scrollHeight - node.scrollTop - node.clientHeight < 40;
+    let stick = true;
+    const onScroll = () => (stick = atBottom());
+    node.addEventListener('scroll', onScroll, { passive: true });
+    const obs = new MutationObserver(() => {
+      if (stick) node.scrollTop = node.scrollHeight;
+    });
     obs.observe(node, { childList: true, subtree: true });
-    toBottom();
-    return { destroy: () => obs.disconnect() };
+    node.scrollTop = node.scrollHeight;
+    return {
+      destroy: () => {
+        obs.disconnect();
+        node.removeEventListener('scroll', onScroll);
+      },
+    };
   }
 </script>
 

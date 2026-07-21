@@ -5,7 +5,7 @@ import type { FactionId } from './factions';
 import { factionById } from './factions';
 import { nextFloat } from './rng';
 
-const LOG_LIMIT = 120;
+const LOG_LIMIT = 400;
 
 // The log lives on GameState, but most engine code holds only RunState. We stash
 // a reference to the active log array so helpers can append without threading it

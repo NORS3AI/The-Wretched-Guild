@@ -20,10 +20,7 @@ export interface BusinessDef {
   heatPerLevel: number; // heat/tick per level
   standingPerLevel: number; // faction standing/tick per level
   maxLevel: number;
-  reqRank: number;
   reqStanding: number; // in its own faction
-  /** an attribute the player must have grown to before this appears (optional) */
-  reqAttr?: { key: AttrKey; min: number };
   /** base coin per cycle when the player WORKS the enterprise (before the
    *  ×(1.5 + 0.5·level) ownership multiplier); the attribute working trains */
   workYield: [number, number];
@@ -45,7 +42,6 @@ export const BUSINESSES: BusinessDef[] = [
     heatPerLevel: 0,
     standingPerLevel: 0.03,
     maxLevel: 50,
-    reqRank: 1,
     reqStanding: 0,
     workYield: [1, 4],
     workTrains: 'wits',
@@ -57,15 +53,13 @@ export const BUSINESSES: BusinessDef[] = [
     faction: 'commons',
     blurb: 'Ale, gossip, and warm bodies. Modest coin and a place to hear things.',
     illicit: false,
-    baseCost: 110,
+    baseCost: 250,
     costGrowth: 2.2,
     incomePerLevel: 0.2,
     heatPerLevel: 0.004,
     standingPerLevel: 0.03,
     maxLevel: 50,
-    reqRank: 2,
     reqStanding: 10,
-    reqAttr: { key: 'charm', min: 3 },
     workYield: [2, 6],
     workTrains: 'charm',
     workVerb: 'Tend',
@@ -76,15 +70,13 @@ export const BUSINESSES: BusinessDef[] = [
     faction: 'shadow',
     blurb: 'A back room that turns stolen goods into clean coin. Lucrative — and watched.',
     illicit: true,
-    baseCost: 140,
+    baseCost: 2000,
     costGrowth: 2.3,
     incomePerLevel: 0.4,
     heatPerLevel: 0.05,
     standingPerLevel: 0.05,
     maxLevel: 50,
-    reqRank: 3,
     reqStanding: 15,
-    reqAttr: { key: 'stealth', min: 5 },
     workYield: [3, 8],
     workTrains: 'stealth',
     workVerb: 'Run',
@@ -95,15 +87,13 @@ export const BUSINESSES: BusinessDef[] = [
     faction: 'merchants',
     blurb: 'A proper storefront with apprentices. Steady, respectable income.',
     illicit: false,
-    baseCost: 240,
+    baseCost: 5_000_000,
     costGrowth: 2.3,
     incomePerLevel: 0.34,
     heatPerLevel: 0.01,
     standingPerLevel: 0.04,
     maxLevel: 50,
-    reqRank: 4,
     reqStanding: 20,
-    reqAttr: { key: 'wits', min: 8 },
     workYield: [3, 7],
     workTrains: 'wits',
     workVerb: 'Run',
@@ -114,15 +104,13 @@ export const BUSINESSES: BusinessDef[] = [
     faction: 'shadow',
     blurb: 'Contraband by the boatload under cover of night. Great wealth, greater risk.',
     illicit: true,
-    baseCost: 520,
+    baseCost: 1_000_000_000,
     costGrowth: 2.4,
     incomePerLevel: 0.9,
     heatPerLevel: 0.13,
     standingPerLevel: 0.06,
     maxLevel: 50,
-    reqRank: 7,
     reqStanding: 40,
-    reqAttr: { key: 'stealth', min: 15 },
     workYield: [5, 12],
     workTrains: 'stealth',
     workVerb: 'Run',
@@ -133,15 +121,13 @@ export const BUSINESSES: BusinessDef[] = [
     faction: 'merchants',
     blurb: 'Caravans, ledgers, and reach across the shire. The engine of a fortune.',
     illicit: false,
-    baseCost: 750,
+    baseCost: 200_000_000_000_000,
     costGrowth: 2.4,
     incomePerLevel: 0.75,
     heatPerLevel: 0.03,
     standingPerLevel: 0.05,
     maxLevel: 50,
-    reqRank: 8,
     reqStanding: 45,
-    reqAttr: { key: 'wits', min: 25 },
     workYield: [6, 14],
     workTrains: 'wits',
     workVerb: 'Run',
@@ -166,25 +152,25 @@ export function nextCost(def: BusinessDef, level: number): number {
 }
 
 export interface Requirements {
-  rankOk: boolean;
   standingOk: boolean;
   alignmentOk: boolean;
-  attrOk: boolean;
   ok: boolean;
 }
 
+/** The non-coin prerequisites: standing in the venture's faction, and that faction
+ *  being willing to admit your bearing. (Attributes and rank are no longer gates.) */
 export function meetsRequirements(run: RunState, def: BusinessDef): Requirements {
-  const rankOk = run.rank >= def.reqRank;
   const standingOk = run.factions[def.faction] >= def.reqStanding;
   const alignmentOk = factionById(def.faction).admits(run.alignment);
-  const attrOk = !def.reqAttr || run.attrs[def.reqAttr.key] >= def.reqAttr.min;
-  return { rankOk, standingOk, alignmentOk, attrOk, ok: rankOk && standingOk && alignmentOk && attrOk };
+  return { standingOk, alignmentOk, ok: standingOk && alignmentOk };
 }
 
-/** Enterprises the player may see: prerequisites (rank/standing/alignment/attr)
- *  met, or already owned. Coin is NOT a gate — you see the price and save for it. */
+/** Enterprises the player may see: those already owned, or whose Base Cost the
+ *  player can afford AND whose faction standing (and alignment) is met. */
 export function visibleBusinesses(run: RunState): BusinessDef[] {
-  return BUSINESSES.filter((b) => ownedLevel(run, b.id) > 0 || meetsRequirements(run, b).ok);
+  return BUSINESSES.filter(
+    (b) => ownedLevel(run, b.id) > 0 || (meetsRequirements(run, b).ok && run.coin >= b.baseCost),
+  );
 }
 
 /** Does the player own any enterprise at all? (Owning one ends the begging life.) */

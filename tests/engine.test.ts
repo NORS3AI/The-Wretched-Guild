@@ -221,25 +221,23 @@ console.log('The Wretched Guild — engine tests\n');
   ff(g, 100);
   assert(g.run.coin > coinAfterBuy, `the stall earns passive income (${coinAfterBuy.toFixed(1)} -> ${g.run.coin.toFixed(1)})`);
 
-  // an illicit venture requires standing + rank; set them and confirm Heat rises
+  // an illicit venture requires its Base Cost + shadow standing; set them and confirm Heat rises
   const h = newGame();
-  h.run.coin = 500;
-  h.run.rank = 3;
+  h.run.coin = 2500; // Fencing Den now costs 2,000 (2 shillings)
   h.run.factions.shadow = 20;
-  h.run.attrs.stealth = 6; // the den also wants a little Stealth
   dispatch(h, { type: 'investBusiness', id: 'fencing_den' });
-  assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once rank + shadow standing are met');
+  assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once coin + shadow standing are met');
   const heatBefore = h.run.heat;
   ff(h, 200);
   assert(h.run.heat > heatBefore, `the illicit den raises Heat over time (${heatBefore} -> ${h.run.heat.toFixed(1)})`);
 }
 
-// 9) Business requirements gate acquisition (rank + standing).
+// 9) Business requirements gate acquisition (Base Cost + standing).
 {
   const g = newGame();
   g.run.coin = 9999;
-  dispatch(g, { type: 'investBusiness', id: 'trade_house' }); // needs rank 8 + standing 45
-  assert(!g.run.businesses['trade_house'], 'a Trade House is barred without the rank and standing to hold it');
+  dispatch(g, { type: 'investBusiness', id: 'trade_house' }); // needs a vast fortune + standing 45
+  assert(!g.run.businesses['trade_house'], 'a Trade House is barred without the coin and standing to hold it');
 }
 
 // 10) The watch fines a high-Heat character (law enforcement bites).

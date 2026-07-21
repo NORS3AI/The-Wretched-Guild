@@ -10,6 +10,7 @@
     workCoinPerTick,
   } from '../engine/businesses';
   import { factionById } from '../engine/factions';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
   $: run = $game.run;
@@ -27,7 +28,7 @@
     </div>
 
     {#if visible.length === 0}
-      <p class="none faint">No enterprises are within your reach yet. Raise your rank and standing, and they will open to you.</p>
+      <p class="none faint">No enterprises are within your reach yet. Save your coin and build your standing, and they will open to you.</p>
     {/if}
 
     <div class="list">
@@ -78,7 +79,7 @@
               title={!affordable ? 'Not enough coin' : ''}
               onclick={() => actions.investBusiness(b.id)}
             >
-              {level === 0 ? 'Acquire' : `Expand to level ${level + 1}`} — {cost} coin
+              {level === 0 ? 'Acquire' : `Expand to level ${level + 1}`} — {formatMoney(cost)}
             </button>
           {/if}
         </div>

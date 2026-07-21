@@ -3,6 +3,18 @@
   import { formatMoney } from '../engine/money';
 
   const game = gameStore;
+
+  // coin-grant rows: each denomination, in copper, with 1/10/100/1000 buttons
+  const MONEY_ROWS = [
+    { name: 'Shilling', value: 1e3 },
+    { name: 'Silver', value: 1e6 },
+    { name: 'Crown', value: 1e9 },
+    { name: 'Triton', value: 1e12 },
+    { name: 'Gold', value: 1e15 },
+  ];
+  const AMOUNTS = [1, 10, 100, 1000];
+  const DIAMOND = 1e36;
+
   $: godMode = $game.settings?.godMode ?? false;
   $: noHeat = $game.settings?.noHeat ?? false;
   $: fastCards = $game.settings?.fastCards ?? false;
@@ -50,16 +62,35 @@
         <button class="btn" disabled={$game.run.rank <= 1} onclick={() => actions.devResetRank()}>Reset to rank 1</button>
       </div>
 
+      <div class="cat">Coin</div>
+      <div class="money">
+        {#each MONEY_ROWS as row}
+          <div class="money-row">
+            <span class="money-name">{row.name}</span>
+            <div class="money-btns">
+              {#each AMOUNTS as amt}
+                <button class="btn tiny" onclick={() => actions.grantCoin(row.value * amt)}>+{amt}</button>
+              {/each}
+            </div>
+          </div>
+        {/each}
+        <div class="money-row">
+          <span class="money-name">Diamond</span>
+          <div class="money-btns">
+            <button class="btn tiny neg" onclick={() => actions.grantCoin(-DIAMOND)}>−1</button>
+          </div>
+        </div>
+      </div>
+      <p class="purse faint">Purse: {formatMoney($game.run.coin)}</p>
+
       <div class="cat">Grants</div>
       <div class="grants">
-        <button class="btn" onclick={() => actions.addDiamond()}>+1 Diamond</button>
         <button class="btn" onclick={() => actions.maxFactions()}>Max all Factions</button>
         <button class="btn" onclick={() => actions.grantOilBuff()}>🍶 Chalice of Infinite Oil</button>
       </div>
       {#if ($game.run.oilBuffMs ?? 0) > 0}
         <p class="oil-line">Infinite Oil active — <strong class="gold">~{oilLeftMin} min</strong> left. Cook without a Goblet of Oil.</p>
       {/if}
-      <p class="purse faint">Purse: {formatMoney($game.run.coin)}</p>
 
       <button class="btn primary close" onclick={() => devOpen.set(false)}>Done</button>
     </div>
@@ -151,6 +182,36 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  }
+  .money {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .money-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .money-name {
+    font-size: 0.86rem;
+    color: var(--ink-dim);
+    min-width: 64px;
+  }
+  .money-btns {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .btn.tiny {
+    padding: 4px 8px;
+    font-size: 0.74rem;
+    min-width: 40px;
+  }
+  .btn.tiny.neg {
+    color: var(--blood-bright);
   }
   .purse {
     font-size: 0.78rem;

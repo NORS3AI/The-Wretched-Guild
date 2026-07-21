@@ -242,8 +242,8 @@ export const actions = {
   },
 
   // ── dev panel cheats ────────────────────────────────────────────────────────
-  addDiamond: () => {
-    game.run.coin += 1e36; // one diamond's worth of copper
+  grantCoin: (amount: number) => {
+    game.run.coin = Math.max(0, game.run.coin + amount); // amount may be negative
     game.run.peakCoin = Math.max(game.run.peakCoin, game.run.coin);
     saveGame(game);
     notify();

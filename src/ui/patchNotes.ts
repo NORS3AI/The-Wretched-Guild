@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '10:00 AM MST',
+    title: 'Dev Coin Grants',
+    changes: [
+      'Reworked the Dev Panel coin cheats: add 1 / 10 / 100 / 1000 of Shilling, Silver, Crown, Triton, or Gold with a tap each.',
+      'Replaced the "+1 Diamond" button with a "−1 Diamond" button to shave a diamond back off your purse.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '9:30 AM MST',
     title: 'Chalice of Infinite Oil',
     changes: [

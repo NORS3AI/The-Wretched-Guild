@@ -743,7 +743,7 @@ console.log('The Wretched Guild — engine tests\n');
 }
 
 // 19) Enterprises: the market stall can only be worked once owned, and working
-//     it out-earns the same base by its ×(1.5+0.5·level) multiplier.
+//     it earns a second helping of its income on top of what it makes passively.
 {
   const g = newGame();
   dispatch(g, { type: 'setActivity', id: 'work_market_stall' });
@@ -1749,6 +1749,24 @@ console.log('The Wretched Guild — engine tests\n');
     processServants(g, g.run);
   }
   assert(g.run.skills['cooking'] === 100, `kitchen work takes Cooking to a full 100% (${g.run.skills['cooking']})`);
+}
+
+// 60) Enterprise income scales with the TOTAL invested, so a high-level venture
+//     pays a grand income instead of a linear trickle.
+{
+  const { passiveIncome, cumulativeCost, PAYBACK_TICKS, businessById } = await import('../src/engine/businesses');
+  const fencing = businessById('fencing_den')!;
+  assert(
+    Math.abs(passiveIncome(fencing, 24) - cumulativeCost(fencing, 24) / PAYBACK_TICKS) < 1e-3,
+    'passive income is the coin sunk into a venture, spread over the payback window',
+  );
+  // a level-24 fencing den now pays millions per tick, not ~10c
+  assert(passiveIncome(fencing, 24) > 1_000_000, `a level-24 fencing den pays a grand income (${passiveIncome(fencing, 24).toFixed(0)}/tick)`);
+  // income keeps pace with the exponential cost — each level pays proportionally more
+  assert(passiveIncome(fencing, 25) > passiveIncome(fencing, 24) * 2, 'each level roughly keeps pace with its cost');
+  // working a venture doubles its output (a second helping on top of passive)
+  const { workCoinPerTick } = await import('../src/engine/businesses');
+  assert(Math.abs(workCoinPerTick(fencing, 24) - passiveIncome(fencing, 24)) < 1e-6, 'working a venture adds a second full helping of its income');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

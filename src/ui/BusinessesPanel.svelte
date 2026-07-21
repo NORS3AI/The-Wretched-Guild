@@ -6,7 +6,7 @@
     canInvest,
     totalIncomePerTick,
     visibleBusinesses,
-    workMultiplier,
+    passiveIncome,
     workCoinPerTick,
   } from '../engine/businesses';
   import { factionById } from '../engine/factions';
@@ -17,6 +17,11 @@
 
   // only enterprises whose prerequisites are met (or already owned) are shown
   $: visible = visibleBusinesses(run);
+
+  // small coin rates read as decimals; larger ones fold into denominations
+  function fmtRate(n: number): string {
+    return n < 100 ? n.toFixed(2) + 'c' : formatMoney(n);
+  }
 </script>
 
 <div class="panel">
@@ -24,7 +29,7 @@
   <div class="body">
     <div class="summary">
       <span class="muted">Passive income</span>
-      <span class="income">+{totalIncomePerTick(run).toFixed(2)} <span class="faint">coin/tick</span></span>
+      <span class="income">+{fmtRate(totalIncomePerTick(run))} <span class="faint">/tick</span></span>
     </div>
 
     {#if visible.length === 0}
@@ -48,10 +53,10 @@
             <span class="faction-tag">{factionById(b.faction).name}</span>
             {#if b.illicit}<span class="illicit-tag">illicit</span>{/if}
             {#if level > 0}
-              <span class="earning">+{(b.incomePerLevel * level).toFixed(2)}/tick idle</span>
+              <span class="earning">+{fmtRate(passiveIncome(b, level))}/tick idle</span>
               {#if working}
                 <span class="earning working" title="Passive income plus your labour">
-                  +{(b.incomePerLevel * level + workCoinPerTick(b, level)).toFixed(2)}/tick working
+                  +{fmtRate(passiveIncome(b, level) + workCoinPerTick(b, level))}/tick working
                 </span>
               {/if}
             {/if}
@@ -65,7 +70,7 @@
               class:primary={working}
               onclick={() => actions.setActivity(working ? null : 'work_' + b.id)}
             >
-              {working ? '■ Stop Working' : `${b.workVerb} it — ×${workMultiplier(level).toFixed(1)} yield`}
+              {working ? '■ Stop Working' : `${b.workVerb} it — +${fmtRate(workCoinPerTick(b, level))}/tick`}
             </button>
           {/if}
 

@@ -7,7 +7,8 @@ import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS, MAX_POUCHES, syncCapacity, hasIronSpike, guardShielded } from './items';
 import { CRAFT_ACTIVITIES } from './crafting';
-import { ownedLevel, ownsAnyBusiness, workMultiplier, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
+import { ownedLevel, ownsAnyBusiness, workCoinPerTick, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
+import { formatMoney } from './money';
 import { TICKS_PER_DAY } from './timeconst';
 import { churchOpen, illicitPrime } from './time';
 import { driftBearing, shiftAlignment } from './alignment';
@@ -374,19 +375,18 @@ function makeWorkActivity(def: BusinessDef): ActivityDef {
     id: WORK_PREFIX + def.id,
     name: `${def.workVerb} the ${def.name}`,
     path: 'Enterprise',
-    blurb: `Put in a shift at your ${def.name}. Yield scales with its level (×2, ×2.5, ×3 …).`,
+    blurb: `Put in a shift at your ${def.name} — a second helping of its income, on top of what it earns passively.`,
     ticks: WORK_TICKS,
     trains: def.workTrains,
     complete(run) {
       const lvl = ownedLevel(run, def.id);
       if (lvl < 1) return; // you can only work what you own
-      const mult = workMultiplier(lvl);
-      const base = nextInt(run, def.workYield[0], def.workYield[1]);
-      const coin = Math.round(base * mult);
+      // working earns a full extra helping of the venture's income over the cycle
+      const coin = Math.round(workCoinPerTick(def, lvl) * WORK_TICKS);
       run.coin += coin;
       trainAttr(run, def.workTrains);
       gainStanding(run, def.faction, 0.5);
-      pushLog(run, `A shift at the ${def.name} turns ${coin} copper (×${mult.toFixed(1)}).`, 'coin');
+      pushLog(run, `A shift at the ${def.name} turns ${formatMoney(coin)}.`, 'coin');
 
       // the market stall draws better wares as it grows (see the drop table).
       if (def.id === 'market_stall') marketStallDrops(run, lvl);

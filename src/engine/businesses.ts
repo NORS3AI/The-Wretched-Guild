@@ -179,7 +179,8 @@ export function ownsAnyBusiness(run: RunState): boolean {
 }
 
 /** The ownership yield multiplier when working an enterprise: ×2 at L1, ×2.5 at
- *  L2, ×3 at L3 … (×(1.5 + 0.5·level)). */
+ *  L2, ×3 at L3 … (×(1.5 + 0.5·level)). (Legacy — kept for reference; income now
+ *  scales with the total invested, see passiveIncome.) */
 export function workMultiplier(level: number): number {
   return level >= 1 ? 1.5 + 0.5 * level : 1;
 }
@@ -187,12 +188,36 @@ export function workMultiplier(level: number): number {
 /** Ticks a single "work the enterprise" cycle takes. */
 export const WORK_TICKS = 7;
 
-/** Average coin per tick earned while actively working an enterprise, so the UI
- *  can show the boost over passive income. */
-export function workCoinPerTick(def: BusinessDef, level: number): number {
+// ── Income scaled to investment ───────────────────────────────────────────────
+// A venture's cost grows EXPONENTIALLY with level (costGrowth^level), so a flat
+// "coin per level" income falls hopelessly behind — by level 24 you've sunk
+// hundreds of billions into a den that pays a few coppers. Instead, a venture's
+// passive income is a fixed fraction of the TOTAL coin you have poured into it,
+// so a grand, high-level enterprise pays a grand income. Roughly, a venture pays
+// itself back over PAYBACK_TICKS ticks of passive income (faster when worked).
+
+/** Ticks over which a venture's passive income repays what you've sunk into it. */
+export const PAYBACK_TICKS = 500;
+
+/** Total coin invested to reach a level — the sum of every upgrade cost paid
+ *  (baseCost × (costGrowth^level − 1)/(costGrowth − 1)). */
+export function cumulativeCost(def: BusinessDef, level: number): number {
+  if (level <= 0) return 0;
+  return (def.baseCost * (Math.pow(def.costGrowth, level) - 1)) / (def.costGrowth - 1);
+}
+
+/** Passive coin/tick an owned venture yields — a fixed fraction of the total coin
+ *  invested in it, so income keeps pace with the exponential cost of levelling. */
+export function passiveIncome(def: BusinessDef, level: number): number {
   if (level < 1) return 0;
-  const avgBase = (def.workYield[0] + def.workYield[1]) / 2;
-  return (avgBase * workMultiplier(level)) / WORK_TICKS;
+  return cumulativeCost(def, level) / PAYBACK_TICKS;
+}
+
+/** The EXTRA coin/tick earned while a venture is actively worked (by you or a
+ *  foreman) — a full second helping on top of its passive income, so working (or
+ *  setting a foreman to) a venture doubles its output. */
+export function workCoinPerTick(def: BusinessDef, level: number): number {
+  return passiveIncome(def, level);
 }
 
 export function canInvest(run: RunState, def: BusinessDef): boolean {
@@ -217,7 +242,7 @@ export function totalIncomePerTick(run: RunState): number {
   let sum = 0;
   for (const def of BUSINESSES) {
     const level = ownedLevel(run, def.id);
-    if (level > 0) sum += def.incomePerLevel * level;
+    if (level > 0) sum += passiveIncome(def, level);
   }
   return sum;
 }
@@ -228,7 +253,7 @@ export function processBusinesses(run: RunState): void {
   for (const def of BUSINESSES) {
     const level = ownedLevel(run, def.id);
     if (level <= 0) continue;
-    run.coin += def.incomePerLevel * level;
+    run.coin += passiveIncome(def, level);
     if (def.standingPerLevel > 0) gainStanding(run, def.faction, def.standingPerLevel * level);
   }
 }

@@ -36,6 +36,17 @@ export function versionForOrdinal(n: number): string {
 // Newest first. Versions are computed from position below.
 const RAW: RawPatch[] = [
   {
+    date: 'July 23, 2026',
+    time: '12:30 AM MST',
+    title: 'Enterprises Reworked — Income That Scales',
+    changes: [
+      'A massive rework of how enterprises earn. Their cost to level up grows exponentially, but their income used to grow only linearly — so a high-level venture cost a fortune and paid a pittance (a level-24 Fencing Den made ~20c/tick after you\'d sunk hundreds of billions into it).',
+      'Now a venture\'s passive income is a fixed share of the TOTAL coin you\'ve poured into it — it pays itself back over a set window and then runs at pure profit. Income keeps pace with the cost of levelling, so a grand enterprise pays a grand income. That same level-24 Fencing Den now earns on the order of a billion-plus per tick.',
+      'Working a venture (or setting a foreman to it) now earns a full SECOND helping of its income on top of the passive — so working it doubles its output, and a free foreman more than doubles it.',
+      'The Enterprises panel shows the new figures, folded into proper denominations for large sums.',
+    ],
+  },
+  {
     date: 'July 22, 2026',
     time: '11:55 PM MST',
     title: 'Craft While You Toil',

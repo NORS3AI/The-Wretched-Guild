@@ -18,6 +18,7 @@ export function maxHp(run: RunState): number {
 }
 
 export function damage(game: GameState, run: RunState, quarters: number, cause: string): void {
+  if (game.settings?.godMode) return; // dev god mode — the wretch takes no harm
   run.hp = Math.max(0, run.hp - quarters);
   if (run.hp <= 0 && run.alive) die(game, run, cause);
 }
@@ -64,6 +65,19 @@ function clampNeed(v: number): number {
 /** Advance all survival needs by one tick, then apply their consequences.
  *  Returns true if the character died. */
 export function tickSurvival(game: GameState, run: RunState): boolean {
+  // dev god mode: every body function is frozen full, illness is banished, and
+  // hearts are pinned to the maximum — nothing can wear the wretch down.
+  if (game.settings?.godMode) {
+    run.needs.food = 100;
+    run.needs.water = 100;
+    run.needs.comfort = 100;
+    run.needs.hygiene = 100;
+    run.needs.relief = 100;
+    run.illness = 'none';
+    run.hp = maxHp(run);
+    return false;
+  }
+
   const n = run.needs;
   n.food = clampNeed(n.food - DECAY.food);
   n.water = clampNeed(n.water - DECAY.water);

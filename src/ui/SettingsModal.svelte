@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { gameStore, actions, settingsOpen } from './game';
+  import { gameStore, actions, settingsOpen, devOpen } from './game';
 
   const game = gameStore;
 
@@ -29,6 +29,19 @@
           </span>
         </label>
       {/each}
+
+      <div class="cat dev-cat">Developer</div>
+      <label class="opt">
+        <input
+          type="checkbox"
+          checked={$devOpen}
+          onchange={(e) => devOpen.set((e.currentTarget as HTMLInputElement).checked)}
+        />
+        <span class="opt-text">
+          <span class="opt-name">Dev panel</span>
+          <span class="opt-desc faint">Open the debug panel — god mode, coin, and faction cheats.</span>
+        </span>
+      </label>
 
       <button class="btn primary close" onclick={() => settingsOpen.set(false)}>Done</button>
     </div>
@@ -64,6 +77,9 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     margin-bottom: 10px;
+  }
+  .dev-cat {
+    margin-top: 18px;
   }
   .opt {
     display: flex;

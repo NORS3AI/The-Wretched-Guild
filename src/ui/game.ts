@@ -20,6 +20,7 @@ export const dangerFlash = writable(0);
 export const settingsOpen = writable(false);
 export const patchOpen = writable(false);
 export const legacyOpen = writable(false);
+export const devOpen = writable(false);
 
 // Which panel fills the main column (Ply Your Trade by default, or one of the
 // tabbed panels). Purely a view concern, so it lives outside the save.
@@ -229,6 +230,21 @@ export const actions = {
   resetEverything: () => {
     clearSave();
     game = newGame();
+    saveGame(game);
+    notify();
+  },
+
+  // ── dev panel cheats ────────────────────────────────────────────────────────
+  addDiamond: () => {
+    game.run.coin += 1e36; // one diamond's worth of copper
+    game.run.peakCoin = Math.max(game.run.peakCoin, game.run.coin);
+    saveGame(game);
+    notify();
+  },
+  maxFactions: () => {
+    for (const k of Object.keys(game.run.factions)) {
+      (game.run.factions as Record<string, number>)[k] = 100;
+    }
     saveGame(game);
     notify();
   },

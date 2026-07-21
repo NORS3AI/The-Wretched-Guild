@@ -53,6 +53,7 @@ export function computeTokens(run: RunState): number {
 
 export function die(game: GameState, run: RunState, cause: string): void {
   if (!run.alive) return;
+  if (game.settings?.godMode) return; // dev god mode — death is disabled
   run.alive = false;
   run.deathCause = cause;
   run.hp = 0;

@@ -1188,5 +1188,23 @@ console.log('The Wretched Guild — engine tests\n');
   assert(h.run.needs.comfort > 50, `the hat keeps comfort rising even in heat (50 -> ${h.run.needs.comfort.toFixed(1)})`);
 }
 
+// 36) Dev god mode: needs freeze full, no harm can land, and death is disabled.
+{
+  const { maxHp } = await import('../src/engine/survival');
+  const g = newGame();
+  g.settings = { ...g.settings, godMode: true };
+  g.run.needs.food = 0;
+  g.run.needs.water = 0;
+  g.run.needs.comfort = 0;
+  g.run.needs.hygiene = 0;
+  g.run.hp = 1;
+  g.run.illness = 'plague';
+  for (let i = 0; i < 300; i++) advance(g);
+  assert(g.run.alive, 'god mode: the wretch cannot die');
+  assert(g.run.needs.food === 100 && g.run.needs.water === 100 && g.run.needs.comfort === 100, 'god mode: body functions stay full');
+  assert(g.run.illness === 'none', 'god mode: illness is banished');
+  assert(g.run.hp >= maxHp(g.run) - 0.001, 'god mode: hearts pinned to the max');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

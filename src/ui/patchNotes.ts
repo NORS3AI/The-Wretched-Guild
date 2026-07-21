@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '11:55 PM MST',
+    title: 'A Dev Panel',
+    changes: [
+      'Settings (the ⚙ button up top) now has a "Dev panel" checkbox. Tick it to open a debug panel.',
+      'The Dev Panel offers God Mode — freezes every body function (food, water, comfort, hygiene, relief) full, banishes illness, pins your hearts to the max, and makes the wretch unkillable — plus a "+1 Diamond" grant and a "Max all Factions" button.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '11:15 PM MST',
     title: 'An All-Weather Hat',
     changes: [

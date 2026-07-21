@@ -3,6 +3,7 @@
   import { advancement, rankTitle, bandName, MAX_RANK } from '../engine/ranks';
   import { FACTIONS } from '../engine/factions';
   import { itemDef } from '../engine/items';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
 
@@ -31,8 +32,8 @@
         <div class="req-label faint">To rise to rung {adv.nextRank} — <em>spends what it costs</em>:</div>
         <div class="req" class:met={adv.coinMet}>
           <span class="tick">{adv.coinMet ? '✓' : '○'}</span>
-          <span>Copper</span>
-          <span class="req-val">{Math.floor(run.coin)} / {adv.req.minCoin}</span>
+          <span>Coin</span>
+          <span class="req-val">{formatMoney(run.coin)} / {formatMoney(adv.req.minCoin)}</span>
         </div>
         {#if adv.req.minCombined > 0}
           <div class="req" class:met={adv.standingMet}>

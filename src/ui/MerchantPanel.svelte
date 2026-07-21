@@ -2,6 +2,7 @@
   import { gameStore, actions } from './game';
   import { carryOffers, canBuyCarry, gearOffers, canBuyGear } from '../engine/merchant';
   import { inventoryCapacity } from '../engine/items';
+  import { formatMoney } from '../engine/money';
   import { factionById } from '../engine/factions';
 
   const game = gameStore;
@@ -37,7 +38,7 @@
               <span class="offer-max">All bought.</span>
             {:else}
               <div class="req">
-                <span class="cost" class:short={run.coin < offer.cost}>{offer.cost}c</span>
+                <span class="cost" class:short={run.coin < offer.cost}>{formatMoney(offer.cost)}</span>
                 <span class="faction" class:short={run.factions[offer.faction] < offer.factionReq}>
                   {factionById(offer.faction).name} {offer.factionReq}
                 </span>
@@ -65,7 +66,7 @@
               <span class="offer-max">{offer.kind === 'waterskin' ? 'At its largest.' : 'Owned.'}</span>
             {:else}
               <div class="req">
-                <span class="cost" class:short={run.coin < offer.cost}>{offer.cost}c</span>
+                <span class="cost" class:short={run.coin < offer.cost}>{formatMoney(offer.cost)}</span>
               </div>
               <button class="btn primary buy" disabled={!buyable} onclick={() => actions.buyGear(offer.kind)}>
                 Buy

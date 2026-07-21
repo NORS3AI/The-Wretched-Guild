@@ -1,6 +1,7 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
   import { CONTRACTS, contractById, contractPay } from '../engine/contracts';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
 
@@ -17,7 +18,7 @@
     <p class="muted">
       A hooded factor of the Shadow Guild waits for you. There is bloody work —
       {#if mark}a mark called <strong class="markname">{mark.title}</strong> — {/if}worth
-      {#if markFee}<strong class="markfee">{markFee} copper</strong>{:else}good coin{/if} at your standing.
+      {#if markFee}<strong class="markfee">{formatMoney(markFee)}</strong>{:else}good coin{/if} at your standing.
       The offer keeps; open it whenever you like and slip away to decide later.
     </p>
     <div class="contract-actions">

@@ -15,6 +15,7 @@ import { riskRoll } from './checks';
 import { sway, killEvil, ethicsBand } from './alignment';
 import { pushLog, trainAttr, gainStanding } from './helpers';
 import { damage } from './survival';
+import { formatMoney } from './money';
 import { nextInt } from './rng';
 import { CONTRACT_COOLDOWN } from './state';
 
@@ -336,9 +337,9 @@ function finishEscape(
     run.coin += pay;
     run.heat = Math.min(100, run.heat + 10);
     gainStanding(run, 'shadow', standing);
-    pushLog(run, `Contract fulfilled. The Guild pays ${pay} coppers into your palm.`, 'good');
+    pushLog(run, `Contract fulfilled. The Guild pays ${formatMoney(pay)} into your palm.`, 'good');
     return {
-      text: `You are three streets away before the first scream. ${pay} coppers, and a name that now means something in the dark.`,
+      text: `You are three streets away before the first scream. ${formatMoney(pay)}, and a name that now means something in the dark.`,
       next: null,
     };
   }
@@ -349,9 +350,9 @@ function finishEscape(
     if (!run.alive) return { text: 'The watch runs you down in the shambles. You do not get up.', next: null };
     run.coin += pay; // the job was done — the Guild pays in full
     gainStanding(run, 'shadow', standing);
-    pushLog(run, `The full ${pay} copper is yours — but a bloody, seen escape leaves every guard hunting you.`, 'bad');
+    pushLog(run, `The full ${formatMoney(pay)} is yours — but a bloody, seen escape leaves every guard hunting you.`, 'bad');
     return {
-      text: `The deed is done and the Guild pays in full — ${pay} coppers. But a bolt grazes you and your face is marked; every guard in the parish now wants your head.`,
+      text: `The deed is done and the Guild pays in full — ${formatMoney(pay)}. But a bolt grazes you and your face is marked; every guard in the parish now wants your head.`,
       next: null,
     };
   }
@@ -368,9 +369,9 @@ function finishEscape(
   }
   run.coin += pay; // you lived, and the deed still counts
   gainStanding(run, 'shadow', standing);
-  pushLog(run, `You barely escape with your life — but the ${pay}-copper fee is clutched in a bloody fist.`, 'bad');
+  pushLog(run, `You barely escape with your life — but the fee of ${formatMoney(pay)} is clutched in a bloody fist.`, 'bad');
   return {
-    text: `They corner you, and you fight your way clear through a haze of blood and pain. You live — barely — the ${pay} coppers yours, but every guard knows your face.`,
+    text: `They corner you, and you fight your way clear through a haze of blood and pain. You live — barely — the ${formatMoney(pay)} yours, but every guard knows your face.`,
     next: null,
   };
 }
@@ -385,7 +386,7 @@ export function makeContract(t: ContractTarget): EncounterDef {
     title: t.title,
     intro:
       `A hooded factor of the Shadow Guild finds you in a tavern nook. "${t.name}, ${t.epithet} who ${t.sin}. ` +
-      `Certain parties want ${P.o} silenced. {FEE} coppers. Do this well, and doors open."`,
+      `Certain parties want ${P.o} silenced. {FEE}. Do this well, and doors open."`,
     start: 'approach',
     nodes: {
       approach: {

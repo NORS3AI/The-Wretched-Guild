@@ -5,6 +5,7 @@ import type { GameState, RunState } from './types';
 import { activityById } from './activities';
 import { ENCOUNTERS } from './encounters';
 import { CONTRACTS, pickContractTarget, contractById, wasSpared, contractPay } from './contracts';
+import { formatMoney } from './money';
 import { newRun } from './state';
 import { CONTRACT_COOLDOWN } from './state';
 import { die } from './death';
@@ -274,7 +275,7 @@ export function dispatch(game: GameState, cmd: Command): void {
       const target = contractById(def.id);
       // the fee scales with rank — fill it into the offer's intro
       const fee = target ? contractPay(target, run.rank) : 40;
-      let intro = def.intro.replace('{FEE}', String(fee));
+      let intro = def.intro.replace('{FEE}', formatMoney(fee));
       // a mark spared before is offered again with a knowing nod to the fact.
       if (target && wasSpared(run, def.id)) {
         intro = `${target.name} still draws breath, and still deserves the knife. The Guild wants the job finished this time. ${intro}`;

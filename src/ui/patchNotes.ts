@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '11:00 AM MST',
+    title: 'Coin Reads in Denominations',
+    changes: [
+      'Amounts that used to show as raw copper now read in proper denominations everywhere. The advancement requirement (e.g. "3460 copper") shows as "3sh 460c"; the label is now simply "Coin".',
+      'The wandering merchant\'s prices, the Shadow Guild contract fee and its payouts now all read in shillings/silver/etc. instead of long copper counts.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '10:30 AM MST',
     title: 'Free Advancement Toggle',
     changes: [

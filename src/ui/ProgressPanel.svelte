@@ -7,7 +7,7 @@
   const game = gameStore;
 
   $: run = $game.run;
-  $: adv = advancement(run);
+  $: adv = advancement(run, $game.settings?.freeAdvance ?? false);
   $: title = rankTitle(run);
 </script>
 

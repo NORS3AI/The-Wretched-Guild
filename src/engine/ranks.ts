@@ -131,18 +131,21 @@ export interface Advancement {
   milestonePassed: boolean;
 }
 
-export function advancement(run: RunState): Advancement {
+/** `freeReqs` (the dev "Free advancement" toggle) reports every numeric
+ *  requirement as already met, so the player can exercise the real Seek
+ *  Advancement flow — Rites of Passage and all — without grinding the costs. */
+export function advancement(run: RunState, freeReqs = false): Advancement {
   const combined = combinedStanding(run.factions);
   if (run.rank >= MAX_RANK) {
     return { atMax: true, nextRank: null, req: null, combined, coinMet: false, standingMet: false, itemStatus: [], itemsMet: false, eligible: false, milestone: null, milestonePassed: true };
   }
   const next = run.rank + 1;
   const req = reqFor(next);
-  const coinMet = run.coin >= req.minCoin;
-  const standingMet = combined >= req.minCombined;
+  const coinMet = freeReqs || run.coin >= req.minCoin;
+  const standingMet = freeReqs || combined >= req.minCombined;
   const itemStatus = req.items.map((it) => {
     const have = countItem(run, it.item);
-    return { item: it.item, have, need: it.qty, met: have >= it.qty };
+    return { item: it.item, have, need: it.qty, met: freeReqs || have >= it.qty };
   });
   const itemsMet = itemStatus.every((s) => s.met);
   const milestone = MILESTONE_RANKS[next] ?? null;

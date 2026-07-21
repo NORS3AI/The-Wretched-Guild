@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '10:30 AM MST',
+    title: 'Free Advancement Toggle',
+    changes: [
+      'Dev Panel gains a "Free advancement" toggle. Turn it on and every rank requirement (coin, standing, turn-ins) reads as met — so you can Seek Advancement from the Reputation tab and walk through each rung and its Rite of Passage, cost-free, to test the flow. (The direct Rank up +1 and Reset to rank 1 buttons remain.)',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '10:00 AM MST',
     title: 'Dev Coin Grants',
     changes: [

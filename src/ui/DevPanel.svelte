@@ -18,6 +18,7 @@
   $: godMode = $game.settings?.godMode ?? false;
   $: noHeat = $game.settings?.noHeat ?? false;
   $: fastCards = $game.settings?.fastCards ?? false;
+  $: freeAdvance = $game.settings?.freeAdvance ?? false;
   $: oilLeftMin = Math.ceil(($game.run.oilBuffMs ?? 0) / 60000);
 </script>
 
@@ -56,6 +57,13 @@
       </label>
 
       <div class="cat">Rank</div>
+      <label class="opt" class:on={freeAdvance}>
+        <input type="checkbox" checked={freeAdvance} onchange={() => actions.toggleSetting('freeAdvance')} />
+        <span class="opt-text">
+          <span class="opt-name">Free advancement</span>
+          <span class="opt-desc faint">Ignore all rank requirements (coin, standing, turn-ins). Then Seek Advancement from the Reputation tab to test each rung and its Rite of Passage, cost-free.</span>
+        </span>
+      </label>
       <p class="rank-line faint">Current rank: <strong class="gold">{$game.run.rank}</strong> of 100</p>
       <div class="grants">
         <button class="btn" disabled={$game.run.rank >= 100} onclick={() => actions.devRankUp()}>Rank up +1</button>

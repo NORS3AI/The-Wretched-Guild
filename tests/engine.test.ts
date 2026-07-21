@@ -1231,6 +1231,18 @@ console.log('The Wretched Guild — engine tests\n');
   assert(r.run.rank === rank0 + 21, 'dev rank up climbs one rung per press');
   dispatch(r, { type: 'devResetRank' });
   assert(r.run.rank === 1, 'dev reset rank returns the wretch to rank 1');
+
+  // free advancement: with the dev flag, requirements read as met and Seek
+  // Advancement rises a rank at no cost.
+  const { advancement } = await import('../src/engine/ranks');
+  const a = newGame();
+  a.run.rank = 1;
+  a.run.coin = 0;
+  assert(!advancement(a.run).eligible, 'without resources you are not eligible normally');
+  assert(advancement(a.run, true).eligible, 'free advancement makes you eligible');
+  a.settings = { ...a.settings, freeAdvance: true };
+  dispatch(a, { type: 'seekAdvancement' });
+  assert(a.run.rank === 2 && a.run.coin === 0, 'free advancement: Seek Advancement rises a rank, spending nothing');
 }
 
 // 38) The wandering merchant stops coming once every ware is bought.

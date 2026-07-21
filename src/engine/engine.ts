@@ -285,7 +285,10 @@ export function dispatch(game: GameState, cmd: Command): void {
 
     case 'seekAdvancement': {
       if (!run.alive || run.encounter) break;
-      const adv = advancement(run);
+      // dev "Free advancement" treats all numeric requirements as met, so the
+      // real Seek Advancement flow (Rites included) can be tested cost-free.
+      const free = !!game.settings?.freeAdvance;
+      const adv = advancement(run, free);
       if (!adv.eligible || adv.nextRank === null) break;
       // crossing into a new band demands a Rite of Passage (§13)
       if (adv.milestone && !adv.milestonePassed) {
@@ -295,8 +298,9 @@ export function dispatch(game: GameState, cmd: Command): void {
         }
         break;
       }
-      // completeAdvance spends the required coin + combined standing and logs
-      completeAdvance(run);
+      // free advancement rises with no cost; otherwise spend the coin + standing
+      if (free) devAdvance(run);
+      else completeAdvance(run);
       break;
     }
 

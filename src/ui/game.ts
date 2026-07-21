@@ -173,6 +173,11 @@ export const actions = {
     saveGame(game);
     notify();
   },
+  clearLog: () => {
+    game.log.length = 0; // clear in place so the engine's log binding stays valid
+    saveGame(game);
+    notify();
+  },
   acknowledgeIllicitWarning: () => {
     game.meta.illicitWarningSeen = true;
     game.paused = false;

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '8:30 PM MST',
+    title: 'Clear the Chronicle',
+    changes: [
+      'Added a Clear button to the Chronicle so you can wipe the log by hand whenever you like.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '8:10 PM MST',
     title: 'Pause Means Pause',
     changes: [

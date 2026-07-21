@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { gameStore } from './game';
+  import { gameStore, actions } from './game';
 
   const game = gameStore;
 
@@ -22,7 +22,12 @@
 </script>
 
 <div class="panel log-panel">
-  <div class="panel-title">Chronicle</div>
+  <div class="panel-title">
+    Chronicle
+    <button class="clear" title="Clear the Chronicle" disabled={entries.length === 0} onclick={() => actions.clearLog()}>
+      Clear
+    </button>
+  </div>
   <div class="log scroll" use:autoscroll>
     {#each entries as entry}
       <div class="entry {entry.kind}">
@@ -38,6 +43,32 @@
     display: flex;
     flex-direction: column;
     height: 520px;
+  }
+  .log-panel .panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .clear {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--ink-dim);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .clear:hover:not(:disabled) {
+    border-color: var(--blood-bright);
+    color: var(--blood-bright);
+  }
+  .clear:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
   .log {
     padding: 10px 12px;

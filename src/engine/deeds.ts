@@ -24,7 +24,8 @@ function doCook(run: RunState, ingredients: string[], cookedId: string, burntId:
   }
   for (const ing of ingredients) removeItem(run, ing, 1);
   const out = res === 'cooked' ? cookedId : burntId;
-  if (res === 'cooked') gainSkill(run, 'cooking', 1); // a good cook teaches; a burn does not
+  // even a burnt dish teaches something; a successful cook teaches double
+  gainSkill(run, 'cooking', res === 'cooked' ? 2 : 1);
   const def = ITEMS[out];
   if (addItem(run, out, 1)) {
     pushLog(
@@ -65,15 +66,15 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'eat',
     name: 'Eat',
-    blurb: 'Eat the most filling food in your pockets.',
+    blurb: 'Eat the most filling food from your larder.',
     timeTicks: 0,
     // only foods that actually restore the belly — a raw fish is not one (cook it first)
-    available: (run) => run.pockets.some((p) => p && (itemDef(p.item)?.food ?? 0) > 0),
+    available: (run) => [...run.larder, ...run.pockets].some((p) => p && (itemDef(p.item)?.food ?? 0) > 0),
     effect: (_g, run) => {
-      // pick the food with the highest food value
+      // pick the food with the highest food value, from the larder or pockets
       let best: string | null = null;
       let bestFood = 0;
-      for (const p of run.pockets) {
+      for (const p of [...run.larder, ...run.pockets]) {
         if (!p) continue;
         const def = itemDef(p.item);
         if ((def?.food ?? 0) > bestFood) {

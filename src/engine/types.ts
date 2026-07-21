@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -100,6 +100,8 @@ export interface RunState {
   waterskinCharges: number;
   waterskinMax: number;
   pockets: (ItemStack | null)[];
+  /** the food larder — six slots reserved for food, apart from the pockets */
+  larder: (ItemStack | null)[];
   /** carry-capacity ladder: base pockets (2–6), belt pouches (×2 slots each,
    *  belt holds up to 6), and the owned container tier (satchel … wagon). */
   pocketSlots: number;

@@ -314,13 +314,13 @@ console.log('The Wretched Guild — engine tests\n');
   while (g.run.alive && ticks++ < 2000) advance(g);
   assert(!g.run.alive, `neglecting food and water is lethal (${g.run.deathCause})`);
 
-  // eating restores the food need
+  // eating restores the food need (food lives in the larder now)
   const e = newGame();
   e.run.needs.food = 20;
-  e.run.pockets = [{ item: 'bread', qty: 1 }, null];
+  e.run.larder = [{ item: 'bread', qty: 1 }, null, null, null, null, null];
   dispatch(e, { type: 'doDeed', id: 'eat' });
   assert(e.run.needs.food > 20, `eating bread restores food (20 -> ${e.run.needs.food})`);
-  assert(!e.run.pockets.some((p) => p && p.item === 'bread'), 'the bread is consumed');
+  assert(!e.run.larder.some((p) => p && p.item === 'bread'), 'the bread is consumed');
 
   // a doctor lifts the plague
   const p = newGame();
@@ -1036,6 +1036,36 @@ console.log('The Wretched Guild — engine tests\n');
     if (got > 0) break;
   }
   assert(got > 0, 'a level-1 market stall can drop a pastry while worked');
+}
+
+// 32) Food routes to the six-slot larder; ingredients (goods) stay in pockets;
+//     and cooking teaches on a burn, double on a success.
+{
+  const { slotsFor, LARDER_SLOTS, countItem } = await import('../src/engine/items');
+  const g = newGame();
+  g.run.larder = [null, null, null, null, null, null];
+  g.run.pockets = [null, null];
+  assert(LARDER_SLOTS === 6, 'the larder has six slots');
+
+  addItem(g.run, 'bread', 1); // food → larder
+  addItem(g.run, 'cooking_oil', 1); // goods → pockets
+  addItem(g.run, 'fish', 1); // raw fish (a food ingredient) → larder
+  assert(g.run.larder.some((p) => p && p.item === 'bread'), 'food goes to the larder');
+  assert(g.run.larder.some((p) => p && p.item === 'fish'), 'raw fish (to be cooked) goes to the larder too');
+  assert(g.run.pockets.some((p) => p && p.item === 'cooking_oil'), 'ingredients like oil stay in the pockets');
+  assert(slotsFor(g.run, 'bread') === g.run.larder && slotsFor(g.run, 'firewood') === g.run.pockets, 'slotsFor routes food to larder, goods to pockets');
+  assert(countItem(g.run, 'bread') === 1, 'countItem sees the larder');
+
+  // a full purse of ingredients no longer blocks cooking: fish (larder) + oil (pockets)
+  g.run.pockets = [{ item: 'firewood', qty: 5 }, { item: 'cooking_oil', qty: 1 }]; // pockets full of goods
+  addItem(g.run, 'fish', 1);
+  g.run.skills['cooking'] = 90; // at 90: 90% cooked / 10% burnt / 0% fail — always teaches
+  const before = g.run.skills['cooking'];
+  dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+  // a burn teaches +1, a success teaches +2 — either way the skill rises
+  const gained = g.run.skills['cooking'] - before;
+  assert(gained === 1 || gained === 2, `cooking teaches (+1 on a burn, +2 on a success): got +${gained}`);
+  assert(g.run.pockets.some((p) => p && p.item === 'firewood'), 'a full purse of goods no longer blocks cooking');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

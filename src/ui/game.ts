@@ -142,6 +142,8 @@ function run(cmd: Command): void {
 export const actions = {
   setActivity: (id: string | null) => run({ type: 'setActivity', id }),
   acceptContract: () => run({ type: 'acceptContract' }),
+  declineContract: () => run({ type: 'declineContract' }),
+  dismissEncounter: () => run({ type: 'dismissEncounter' }),
   chooseEncounter: (index: number) => run({ type: 'chooseEncounter', index }),
   seekAdvancement: () => run({ type: 'seekAdvancement' }),
   payStocks: () => run({ type: 'payStocks' }),

@@ -31,7 +31,7 @@
         <div class="req-label faint">To rise to rung {adv.nextRank} — <em>spends what it costs</em>:</div>
         <div class="req" class:met={adv.coinMet}>
           <span class="tick">{adv.coinMet ? '✓' : '○'}</span>
-          <span>Coppers (spent)</span>
+          <span>Copper</span>
           <span class="req-val">{Math.floor(run.coin)} / {adv.req.minCoin}</span>
         </div>
         {#if adv.req.minCombined > 0}

@@ -196,7 +196,9 @@ export type Command =
   | { type: 'buyUnlock'; id: string }
   | { type: 'buyItem'; id: string }
   | { type: 'buyCarry'; kind: CarryKind }
-  | { type: 'dismissMerchant' };
+  | { type: 'dismissMerchant' }
+  | { type: 'declineContract' }
+  | { type: 'dismissEncounter' };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -221,6 +223,23 @@ export function dispatch(game: GameState, cmd: Command): void {
       run.coin -= 50;
       run.stocksUntil = null;
       pushLog(run, 'You press 50 copper into a gaoler\'s waiting palm and are quietly let go, spared the worst of it.', 'plain');
+      break;
+    }
+
+    case 'declineContract': {
+      if (!run.contractAvailable) break;
+      run.contractAvailable = false;
+      run.contractTargetId = null;
+      run.contractCooldown = CONTRACT_COOLDOWN;
+      pushLog(run, 'You wave the factor off. The Shadow Guild will come knocking again.', 'plain');
+      break;
+    }
+
+    case 'dismissEncounter': {
+      // only random events may simply be walked away from; contracts and rites
+      // have their own exits within the encounter.
+      if (!run.encounter || !run.encounter.defId.startsWith('event_')) break;
+      run.encounter = null;
       break;
     }
 

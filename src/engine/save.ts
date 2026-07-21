@@ -8,6 +8,7 @@ import { advanceTick } from './engine';
 import { bindLog, pushLog } from './helpers';
 import { emptyStanding } from './factions';
 import { emptySkills } from './skills';
+import { isLarderItem } from './items';
 
 const SAVE_KEY = 'wretched-guild/save';
 
@@ -180,6 +181,24 @@ function migrate(data: unknown): GameState {
     const r = g.run as unknown as Record<string, unknown>;
     if (typeof r.eventCooldown !== 'number') r.eventCooldown = 45;
     g.version = 17;
+  }
+  // v17 → v18: the six-slot food larder. Relocate any food out of the pockets.
+  if (g.version < 18) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (!Array.isArray(r.larder)) {
+      const larder: ({ item: string; qty: number } | null)[] = [null, null, null, null, null, null];
+      const pockets = (r.pockets as ({ item: string; qty: number } | null)[]) ?? [];
+      let li = 0;
+      for (let i = 0; i < pockets.length; i++) {
+        const slot = pockets[i];
+        if (slot && isLarderItem(slot.item) && li < larder.length) {
+          larder[li++] = slot;
+          pockets[i] = null;
+        }
+      }
+      r.larder = larder;
+    }
+    g.version = 18;
   }
   g.version = SAVE_VERSION;
   return g;

@@ -37,6 +37,17 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '9:40 PM MST',
+    title: 'The Larder & the Long Way Round',
+    changes: [
+      'Food now lives in a dedicated six-slot Larder, separate from your pockets — so a purse full of ingredients (oil, butter, firewood) never leaves you unable to cook. Raw catch you mean to cook is kept in the larder too.',
+      'Every event can now be waved off: "A Whisper in the Dark" has a Leave button, and each random town event has a "Leave — pay it no mind" option, just like the wandering merchant.',
+      'Cooking now teaches from every attempt that reaches the pan: +1 skill on a burn, and double (+2) on a success.',
+      'The advancement screen now labels the coin requirement simply "Copper" instead of "Coppers (spent)".',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '9:05 PM MST',
     title: 'Whispers, Wages & a Living Town',
     changes: [

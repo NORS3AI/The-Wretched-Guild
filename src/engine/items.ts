@@ -58,27 +58,49 @@ export function isEdible(def: ItemDef): boolean {
   return !!(def.food || def.water || def.heal);
 }
 
-/** A pocket slot holds a stack of at most this many of one item. */
+/** A slot holds a stack of at most this many of one item. */
 export const MAX_STACK = 5;
+
+/** The larder — a dedicated six-slot store just for food, kept apart from the
+ *  pockets so a purse full of ingredients never leaves you unable to cook. */
+export const LARDER_SLOTS = 6;
 
 export function itemDef(id: string): ItemDef | undefined {
   return ITEMS[id];
+}
+
+/** Does this item belong in the food larder (rather than the pockets)? Food and
+ *  herbs — including raw catch you mean to cook — go to the larder. */
+export function isLarderItem(id: string): boolean {
+  const def = itemDef(id);
+  return !!def && (def.kind === 'food' || def.kind === 'herb');
+}
+
+/** The slot-array an item lives in: the larder for food, the pockets otherwise. */
+export function slotsFor(run: RunState, id: string): (ItemStack | null)[] {
+  return isLarderItem(id) ? run.larder : run.pockets;
 }
 
 export function pocketCount(run: RunState): number {
   return run.pockets.reduce((s, p) => s + (p ? p.qty : 0), 0);
 }
 
-/** How many of an item the player is carrying, across all pocket slots. */
-export function countItem(run: RunState, id: string): number {
-  return run.pockets.reduce((s, p) => s + (p && p.item === id ? p.qty : 0), 0);
+function countIn(arr: (ItemStack | null)[] | undefined, id: string): number {
+  return (arr ?? []).reduce((s, p) => s + (p && p.item === id ? p.qty : 0), 0);
 }
 
-/** Add items, filling existing stacks (to MAX_STACK) then empty slots. Returns
- *  true only if ALL fit; overflow beyond two 5-stacks is lost to the mud. */
+/** How many of an item the player carries, across both pockets and larder. */
+export function countItem(run: RunState, id: string): number {
+  return countIn(run.pockets, id) + countIn(run.larder, id);
+}
+
+/** Add items, filling existing stacks (to MAX_STACK) then empty slots, in the
+ *  item's home store (larder for food, pockets otherwise). Returns true only if
+ *  ALL fit; overflow is lost. */
 export function addItem(run: RunState, id: string, qty = 1): boolean {
+  const slots = slotsFor(run, id);
   let left = qty;
-  for (const slot of run.pockets) {
+  for (const slot of slots) {
     if (left <= 0) break;
     if (slot && slot.item === id && slot.qty < MAX_STACK) {
       const room = MAX_STACK - slot.qty;
@@ -87,36 +109,45 @@ export function addItem(run: RunState, id: string, qty = 1): boolean {
       left -= add;
     }
   }
-  for (let i = 0; i < run.pockets.length && left > 0; i++) {
-    if (run.pockets[i] === null) {
+  for (let i = 0; i < slots.length && left > 0; i++) {
+    if (slots[i] === null) {
       const add = Math.min(MAX_STACK, left);
-      run.pockets[i] = { item: id, qty: add };
+      slots[i] = { item: id, qty: add };
       left -= add;
     }
   }
   return left <= 0;
 }
 
-/** Remove `qty` of an item, drawing across slots. Fails (removing nothing) if
- *  the player isn't carrying enough. */
-export function removeItem(run: RunState, id: string, qty = 1): boolean {
-  if (countItem(run, id) < qty) return false;
-  let left = qty;
-  for (let i = 0; i < run.pockets.length && left > 0; i++) {
-    const slot = run.pockets[i];
+function drainFrom(arr: (ItemStack | null)[] | undefined, id: string, left: number): number {
+  if (!arr) return left;
+  for (let i = 0; i < arr.length && left > 0; i++) {
+    const slot = arr[i];
     if (slot && slot.item === id) {
       const take = Math.min(slot.qty, left);
       slot.qty -= take;
       left -= take;
-      if (slot.qty <= 0) run.pockets[i] = null;
+      if (slot.qty <= 0) arr[i] = null;
     }
   }
+  return left;
+}
+
+/** Remove `qty` of an item, drawing from its home store first and then the other
+ *  (so items on older saves are still reachable). Fails if not carrying enough. */
+export function removeItem(run: RunState, id: string, qty = 1): boolean {
+  if (countItem(run, id) < qty) return false;
+  let left = qty;
+  left = drainFrom(slotsFor(run, id), id, left);
+  left = drainFrom(run.pockets, id, left);
+  left = drainFrom(run.larder, id, left);
   return true;
 }
 
 export function hasRoom(run: RunState, id: string): boolean {
-  if (run.pockets.some((p) => p && p.item === id && p.qty < MAX_STACK)) return true;
-  return run.pockets.some((p) => p === null);
+  const slots = slotsFor(run, id);
+  if (slots.some((p) => p && p.item === id && p.qty < MAX_STACK)) return true;
+  return slots.some((p) => p === null);
 }
 
 // ── carry capacity: pockets → belt pouches → beasts and wagons ────────────────

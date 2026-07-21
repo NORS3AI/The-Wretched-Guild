@@ -36,9 +36,14 @@
           {#if markFee}<strong class="markfee">{markFee} copper</strong>{:else}good coin{/if} at your standing.
           The offer keeps; open it whenever you like and slip away to decide later.
         </p>
-        <button class="btn primary" onclick={() => actions.acceptContract()}>
-          Read the Contract →
-        </button>
+        <div class="contract-actions">
+          <button class="btn primary" onclick={() => actions.acceptContract()}>
+            Read the Contract →
+          </button>
+          <button class="btn" onclick={() => actions.declineContract()}>
+            Leave
+          </button>
+        </div>
       </div>
     </div>
   {/if}
@@ -108,6 +113,11 @@
   }
   .markfee {
     color: var(--gold-bright);
+  }
+  .contract-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
   .acts {
     display: grid;

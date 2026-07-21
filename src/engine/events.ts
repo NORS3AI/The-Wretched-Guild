@@ -15,12 +15,12 @@ function clamp100(v: number): number {
   return Math.max(0, Math.min(100, v));
 }
 
-/** Does the player carry anything edible to give away? */
+/** Does the player carry anything edible to give away? (food lives in the larder) */
 function hasFoodToGive(run: RunState): boolean {
-  return run.pockets.some((p) => p && (itemDef(p.item)?.food ?? 0) > 0);
+  return [...run.larder, ...run.pockets].some((p) => p && (itemDef(p.item)?.food ?? 0) > 0);
 }
 function giveAwayFood(run: RunState): string | null {
-  for (const p of run.pockets) {
+  for (const p of [...run.larder, ...run.pockets]) {
     if (p && (itemDef(p.item)?.food ?? 0) > 0) {
       removeItem(run, p.item, 1);
       return itemDef(p.item)!.name.toLowerCase();

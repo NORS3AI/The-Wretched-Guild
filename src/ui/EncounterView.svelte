@@ -7,6 +7,8 @@
   $: enc = $game.run.encounter;
   $: def = enc ? ENCOUNTERS[enc.defId] : null;
   $: node = enc && def ? def.nodes[enc.nodeId] : null;
+  // random town events can simply be walked away from (contracts/rites can't)
+  $: isEvent = !!enc && enc.defId.startsWith('event_');
 </script>
 
 {#if enc && def && node}
@@ -37,6 +39,10 @@
           </button>
         {/each}
       </div>
+
+      {#if isEvent}
+        <button class="leave" onclick={() => actions.dismissEncounter()}>Leave — pay it no mind</button>
+      {/if}
     </div>
   </div>
 {/if}
@@ -114,5 +120,22 @@
     font-size: 0.74rem;
     color: var(--ink-faint);
     font-style: italic;
+  }
+  .leave {
+    margin-top: 14px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    color: var(--ink-dim);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 9px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .leave:hover {
+    border-color: var(--ink-dim);
+    color: var(--ink);
   }
 </style>

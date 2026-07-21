@@ -9,6 +9,7 @@
   $: run = $game.run;
   $: climate = climateNow(run);
   $: usedSlots = run.pockets.filter(Boolean).length;
+  $: larderUsed = run.larder.filter(Boolean).length;
   $: vendorOpen = shopOpen(run);
 
   const needRows = [
@@ -66,7 +67,36 @@
       {/each}
     </div>
 
-    <!-- inventory / vendor -->
+    <!-- larder: six slots just for food, so ingredients never crowd out cooking -->
+    <div class="section-label">
+      Larder
+      <span class="slots faint">{larderUsed}/{run.larder.length} food</span>
+    </div>
+    <div class="pockets">
+      {#each run.larder as slot}
+        {@const def = slot ? itemDef(slot.item) : null}
+        <div class="slot" class:empty={!slot}>
+          {#if slot && def}
+            <div class="slot-top">
+              <span class="slot-name" title={def.blurb}>{def.name}</span>
+              {#if slot.qty > 1}<span class="slot-qty">×{slot.qty}</span>{/if}
+            </div>
+            <div class="slot-actions">
+              {#if isEdible(def)}
+                <button class="mini" title="Eat" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {/if}
+              <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
+                Sell {def.value}c
+              </button>
+            </div>
+          {:else}
+            <span class="slot-empty faint">— empty —</span>
+          {/if}
+        </div>
+      {/each}
+    </div>
+
+    <!-- pockets & vendor -->
     <div class="section-label">
       Pockets &amp; Pedlar
       <span class="slots faint">{usedSlots}/{run.pockets.length} slots</span>

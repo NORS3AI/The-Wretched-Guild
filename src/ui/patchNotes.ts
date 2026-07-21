@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '11:15 PM MST',
+    title: 'An All-Weather Hat',
+    changes: [
+      'The wandering merchant now sells An All-Weather Hat for 1 shilling. A broad felt hat and hood, it wards off BOTH the summer heat and the winter cold — with it on, weather no longer troubles your comfort at all.',
+      'Warm Woollens (the "sweater") still keep only the cold out; the heat can still get you. Body & Needs now shows a small badge — 🎩 Sheltered with the hat, 🧥 Woollens against the cold — so you can see what you\'re protected from.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '10:40 PM MST',
     title: 'A Red ❗️ for Events',
     changes: [

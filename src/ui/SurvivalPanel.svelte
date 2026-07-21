@@ -44,7 +44,11 @@
       <span>
         The air is
         <strong class:cold={climate === 'cold'} class:hot={climate === 'hot'}>{climate}</strong>.
-        {#if run.warmUntil > run.tick}
+        {#if run.weatherproof}
+          <span class="warm" title="Neither cold nor heat can touch you">🎩 Sheltered</span>
+        {:else if run.warmClothes && climate === 'cold'}
+          <span class="warm" title="Your woollens keep the cold out">🧥 Woollens</span>
+        {:else if run.warmUntil > run.tick}
           <span class="warm" title="The cold cannot touch you">🔥 Warm ~{run.warmUntil - run.tick}h</span>
         {/if}
       </span>

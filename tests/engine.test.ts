@@ -1172,5 +1172,21 @@ console.log('The Wretched Guild — engine tests\n');
   assert(countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0, 'a rabbit is roasted with oil into food');
 }
 
+// 35) The All-Weather Hat (1 shilling) wards off BOTH heat and cold.
+{
+  const { gearOffers, buyGear, canBuyGear } = await import('../src/engine/merchant');
+  const h = newGame();
+  h.run.coin = 1000;
+  const hat = gearOffers(h.run).find((o) => o.kind === 'hat')!;
+  assert(hat.cost === 1000, 'the all-weather hat costs 1 shilling (1000c)');
+  assert(buyGear(h.run, 'hat') && h.run.weatherproof, 'the hat is bought and makes you weatherproof');
+  assert(!canBuyGear(h.run, gearOffers(h.run).find((o) => o.kind === 'hat')!), 'the hat cannot be bought twice');
+  // in the swelter of a summer day (tick 80), comfort still recovers with the hat on
+  h.run.tick = 80;
+  h.run.needs.comfort = 50;
+  for (let i = 0; i < 10; i++) advance(h);
+  assert(h.run.needs.comfort > 50, `the hat keeps comfort rising even in heat (50 -> ${h.run.needs.comfort.toFixed(1)})`);
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

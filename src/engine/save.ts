@@ -204,6 +204,7 @@ function migrate(data: unknown): GameState {
   if (g.version < 19) {
     const r = g.run as unknown as Record<string, unknown>;
     if (typeof r.warmClothes !== 'boolean') r.warmClothes = false;
+    if (typeof r.weatherproof !== 'boolean') r.weatherproof = false;
     if (typeof r.hasBow !== 'boolean') r.hasBow = false;
     g.version = 19;
   }

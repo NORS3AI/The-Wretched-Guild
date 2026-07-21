@@ -77,7 +77,8 @@ export function tickSurvival(game: GameState, run: RunState): boolean {
   const hardy = run.learnings['hardy'] ? 0.6 : 1;
   // warm woollens keep the cold out just like Seeking Warmth does
   const warm = run.warmUntil > run.tick || run.warmClothes;
-  if (climate === 'cold' && !warm) n.comfort = clampNeed(n.comfort - 0.28 * hardy);
+  if (run.weatherproof) n.comfort = clampNeed(n.comfort + 0.2); // the hat shrugs off both cold AND heat
+  else if (climate === 'cold' && !warm) n.comfort = clampNeed(n.comfort - 0.28 * hardy);
   else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.22 * hardy);
   else n.comfort = clampNeed(n.comfort + 0.2); // mild, or cold-but-warm
 

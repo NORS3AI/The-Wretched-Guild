@@ -90,7 +90,7 @@ export function canBuyCarry(run: RunState, offer: CarryOffer): boolean {
 
 // ── gear: waterskins, warm clothes, and a hunting bow ─────────────────────────
 
-export type GearKind = 'waterskin' | 'warm_clothes' | 'bow';
+export type GearKind = 'waterskin' | 'warm_clothes' | 'hat' | 'bow';
 
 export interface GearOffer {
   kind: GearKind;
@@ -127,6 +127,15 @@ export function gearOffers(run: RunState): GearOffer[] {
       maxed: !!run.warmClothes,
     },
     {
+      kind: 'hat',
+      name: 'An All-Weather Hat',
+      desc: 'A broad felt hat and hood — shades off the summer sun and turns the winter cold alike. Weather troubles you no more.',
+      cost: 1000,
+      faction: 'commons',
+      factionReq: 0,
+      maxed: !!run.weatherproof,
+    },
+    {
       kind: 'bow',
       name: 'A Hunting Bow',
       desc: 'Take up the Hunter\'s trade — stalk game in the wood.',
@@ -153,6 +162,9 @@ export function buyGear(run: RunState, kind: GearKind): boolean {
   } else if (kind === 'warm_clothes') {
     run.warmClothes = true;
     pushLog(run, 'You pull on thick warm woollens. The cold will trouble you far less.', 'good');
+  } else if (kind === 'hat') {
+    run.weatherproof = true;
+    pushLog(run, 'You don a broad all-weather hat and hood. Neither cold nor heat will trouble you again.', 'good');
   } else {
     run.hasBow = true;
     pushLog(run, 'You buy a hunting bow and a quiver of arrows. The Hunter\'s trade is open to you.', 'good');

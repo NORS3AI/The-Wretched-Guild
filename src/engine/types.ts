@@ -101,6 +101,8 @@ export interface RunState {
   waterskinMax: number;
   /** warm woollens bought from the merchant — keep the cold from draining comfort */
   warmClothes: boolean;
+  /** an all-weather hat bought from the merchant — wards off BOTH cold and heat */
+  weatherproof: boolean;
   /** a hunting bow bought from the merchant — unlocks the Hunter trade */
   hasBow: boolean;
   pockets: (ItemStack | null)[];

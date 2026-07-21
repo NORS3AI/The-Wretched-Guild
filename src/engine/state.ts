@@ -60,6 +60,7 @@ export function newRun(meta: MetaState): RunState {
     waterskinCharges: 4,
     waterskinMax: 4,
     warmClothes: false,
+    weatherproof: false,
     hasBow: false,
     pockets: [null, null],
     // the six-slot food larder — a wretch starts with a crust of bread

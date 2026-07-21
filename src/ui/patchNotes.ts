@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '9:10 PM MST',
+    title: 'Events Tab & Alert Badges',
+    changes: [
+      'The Events tab is now a permanent home where everything needing your attention stacks together — the stocks, encounters, contracts, Rites of Passage, and the wandering pack-merchant (moved here out of Ply Your Trade).',
+      'A red ! badge now marks the Events tab whenever something is waiting there.',
+      'Body & Needs also flags a red ! whenever any need — food, water, comfort, hygiene, or relief — falls to 50% or lower, so you know at a glance when to eat, drink, or tend to yourself.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '8:35 PM MST',
     title: 'An Events Tab',
     changes: [

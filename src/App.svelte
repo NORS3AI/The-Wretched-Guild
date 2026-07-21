@@ -31,21 +31,24 @@
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
 
-  // An Events tab appears only while an encounter or the stocks is active — the
-  // game whisks the player to it automatically (see game.ts).
-  $: eventActive = $game.run.encounter !== null || $game.run.stocksUntil !== null;
+  // The Events tab gathers everything that needs handling — encounters, the
+  // stocks, and the wandering merchant. A red ! flags when any of them is waiting.
+  $: eventsAlert =
+    $game.run.encounter !== null || $game.run.stocksUntil !== null || $game.run.merchantHere;
+  // Body & Needs flags a red ! when any need has fallen to half or lower.
+  $: needsAlert = Object.values($game.run.needs).some((v) => v <= 50);
 
   // The Wretch (attributes & skills) leads as its own tab. The Merchant tab is the
   // town shop — always present; it shows a "closed" sign outside 8am–6pm hours.
   $: tabs = [
-    { id: 'wretch' as SideTab, label: 'The Wretch', show: true, flag: false },
-    { id: 'events' as SideTab, label: 'Events', show: eventActive, flag: true },
-    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true, flag: false },
-    { id: 'merchant' as SideTab, label: 'Merchant', show: true, flag: false },
-    { id: 'needs' as SideTab, label: 'Body & Needs', show: true, flag: false },
-    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, flag: false },
-    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked, flag: false },
-    { id: 'reputation' as SideTab, label: 'Reputation', show: true, flag: false },
+    { id: 'wretch' as SideTab, label: 'The Wretch', show: true, alert: false },
+    { id: 'events' as SideTab, label: 'Events', show: true, alert: eventsAlert },
+    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true, alert: false },
+    { id: 'merchant' as SideTab, label: 'Merchant', show: true, alert: false },
+    { id: 'needs' as SideTab, label: 'Body & Needs', show: true, alert: needsAlert },
+    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, alert: false },
+    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked, alert: false },
+    { id: 'reputation' as SideTab, label: 'Reputation', show: true, alert: false },
   ].filter((t) => t.show);
 
   // If the active tab has since become unavailable (e.g. a new life resets rank),
@@ -69,12 +72,13 @@
     <button
       class="tab"
       class:active={effectiveTab === tab.id}
-      class:flag={tab.flag}
+      class:flag={tab.alert}
       role="tab"
       aria-selected={effectiveTab === tab.id}
       onclick={() => activeTab.set(tab.id)}
     >
       {tab.label}
+      {#if tab.alert}<span class="alert-badge" title="Needs your attention">!</span>{/if}
     </button>
   {/each}
 </div>
@@ -82,12 +86,25 @@
 <main class="layout">
   <section class="center col tabpanel">
     {#if effectiveTab === 'events'}
-      <!-- Events, accepted contracts, Rites of Passage, and the stocks all live
-           on their own tab; the game auto-navigates here when one opens. -->
+      <!-- Everything that needs handling stacks here: the stocks, encounters
+           (random events, accepted contracts, Rites of Passage), and the
+           wandering merchant. The game auto-navigates here when one opens. -->
       {#if $game.run.stocksUntil !== null}
         <StocksPanel />
       {:else if $game.run.encounter}
         <EncounterView />
+      {/if}
+      {#if $game.run.merchantHere}
+        <MerchantPanel />
+      {/if}
+      {#if !eventsAlert}
+        <div class="panel">
+          <div class="panel-title">Events</div>
+          <p class="no-events">
+            Nothing stirs just now. Events, wandering merchants, contracts, and Rites of
+            Passage will gather here when they arise.
+          </p>
+        </div>
       {/if}
     {:else if effectiveTab === 'wretch'}
       <CharacterPanel />
@@ -102,9 +119,6 @@
     {:else if effectiveTab === 'reputation'}
       <ProgressPanel />
     {:else}
-      {#if $game.run.merchantHere}
-        <MerchantPanel />
-      {/if}
       <ActivitiesPanel />
     {/if}
   </section>
@@ -234,7 +248,7 @@
     color: var(--gold-bright);
     background: rgba(201, 162, 39, 0.1);
   }
-  /* the Events tab, present only while something demands attention, draws the eye */
+  /* a tab with something needing attention (Events waiting, a need at half) glows */
   .tab.flag:not(.active) {
     border-color: var(--blood);
     color: var(--blood-bright);
@@ -248,6 +262,30 @@
     50% {
       box-shadow: 0 0 8px 1px rgba(160, 60, 55, 0.5);
     }
+  }
+  .alert-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    margin-left: 5px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: var(--blood-bright);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .no-events {
+    padding: 16px 14px;
+    margin: 0;
+    font-size: 0.86rem;
+    font-style: italic;
+    line-height: 1.55;
+    color: var(--ink-dim);
   }
   .tabpanel {
     min-width: 0;

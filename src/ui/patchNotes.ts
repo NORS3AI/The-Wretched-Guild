@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '9:30 AM MST',
+    title: 'Chalice of Infinite Oil',
+    changes: [
+      'New Dev Panel grant: the Chalice of Infinite Oil. For one hour of real time, all your cooking (fish, game, potatoes) needs no physical Goblet of Oil — the Chalice provides it and no oil is spent. A countdown shows in the Dev Panel and on the Body & Needs weather line (🍶).',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '9:00 AM MST',
     title: 'Tidier Empty Events',
     changes: [

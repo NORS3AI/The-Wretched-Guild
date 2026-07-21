@@ -206,6 +206,7 @@ function migrate(data: unknown): GameState {
     if (typeof r.warmClothes !== 'boolean') r.warmClothes = false;
     if (typeof r.weatherproof !== 'boolean') r.weatherproof = false;
     if (typeof r.hasBow !== 'boolean') r.hasBow = false;
+    if (typeof r.oilBuffMs !== 'number') r.oilBuffMs = 0;
     g.version = 19;
   }
   g.version = SAVE_VERSION;

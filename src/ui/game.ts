@@ -92,6 +92,11 @@ setInterval(() => {
     const now = Date.now();
     const elapsed = Math.min(1000, Math.max(0, now - lastFrame)); // measured, clamped
     lastFrame = now;
+    // the Chalice of Infinite Oil buff burns down in real time — even while paused
+    if (game.run.oilBuffMs > 0) {
+      game.run.oilBuffMs = Math.max(0, game.run.oilBuffMs - elapsed);
+      notify();
+    }
     if (!game.paused && game.run.alive) {
       const wasAlive = game.run.alive;
       const dt = elapsed * Math.max(1, game.speed | 0);
@@ -145,6 +150,8 @@ if (typeof window !== 'undefined') {
       // — but only if the game was actually running, not paused.
       const awayMs = Date.now() - (game.lastSavedAt ?? Date.now());
       if (!game.paused && game.run.alive) game.run.dayMs += Math.min(Math.max(0, awayMs), DAY_LENGTH_MS);
+      // the oil buff counts real time even while the tab was away
+      if (game.run.oilBuffMs > 0) game.run.oilBuffMs = Math.max(0, game.run.oilBuffMs - Math.max(0, awayMs));
       catchUpOffline(game); // simulate what happened while we were hidden (skips if paused)
       lastStarveHits = game.run.starveHits; // don't flash for offline progress
       saveGame(game);
@@ -250,4 +257,9 @@ export const actions = {
   },
   devRankUp: () => run({ type: 'devRankUp' }),
   devResetRank: () => run({ type: 'devResetRank' }),
+  grantOilBuff: () => {
+    game.run.oilBuffMs = 3600_000; // one hour of real time
+    saveGame(game);
+    notify();
+  },
 };

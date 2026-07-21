@@ -6,6 +6,7 @@
   $: godMode = $game.settings?.godMode ?? false;
   $: noHeat = $game.settings?.noHeat ?? false;
   $: fastCards = $game.settings?.fastCards ?? false;
+  $: oilLeftMin = Math.ceil(($game.run.oilBuffMs ?? 0) / 60000);
 </script>
 
 <div class="overlay">
@@ -53,7 +54,11 @@
       <div class="grants">
         <button class="btn" onclick={() => actions.addDiamond()}>+1 Diamond</button>
         <button class="btn" onclick={() => actions.maxFactions()}>Max all Factions</button>
+        <button class="btn" onclick={() => actions.grantOilBuff()}>🍶 Chalice of Infinite Oil</button>
       </div>
+      {#if ($game.run.oilBuffMs ?? 0) > 0}
+        <p class="oil-line">Infinite Oil active — <strong class="gold">~{oilLeftMin} min</strong> left. Cook without a Goblet of Oil.</p>
+      {/if}
       <p class="purse faint">Purse: {formatMoney($game.run.coin)}</p>
 
       <button class="btn primary close" onclick={() => devOpen.set(false)}>Done</button>
@@ -155,6 +160,11 @@
   .rank-line {
     font-size: 0.82rem;
     margin: 0 0 10px;
+  }
+  .oil-line {
+    font-size: 0.8rem;
+    margin: 10px 0 0;
+    color: var(--green);
   }
   .gold {
     color: var(--gold-bright);

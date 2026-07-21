@@ -1254,5 +1254,25 @@ console.log('The Wretched Guild — engine tests\n');
   assert(!g.run.merchantHere, 'a sold-out merchant is never sent into town');
 }
 
+// 39) The Chalice of Infinite Oil buff lets you cook with no physical Goblet.
+{
+  const { hasCookingOil } = await import('../src/engine/deeds');
+  const g = newGame();
+  g.run.oilBuffMs = 3600_000; // buffed for an hour
+  g.run.larder = [{ item: 'raw_rabbit', qty: 1 }, null, null, null, null, null];
+  g.run.pockets = [null, null]; // NO cooking oil at all
+  g.run.skills['cooking'] = 100; // guarantee a success
+  assert(hasCookingOil(g.run), 'the Chalice supplies cooking oil while buffed');
+  dispatch(g, { type: 'doDeed', id: 'cook_game' });
+  assert(
+    countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0,
+    'buffed cooking roasts the beast with no Goblet of Oil in the pockets',
+  );
+
+  // once the buff runs out, cooking needs the real thing again
+  g.run.oilBuffMs = 0;
+  assert(!hasCookingOil(g.run), 'without the buff and without a Goblet, there is no oil to cook with');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

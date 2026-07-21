@@ -15,6 +15,12 @@ import { TICKS_PER_DAY } from './timeconst';
 /** Shared cooking: roll against Cooking skill. A success yields the good dish
  *  and +1 Cooking; a burn yields the ruined dish and no skill; a failure cooks
  *  nothing and spares the ingredients (see cookRoll for the odds). */
+/** Oil for the pan, from a physical Goblet — or, while the dev Chalice of Infinite
+ *  Oil buff runs, from thin air. */
+export function hasCookingOil(run: RunState): boolean {
+  return (run.oilBuffMs ?? 0) > 0 || countItem(run, 'cooking_oil') >= 1;
+}
+
 function doCook(run: RunState, ingredients: string[], cookedId: string, burntId: string): void {
   const res = cookRoll(run, 'cooking');
   if (res === 'failed') {
@@ -22,7 +28,12 @@ function doCook(run: RunState, ingredients: string[], cookedId: string, burntId:
     pushLog(run, 'You cannot get the cooking right at all — at least the ingredients are spared for another try.', 'plain');
     return;
   }
-  for (const ing of ingredients) removeItem(run, ing, 1);
+  // the Chalice buff provides the oil, so no physical Goblet is spent while it lasts
+  const oilBuffed = (run.oilBuffMs ?? 0) > 0;
+  for (const ing of ingredients) {
+    if (ing === 'cooking_oil' && oilBuffed) continue;
+    removeItem(run, ing, 1);
+  }
   const out = res === 'cooked' ? cookedId : burntId;
   // even a burnt dish teaches something; a successful cook teaches double
   gainSkill(run, 'cooking', res === 'cooked' ? 2 : 1);
@@ -198,9 +209,9 @@ export const DEEDS: DeedDef[] = [
     blurb: 'Fry a raw river fish in a goblet of cooking oil. It may come out golden, burn, or refuse to cook at all.',
     timeTicks: 1,
     reveal: (run) => countItem(run, 'fish') >= 1,
-    available: (run) => countItem(run, 'fish') >= 1 && countItem(run, 'cooking_oil') >= 1,
+    available: (run) => countItem(run, 'fish') >= 1 && hasCookingOil(run),
     effect: (_g, run) => {
-      if (countItem(run, 'fish') < 1 || countItem(run, 'cooking_oil') < 1) {
+      if (countItem(run, 'fish') < 1 || !hasCookingOil(run)) {
         pushLog(run, 'You need a raw river fish and a goblet of cooking oil to fry it.', 'bad');
         return;
       }
@@ -214,9 +225,9 @@ export const DEEDS: DeedDef[] = [
     timeTicks: 1,
     reveal: (run) => countItem(run, 'potato') >= 1,
     available: (run) =>
-      countItem(run, 'potato') >= 1 && countItem(run, 'cooking_oil') >= 1 && countItem(run, 'slab_of_butter') >= 1,
+      countItem(run, 'potato') >= 1 && hasCookingOil(run) && countItem(run, 'slab_of_butter') >= 1,
     effect: (_g, run) => {
-      if (countItem(run, 'potato') < 1 || countItem(run, 'cooking_oil') < 1 || countItem(run, 'slab_of_butter') < 1) {
+      if (countItem(run, 'potato') < 1 || !hasCookingOil(run) || countItem(run, 'slab_of_butter') < 1) {
         pushLog(run, 'You need a potato, a goblet of oil, and a slab of butter to bake it.', 'bad');
         return;
       }
@@ -229,10 +240,10 @@ export const DEEDS: DeedDef[] = [
     blurb: 'Roast a beast you have hunted over a goblet of oil. Your Cooking skill decides how it comes out.',
     timeTicks: 1,
     reveal: (run) => bestRawGame(run) !== null,
-    available: (run) => bestRawGame(run) !== null && countItem(run, 'cooking_oil') >= 1,
+    available: (run) => bestRawGame(run) !== null && hasCookingOil(run),
     effect: (_g, run) => {
       const raw = bestRawGame(run);
-      if (!raw || countItem(run, 'cooking_oil') < 1) {
+      if (!raw || !hasCookingOil(run)) {
         pushLog(run, 'You need a hunted beast and a goblet of oil to roast it.', 'bad');
         return;
       }

@@ -105,6 +105,9 @@ export interface RunState {
   weatherproof: boolean;
   /** a hunting bow bought from the merchant — unlocks the Hunter trade */
   hasBow: boolean;
+  /** dev "Chalice of Infinite Oil" buff — real-time ms remaining during which
+   *  cooking needs no physical Goblet of Oil */
+  oilBuffMs: number;
   pockets: (ItemStack | null)[];
   /** the food larder — six slots reserved for food, apart from the pockets */
   larder: (ItemStack | null)[];

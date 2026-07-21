@@ -51,6 +51,9 @@
         {:else if run.warmUntil > run.tick}
           <span class="warm" title="The cold cannot touch you">🔥 Warm ~{run.warmUntil - run.tick}h</span>
         {/if}
+        {#if (run.oilBuffMs ?? 0) > 0}
+          <span class="warm oil" title="Cook without a Goblet of Oil">🍶 Oil ~{Math.ceil(run.oilBuffMs / 60000)}m</span>
+        {/if}
       </span>
       <span class="faint">Waterskin: {run.waterskinCharges}/{run.waterskinMax}</span>
     </div>
@@ -190,6 +193,9 @@
     color: #e08a3a;
     font-size: 0.76rem;
     white-space: nowrap;
+  }
+  .weather .warm.oil {
+    color: var(--green);
   }
   .needs {
     display: flex;

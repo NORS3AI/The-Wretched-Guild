@@ -1,6 +1,6 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
-  import { itemDef, VENDOR_STOCK } from '../engine/items';
+  import { itemDef, countItem, VENDOR_STOCK } from '../engine/items';
   import { shopOpen, formatClock, SHOP_OPEN_HOUR, SHOP_CLOSE_HOUR } from '../engine/time';
 
   const game = gameStore;
@@ -22,9 +22,13 @@
         {#each VENDOR_STOCK as id}
           {@const def = itemDef(id)}
           {#if def && def.buy != null}
+            {@const owned = countItem(run, id)}
             <div class="ware">
               <div class="ware-main">
-                <span class="ware-name">{def.name}</span>
+                <span class="ware-name">
+                  {def.name}
+                  {#if owned > 0}<span class="owned faint">— you own ×{owned}</span>{/if}
+                </span>
                 <p class="ware-desc faint">{def.blurb}</p>
               </div>
               <button
@@ -99,6 +103,9 @@
   .ware-name {
     font-size: 0.94rem;
     color: var(--ink);
+  }
+  .owned {
+    font-size: 0.72rem;
   }
   .ware-desc {
     font-size: 0.78rem;

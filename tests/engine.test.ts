@@ -350,8 +350,9 @@ console.log('The Wretched Guild — engine tests\n');
 // 15) Money formats into denominations (1000 copper = 1 shilling).
 {
   assert(formatMoney(40) === '40c', 'small sums read in copper');
-  assert(formatMoney(1250) === '1s 250c', '1250 copper = 1 shilling 250 copper');
-  assert(formatMoney(3_000_000) === '3si', 'a million copper reads in silver');
+  assert(formatMoney(1250) === '1sh 250c', '1250 copper = 1 shilling 250 copper');
+  assert(formatMoney(1000) === '1sh', '1000 copper rolls up to a shilling');
+  assert(formatMoney(3_000_000) === '3s', 'a million copper reads in silver');
 }
 
 // 15b) Beggar → next advancement costs 15 coppers.

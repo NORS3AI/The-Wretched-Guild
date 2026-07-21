@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '5:40 PM MST',
+    title: 'Cleaner Coin & Merchant Counts',
+    changes: [
+      'The Coin of the Realm now reads as proper denominations — 1,000 copper rolls up to "1sh 0c" and never shows a raw count like "3 million" of anything. Each rung shows its place-value digit.',
+      'New short marks for the coin: copper c · shilling sh · silver s · crown cr · triton t · gold g · platinum p · amethyst ag · topaz tg · emerald eg · ruby rg · sapphire sg · diamond dg.',
+      'The town Merchant now shows how many of each ware you already hold ("you own ×12"), so you can avoid buying more than you need.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '5:00 PM MST',
     title: 'Ledger, Enterprises & a Longer Chronicle',
     changes: [

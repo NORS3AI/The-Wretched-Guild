@@ -14,18 +14,18 @@ export interface Denom {
 // only relevant as far-future aspirational wealth; the beggar phase lives in the
 // bottom three.)
 export const DENOMS: Denom[] = [
-  { name: 'diamond', short: 'di', value: 1e36 },
-  { name: 'sapphire', short: 'sa', value: 1e33 },
-  { name: 'ruby', short: 'ru', value: 1e30 },
-  { name: 'emerald', short: 'em', value: 1e27 },
-  { name: 'topaz', short: 'to', value: 1e24 },
-  { name: 'amethyst', short: 'am', value: 1e21 },
-  { name: 'platinum', short: 'pt', value: 1e18 },
+  { name: 'diamond', short: 'dg', value: 1e36 },
+  { name: 'sapphire', short: 'sg', value: 1e33 },
+  { name: 'ruby', short: 'rg', value: 1e30 },
+  { name: 'emerald', short: 'eg', value: 1e27 },
+  { name: 'topaz', short: 'tg', value: 1e24 },
+  { name: 'amethyst', short: 'ag', value: 1e21 },
+  { name: 'platinum', short: 'p', value: 1e18 },
   { name: 'gold', short: 'g', value: 1e15 },
-  { name: 'triton', short: 'tr', value: 1e12 },
+  { name: 'triton', short: 't', value: 1e12 },
   { name: 'crown', short: 'cr', value: 1e9 },
-  { name: 'silver', short: 'si', value: 1e6 },
-  { name: 'shilling', short: 's', value: 1e3 },
+  { name: 'silver', short: 's', value: 1e6 },
+  { name: 'shilling', short: 'sh', value: 1e3 },
   { name: 'copper', short: 'c', value: 1 },
 ];
 
@@ -63,14 +63,17 @@ export interface WealthRung {
   value: number;
   /** name of the denomination one step below (null for copper, the base). */
   below: string | null;
-  /** has the player ever amassed at least one of this denomination right now? */
+  /** has the player amassed at least one of this denomination? */
   reached: boolean;
-  /** how many whole units of this denomination the amount contains. */
+  /** the place-value digit for this denomination (0–999): the amount rolls up so
+   *  1,000 copper reads as "1sh 0c" rather than a raw count of "3,000,000". */
   have: number;
 }
 
 /** The full wealth ladder, copper → diamond, tagged with what the given purse has
- *  reached — so the player can see how far their coin climbs and what lies above. */
+ *  reached — so the player can see how far their coin climbs and what lies above.
+ *  Each rung's `have` is its place-value digit, so reading the reached rungs top to
+ *  bottom gives a proper mixed-denomination amount (never "3 million of anything"). */
 export function wealthLadder(copper: number): WealthRung[] {
   const amt = Math.floor(Math.max(0, copper));
   const ascending = [...DENOMS].reverse(); // copper (base) up to diamond
@@ -80,6 +83,6 @@ export function wealthLadder(copper: number): WealthRung[] {
     value: d.value,
     below: i > 0 ? ascending[i - 1].name : null,
     reached: amt >= d.value,
-    have: Math.floor(amt / d.value),
+    have: Math.floor(amt / d.value) % 1000,
   }));
 }

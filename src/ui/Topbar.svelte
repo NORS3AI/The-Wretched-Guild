@@ -85,7 +85,7 @@
               </div>
               <span class="rung-status">
                 {#if rung.reached}
-                  <span class="have">✓ ×{rung.have.toLocaleString()}</span>
+                  <span class="have">{rung.have}{rung.short}</span>
                 {:else if rung.name === nextGoal}
                   <span class="goal">next goal</span>
                 {:else}

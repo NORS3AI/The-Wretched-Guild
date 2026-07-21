@@ -12,6 +12,9 @@ export const CONTRACT_FIRST_OFFER = 30; // ticks before the first contract appea
 export const CONTRACT_COOLDOWN = 90; // ticks between contract offers
 export const MERCHANT_FIRST_VISIT = 60; // ticks before a wandering merchant first appears
 export const MERCHANT_COOLDOWN = 120; // ticks between merchant visits
+export const EVENT_FIRST = 45; // ticks before the first random event
+export const EVENT_COOLDOWN_MIN = 80; // ticks between random events (low)
+export const EVENT_COOLDOWN_MAX = 160; // ticks between random events (high)
 
 export function newMeta(): MetaState {
   return {
@@ -98,6 +101,7 @@ export function newRun(meta: MetaState): RunState {
     contractFates: {},
     merchantHere: false,
     merchantCooldown: MERCHANT_FIRST_VISIT,
+    eventCooldown: EVENT_FIRST,
     legacyThisRun: 0,
   };
   run.hp = maxHp(run);

@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -153,6 +153,8 @@ export interface RunState {
   merchantHere: boolean;
   /** ticks until the wandering merchant next comes to town */
   merchantCooldown: number;
+  /** ticks until the next random town event springs up */
+  eventCooldown: number;
 
   legacyThisRun: number;
 }

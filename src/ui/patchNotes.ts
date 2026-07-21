@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '9:05 PM MST',
+    title: 'Whispers, Wages & a Living Town',
+    changes: [
+      'The contract offer ("A Whisper in the Dark") now shows what the job pays — and contracts are worth more at higher rank: the Guild trusts the risen with weightier, better-paid work (+10% of the base fee per rank above Beggar).',
+      'The town now throws random events at you beyond killing work — a harvest to lend a hand to, the chapel bell, an unguarded stall, a dropped purse, a child in rags, a mired cart, a wandering preacher. Most are chances to do good (or ill): farming, worship, charity, and honest help, alongside a bit of theft for those so inclined.',
+      'Market Stall pastry drops now start from level 1: 10% at L1, 15% at L2, 20% at L3+ (the higher-tier drops are unchanged).',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '8:30 PM MST',
     title: 'Clear the Chronicle',
     changes: [

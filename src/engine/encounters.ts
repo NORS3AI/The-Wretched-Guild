@@ -41,8 +41,10 @@ export interface EncounterDef {
 
 import { CONTRACTS } from './contracts';
 import { MILESTONES } from './milestones';
+import { EVENTS } from './events';
 
 export const ENCOUNTERS: Record<string, EncounterDef> = {
   ...CONTRACTS,
   ...MILESTONES,
+  ...Object.fromEntries(EVENTS.map((e) => [e.id, e])),
 };

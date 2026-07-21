@@ -11,6 +11,14 @@ import { formatMoney } from '../src/engine/money';
 import { rankTitle } from '../src/engine/ranks';
 import { addItem, countItem, MAX_STACK, itemDef, isEdible } from '../src/engine/items';
 
+// Advance one tick, then dismiss any random town event that popped up (it would
+// otherwise halt the sim and stall the fast-forward loops below). Tests that
+// exercise events do so explicitly via their own encounters.
+function advance(g: ReturnType<typeof newGame>): void {
+  advanceTick(g);
+  if (g.run.encounter && g.run.encounter.defId.startsWith('event_')) g.run.encounter = null;
+}
+
 let failures = 0;
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -27,7 +35,7 @@ function ff(g: ReturnType<typeof newGame>, n: number): void {
   for (let i = 0; i < n; i++) {
     Object.assign(g.run.needs, { food: 100, water: 100, comfort: 100, relief: 100 });
     g.run.illness = 'none';
-    advanceTick(g);
+    advance(g);
     if (!g.run.alive) break;
   }
 }
@@ -48,7 +56,7 @@ console.log('The Wretched Guild — engine tests\n');
   const g = newGame();
   dispatch(g, { type: 'setActivity', id: 'beg' });
   let guard = 0;
-  while (!g.run.contractAvailable && guard++ < 5000) advanceTick(g);
+  while (!g.run.contractAvailable && guard++ < 5000) advance(g);
   assert(g.run.contractAvailable, 'a contract is offered within reasonable time');
 
   g.run.stocksUntil = null; // begging may have landed us in the stocks; free us to test the contract
@@ -244,7 +252,7 @@ console.log('The Wretched Guild — engine tests\n');
     Object.assign(g.run.needs, { food: 100, water: 100, comfort: 100, relief: 100 });
     g.run.illness = 'none';
     g.run.heat = 100; // keep the pressure pinned high
-    advanceTick(g);
+    advance(g);
     if (g.run.coin < coin0 || g.run.heat < 100) { fined = true; break; }
   }
   assert(fined, 'sustained max Heat draws the watch (a fine or raid occurs)');
@@ -255,11 +263,11 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   // locked below rank 3
-  advanceTick(g);
+  advance(g);
   assert(g.run.recruits.length === 0, 'no candidates appear before rank 3');
 
   g.run.rank = 4;
-  advanceTick(g); // ensureRecruits fills the pool
+  advance(g); // ensureRecruits fills the pool
   assert(g.run.recruits.length === 3, 'candidates appear once the Guild is unlocked');
 
   // hand-craft a Lawful Good friar and confirm they refuse shadow work
@@ -284,7 +292,7 @@ console.log('The Wretched Guild — engine tests\n');
   const g = newGame();
   g.run.rank = 3; // cap = 1 + floor(2/2) = 2
   g.run.coin = 100000;
-  advanceTick(g);
+  advance(g);
   let hired = 0;
   for (let attempt = 0; attempt < 6; attempt++) {
     const r = g.run.recruits[0];
@@ -292,7 +300,7 @@ console.log('The Wretched Guild — engine tests\n');
     const ok = g.run.members.length;
     dispatch(g, { type: 'recruitMember', id: r.id });
     if (g.run.members.length > ok) hired++;
-    advanceTick(g);
+    advance(g);
   }
   assert(g.run.members.length <= 2, `roster respects the rank-3 cap of 2 (has ${g.run.members.length})`);
   assert(hired >= 1, 'at least one hire succeeded');
@@ -303,7 +311,7 @@ console.log('The Wretched Guild — engine tests\n');
   // an unfed, unwatered wretch dies of hunger or thirst
   const g = newGame();
   let ticks = 0;
-  while (g.run.alive && ticks++ < 2000) advanceTick(g);
+  while (g.run.alive && ticks++ < 2000) advance(g);
   assert(!g.run.alive, `neglecting food and water is lethal (${g.run.deathCause})`);
 
   // eating restores the food need
@@ -402,7 +410,7 @@ console.log('The Wretched Guild — engine tests\n');
   g2.run.stocksUntil = g2.run.tick + 24;
   g2.run.needs.food = 90;
   g2.run.needs.water = 90;
-  for (let i = 0; i < 30; i++) advanceTick(g2); // serve the sentence, no tending
+  for (let i = 0; i < 30; i++) advance(g2); // serve the sentence, no tending
   assert(g2.run.stocksUntil === null, 'the sentence ends on its own');
   assert(g2.run.needs.food <= 12 && g2.run.needs.water <= 8, `release leaves needs wrecked (food ${g2.run.needs.food.toFixed(1)}, water ${g2.run.needs.water.toFixed(1)})`);
 }
@@ -467,7 +475,7 @@ console.log('The Wretched Guild — engine tests\n');
   // force a cold tick by putting us at a winter/night point isn't easy; instead
   // verify the guard directly: with warm active, a cold check never drains.
   const before = g.run.needs.comfort;
-  for (let i = 0; i < 10; i++) advanceTick(g);
+  for (let i = 0; i < 10; i++) advance(g);
   assert(g.run.needs.comfort >= before - 0.01, `comfort does not drop from cold while warm (${before} -> ${g.run.needs.comfort})`);
 }
 
@@ -989,6 +997,45 @@ console.log('The Wretched Guild — engine tests\n');
   g.lastSavedAt = Date.now() - 60 * 60 * 1000;
   catchUpOffline(g);
   assert(g.run.tick > tickBefore, 'an unpaused game catches up on background time');
+}
+
+// 30) Random town events spring up and resolve on a valid choice.
+{
+  const { EVENTS } = await import('../src/engine/events');
+  assert(EVENTS.length >= 6, `there is a variety of events (${EVENTS.length})`);
+  assert(EVENTS.some((e) => e.id === 'event_harvest') && EVENTS.some((e) => e.id === 'event_chapel_bell') && EVENTS.some((e) => e.id === 'event_unguarded_stall'), 'events span farming, worship, and stealing');
+
+  const g = newGame();
+  g.run.eventCooldown = 1;
+  advanceTick(g); // 1 → 0 → an event springs up
+  assert(g.run.encounter !== null && g.run.encounter.defId.startsWith('event_'), 'a random event springs up when its timer runs out');
+
+  const enc = g.run.encounter!;
+  const node = ENCOUNTERS[enc.defId].nodes[enc.nodeId];
+  const idx = node.choices.findIndex((c) => !c.gate || c.gate(g.run));
+  dispatch(g, { type: 'chooseEncounter', index: idx });
+  assert(g.run.encounter === null, 'choosing a valid option resolves the event');
+  assert(g.run.eventCooldown > 1, 'the next event is scheduled for later');
+}
+
+// 31) Contract fees scale with rank; a level-1 stall drops food while worked.
+{
+  const { contractById, contractPay } = await import('../src/engine/contracts');
+  const osric = contractById('contract_taxman')!;
+  assert(contractPay(osric, 1) === osric.pay, 'at rank 1 a contract pays its base fee');
+  assert(contractPay(osric, 10) > contractPay(osric, 1), 'a higher rank is worth more than rank 1');
+  assert(contractPay(osric, 50) > contractPay(osric, 10), 'and it keeps climbing with rank');
+
+  const g = newGame();
+  g.run.businesses = { market_stall: 1 }; // pastry now drops from level 1 (10%)
+  dispatch(g, { type: 'setActivity', id: 'work_market_stall' });
+  let got = 0;
+  for (let n = 0; n < 800; n++) {
+    ff(g, 7);
+    got = countItem(g.run, 'pastry');
+    if (got > 0) break;
+  }
+  assert(got > 0, 'a level-1 market stall can drop a pastry while worked');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

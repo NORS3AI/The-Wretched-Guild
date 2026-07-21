@@ -296,6 +296,12 @@ export function contractById(id: string): ContractTarget | undefined {
   return BY_ID[id];
 }
 
+/** The fee a contract pays, scaled by the player's rank — the Guild trusts the
+ *  risen with weightier, better-paid work (+10% of base per rank above Beggar). */
+export function contractPay(t: ContractTarget, rank: number): number {
+  return Math.round(t.pay * (1 + Math.max(0, rank - 1) * 0.1));
+}
+
 /** Was this mark spared before? (Used to colour a repeat offer.) */
 export function wasSpared(run: RunState, id: string): boolean {
   return run.contractFates?.[id] === 'spared';
@@ -379,7 +385,7 @@ export function makeContract(t: ContractTarget): EncounterDef {
     title: t.title,
     intro:
       `A hooded factor of the Shadow Guild finds you in a tavern nook. "${t.name}, ${t.epithet} who ${t.sin}. ` +
-      `Certain parties want ${P.o} silenced. ${t.pay} coppers. Do this well, and doors open."`,
+      `Certain parties want ${P.o} silenced. {FEE} coppers. Do this well, and doors open."`,
     start: 'approach',
     nodes: {
       approach: {
@@ -580,18 +586,18 @@ export function makeContract(t: ContractTarget): EncounterDef {
             tag: '[Stealth]',
             gate: (r) => r.attrs.stealth >= 4,
             gateHint: 'Requires Stealth 4',
-            resolve: (game, run) => finishEscape(game, run, run.attrs.stealth, 7, t.pay),
+            resolve: (game, run) => finishEscape(game, run, run.attrs.stealth, 7, contractPay(t, run.rank)),
           },
           {
             label: 'Walk out calmly as though you belong',
             tag: '[Charm]',
             gate: (r) => r.attrs.charm >= 4,
             gateHint: 'Requires Charm 4',
-            resolve: (game, run) => finishEscape(game, run, run.attrs.charm, 8, t.pay),
+            resolve: (game, run) => finishEscape(game, run, run.attrs.charm, 8, contractPay(t, run.rank)),
           },
           {
             label: 'Simply run',
-            resolve: (game, run) => finishEscape(game, run, run.attrs.brawn, 12, t.pay),
+            resolve: (game, run) => finishEscape(game, run, run.attrs.brawn, 12, contractPay(t, run.rank)),
           },
         ],
       },

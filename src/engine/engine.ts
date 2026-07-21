@@ -4,7 +4,7 @@
 import type { GameState, RunState } from './types';
 import { activityById } from './activities';
 import { ENCOUNTERS } from './encounters';
-import { CONTRACTS, pickContractTarget, contractById, wasSpared } from './contracts';
+import { CONTRACTS, pickContractTarget, contractById, wasSpared, contractPay } from './contracts';
 import { newRun } from './state';
 import { CONTRACT_COOLDOWN } from './state';
 import { die } from './death';
@@ -21,7 +21,8 @@ import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from '.
 import { chance, nextInt } from './rng';
 import { shopOpen } from './time';
 import { buyCarryUpgrade, type CarryKind } from './merchant';
-import { MERCHANT_COOLDOWN } from './state';
+import { MERCHANT_COOLDOWN, EVENT_COOLDOWN_MIN, EVENT_COOLDOWN_MAX } from './state';
+import { pickEvent } from './events';
 
 export { TICKS_PER_DAY, DAYS_PER_YEAR, TICKS_PER_YEAR } from './timeconst';
 import { TICKS_PER_DAY, TICKS_PER_YEAR } from './timeconst';
@@ -115,6 +116,17 @@ export function advanceTick(game: GameState): void {
       run.merchantHere = true;
       run.merchantCooldown = MERCHANT_COOLDOWN;
       pushLog(run, 'A wandering merchant rolls into the square with pouches, packs, and beasts of burden for sale.', 'system');
+    }
+  }
+
+  // random town events spring up now and then — a harvest to help, a chapel bell,
+  // an unguarded stall, a dropped purse. A one-choice encounter that pauses time.
+  if (run.encounter === null && run.stocksUntil === null) {
+    run.eventCooldown--;
+    if (run.eventCooldown <= 0) {
+      const ev = pickEvent(run);
+      run.encounter = { defId: ev.id, nodeId: ev.start, lastOutcomeText: ev.intro };
+      run.eventCooldown = nextInt(run, EVENT_COOLDOWN_MIN, EVENT_COOLDOWN_MAX);
     }
   }
 
@@ -226,12 +238,14 @@ export function dispatch(game: GameState, cmd: Command): void {
       // only spent once they commit to an approach (see the contract's choices).
       const targetId = run.contractTargetId ?? 'contract_taxman';
       const def = CONTRACTS[targetId] ?? CONTRACTS['contract_taxman'];
-      // a mark spared before is offered again with a knowing nod to the fact.
       const target = contractById(def.id);
-      const intro =
-        target && wasSpared(run, def.id)
-          ? `${target.name} still draws breath, and still deserves the knife. The Guild wants the job finished this time. ${def.intro}`
-          : def.intro;
+      // the fee scales with rank — fill it into the offer's intro
+      const fee = target ? contractPay(target, run.rank) : 40;
+      let intro = def.intro.replace('{FEE}', String(fee));
+      // a mark spared before is offered again with a knowing nod to the fact.
+      if (target && wasSpared(run, def.id)) {
+        intro = `${target.name} still draws breath, and still deserves the knife. The Guild wants the job finished this time. ${intro}`;
+      }
       run.encounter = { defId: def.id, nodeId: def.start, lastOutcomeText: intro };
       break;
     }

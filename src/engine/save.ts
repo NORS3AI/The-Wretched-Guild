@@ -175,6 +175,12 @@ function migrate(data: unknown): GameState {
     }
     g.version = 16;
   }
+  // v16 → v17: random town events.
+  if (g.version < 17) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.eventCooldown !== 'number') r.eventCooldown = 45;
+    g.version = 17;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

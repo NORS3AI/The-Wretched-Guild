@@ -299,7 +299,9 @@ function makeWorkActivity(def: BusinessDef): ActivityDef {
 
 /** The market stall's level-gated finds while it is worked. */
 function marketStallDrops(run: RunState, lvl: number): void {
-  if (lvl >= 3 && chance(run, 0.2)) stallDrop(run, 'pastry');
+  // pastry starts at level 1 and grows: L1 10%, L2 15%, L3+ 20%
+  const pastryChance = lvl >= 3 ? 0.2 : lvl === 2 ? 0.15 : lvl >= 1 ? 0.1 : 0;
+  if (pastryChance > 0 && chance(run, pastryChance)) stallDrop(run, 'pastry');
   if (lvl >= 7 && chance(run, 0.3)) stallDrop(run, 'cake');
   if (lvl >= 15 && chance(run, 0.4)) stallDrop(run, 'fried_fish');
   if (lvl >= 30) {

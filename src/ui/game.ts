@@ -27,13 +27,14 @@ function checkFlash(): void {
   }
 }
 
-// The render loop repaints a few times a second; game-ticks advance on a real-
-// time accumulator (one tick per REAL_MS_PER_TICK of speed-scaled time). This
-// keeps the clock and bars smooth at every speed — at 1× a tick lands every 15s
-// (a 6-minute day), and 10× skips through it smoothly rather than in big chunks.
-const RENDER_MS = 500;
-const MAX_TICKS_PER_FRAME = 200; // safety clamp
+// The render loop repaints ~10×/sec; game-ticks advance on an accumulator fed by
+// MEASURED real time (not the nominal interval, which drifts slower than the wall
+// clock under load) so the sim, the clock, the activity bars, and the Chronicle
+// all stay in lock-step — the log now lands the instant a cycle finishes.
+const RENDER_MS = 100;
+const MAX_TICKS_PER_FRAME = 400; // safety clamp
 let tickAcc = 0;
+let lastFrame = Date.now();
 
 let game: GameState = loadGame();
 
@@ -50,29 +51,37 @@ let saveAcc = 0;
 let ticking = false; // guard against overlap/re-entrancy
 setInterval(() => {
   if (ticking) return;
-  // While the tab is hidden, we don't tick here (browsers throttle timers);
-  // the elapsed time is simulated in one bounded batch when the tab returns.
-  if (hidden()) return;
+  // While the tab is hidden, we don't tick here (browsers throttle timers); the
+  // elapsed time is simulated in one bounded batch when the tab returns. Keep the
+  // frame anchor current so returning doesn't jump.
+  if (hidden()) {
+    lastFrame = Date.now();
+    return;
+  }
   ticking = true;
   try {
-    if (!game.paused && game.run.alive && !game.run.encounter) {
+    const now = Date.now();
+    const elapsed = Math.min(1000, Math.max(0, now - lastFrame)); // measured, clamped
+    lastFrame = now;
+    if (!game.paused && game.run.alive) {
       const wasAlive = game.run.alive;
-      const dt = RENDER_MS * Math.max(1, game.speed | 0);
+      const dt = elapsed * Math.max(1, game.speed | 0);
       // the day/night clock runs on its own real-time timer (6 min per day)
       game.run.dayMs += dt;
-      // the sim clock advances a whole tick at a time from the same real time
+      // the sim clock advances a whole tick at a time from the same real time —
+      // this continues even with an encounter open (the player can leave it)
       tickAcc += dt;
       let did = 0;
       while (tickAcc >= REAL_MS_PER_TICK && did < MAX_TICKS_PER_FRAME) {
         tickAcc -= REAL_MS_PER_TICK;
         advanceTick(game);
         did++;
-        if (!game.run.alive || game.run.encounter) {
-          tickAcc = 0; // don't carry time across a death or an open encounter
+        if (!game.run.alive) {
+          tickAcc = 0; // don't carry time across a death
           break;
         }
       }
-      // repaint every frame so the clock glides even between ticks
+      // repaint every frame so the clock, bars, and Chronicle stay live
       notify();
       if (did > 0) {
         checkFlash();
@@ -81,7 +90,7 @@ setInterval(() => {
         if (wasAlive && !game.run.alive) saveGame(game);
       }
     }
-    saveAcc += RENDER_MS;
+    saveAcc += elapsed;
     if (saveAcc >= 5000) {
       saveAcc = 0;
       saveGame(game);

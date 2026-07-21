@@ -1068,5 +1068,30 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.pockets.some((p) => p && p.item === 'firewood'), 'a full purse of goods no longer blocks cooking');
 }
 
+// 33) Laying Low cools your Guild members' Heat (2 per cycle), and time now
+//     flows even while an encounter is open (the player can leave it).
+{
+  const g = newGame();
+  g.run.members = [
+    { id: 'm1', name: 'Cutter', archetype: 'Thug', skill: 10, alignment: { ethics: 0, morals: -20 }, job: null, upkeep: 0, heat: 10 },
+    { id: 'm2', name: 'Mouse', archetype: 'Sneak', skill: 8, alignment: { ethics: -20, morals: -10 }, job: null, upkeep: 0, heat: 0 },
+  ];
+  g.run.heat = 30;
+  dispatch(g, { type: 'setActivity', id: 'laylow' });
+  ff(g, 6); // one Lay Low cycle
+  assert(g.run.members[0].heat <= 8, `laying low cools a member's Heat by 2 (10 -> ${g.run.members[0].heat})`);
+  assert(g.run.members[1].heat === 0, 'a member with no Heat stays at 0 (never negative)');
+
+  // time flows with an encounter open
+  const h = newGame();
+  h.run.contractAvailable = true;
+  h.run.contractTargetId = 'contract_taxman';
+  dispatch(h, { type: 'acceptContract' });
+  assert(h.run.encounter !== null, 'a contract encounter is open');
+  const t0 = h.run.tick;
+  advanceTick(h);
+  assert(h.run.tick === t0 + 1, 'the clock keeps ticking with an encounter open (no pause)');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

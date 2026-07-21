@@ -253,6 +253,10 @@ export const ACTIVITIES: ActivityDef[] = [
     complete(run) {
       run.heat = Math.max(0, run.heat - nextInt(run, 6, 10));
       run.hp = Math.min(maxHp(run), run.hp + 1);
+      // your Guild members lie low with you — each cools 2 Heat of their own
+      for (const m of run.members) {
+        if (m.heat > 0) m.heat = Math.max(0, m.heat - 2);
+      }
       // stop laying low once there is nothing left to recover from
       if (run.hp >= maxHp(run) && run.heat <= 0) {
         run.activity = null;

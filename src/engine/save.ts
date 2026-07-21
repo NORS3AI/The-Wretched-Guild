@@ -213,15 +213,15 @@ export function catchUpOffline(game: GameState): void {
   game.lastSavedAt = now;
   if (elapsedMs < OFFLINE_TICK_MS) return;
   // A paused game does not advance in the background — no time passes while
-  // paused, whether you're watching or away.
-  if (game.paused || !game.run.alive || game.run.encounter) return;
+  // paused, whether you're watching or away. (Time flows with an encounter open.)
+  if (game.paused || !game.run.alive) return;
 
   const ticks = Math.min(OFFLINE_MAX_TICKS, Math.floor(elapsedMs / OFFLINE_TICK_MS));
   if (ticks <= 0) return;
 
   const coinBefore = game.run.coin;
   for (let i = 0; i < ticks; i++) {
-    if (!game.run.alive || game.run.encounter) break;
+    if (!game.run.alive) break;
     advanceTick(game);
   }
 

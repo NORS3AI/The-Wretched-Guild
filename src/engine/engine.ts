@@ -33,11 +33,11 @@ export function currentDay(run: RunState): number {
 
 // ── Tick ──────────────────────────────────────────────────────────────────────
 
-/** Advance in-game time by one tick. Mutates game in place. Time does NOT flow
- *  while an encounter is open or the character is dead — the caller guards that. */
+/** Advance in-game time by one tick. Mutates game in place. Time flows even while
+ *  an encounter is open (the player can leave it) — only death stops the clock. */
 export function advanceTick(game: GameState): void {
   const run = game.run;
-  if (!run.alive || run.encounter) return;
+  if (!run.alive) return;
   bindLog(game);
 
   run.tick++;

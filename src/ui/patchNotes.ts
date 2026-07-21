@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '10:15 PM MST',
+    title: 'In Lock-Step',
+    changes: [
+      'Fixed the Chronicle lagging behind your work: the sim clock now runs on measured real time, so the log lands the instant a cycle finishes and the activity bars, clock, and Chronicle all stay in step.',
+      'Encounters no longer pause the game — time keeps flowing while a contract or event is on screen, since you can always leave it.',
+      'Laying Low now also cools your Guild members: each member with Heat sheds 2 per cycle alongside you.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '9:40 PM MST',
     title: 'The Larder & the Long Way Round',
     changes: [

@@ -426,6 +426,22 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.activity === null, 'Lay Low auto-cancels once fully healed and Heat is 0');
 }
 
+// 15e-2) Lay Low keeps going while a Guild member is still hot, and only stops
+//        once every wretch's Heat is cool too.
+{
+  const g = newGame();
+  g.run.hp = 12; // already fully healed
+  g.run.heat = 0; // own Heat already out
+  g.run.members = [
+    { id: 'x', name: 'Hot', archetype: 'Thug', skill: 10, alignment: { ethics: 0, morals: -20 }, job: null, upkeep: 0, heat: 20 },
+  ];
+  dispatch(g, { type: 'setActivity', id: 'laylow' });
+  ff(g, 6); // one cycle: the member cools 2 -> 18, still hot
+  assert(g.run.activity !== null, 'Lay Low keeps going while a Guild member is still hot');
+  ff(g, 120); // long enough to cool the member fully
+  assert(g.run.members[0].heat === 0 && g.run.activity === null, 'Lay Low ends once every wretch is cool too');
+}
+
 // 15f) The pedlar buys pocket items; herbs are eaten for health + water.
 {
   const g = newGame();

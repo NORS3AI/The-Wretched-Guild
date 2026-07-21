@@ -290,10 +290,13 @@ export const ACTIVITIES: ActivityDef[] = [
       for (const m of run.members) {
         if (m.heat > 0) m.heat = Math.max(0, m.heat - 2);
       }
-      // stop laying low once there is nothing left to recover from
-      if (run.hp >= maxHp(run) && run.heat <= 0) {
+      // stop laying low only once there is nothing left to recover from: your
+      // wounds are fully closed, your own Heat is out, AND every Guild member's
+      // Heat has cooled to nothing too.
+      const membersCool = run.members.every((m) => m.heat <= 0);
+      if (run.hp >= maxHp(run) && run.heat <= 0 && membersCool) {
         run.activity = null;
-        pushLog(run, 'Wounds knit and the hue and cry has died down — no need to hide any longer. You stop laying low.', 'good');
+        pushLog(run, 'Wounds knit, the hue and cry has died down, and every wretch is cool — no need to hide any longer. You stop laying low.', 'good');
       } else {
         pushLog(run, 'You keep to the shadows and let the city forget your face.', 'plain');
       }

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '9:40 PM MST',
+    title: 'Lay Low Until All Is Quiet',
+    changes: [
+      'Laying Low now only stops on its own once everything has truly settled: your wounds fully closed (health at 100%), your own Heat out, AND every Guild member\'s Heat cooled to zero. No more surfacing while a wretch is still wanted.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '9:10 PM MST',
     title: 'Events Tab & Alert Badges',
     changes: [

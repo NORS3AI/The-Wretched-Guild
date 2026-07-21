@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { gameStore, actions, settingsOpen } from './game';
+  import { gameStore, actions, settingsOpen, bearingOpen } from './game';
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
-  import { alignmentName } from '../engine/alignment';
+  import { alignmentName, ethicsBand, moralsBand } from '../engine/alignment';
+  import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
   import { formatMoney } from '../engine/money';
   import { hourOfDay, formatClock, dayPart } from '../engine/time';
+  import heartsUrl from '../assets/hearts.png';
 
   const game = gameStore;
 
@@ -12,6 +14,26 @@
   const partIcon = { night: '🌙', dawn: '🌅', day: '☀️', dusk: '🌆' } as const;
   $: hour = hourOfDay($game.run);
   $: part = dayPart($game.run);
+
+  // hearts as sprites (moved here from The Wretch): each heart has 5 phases
+  // (full → empty); the sprite column is 4 − quarters, the row flips green when
+  // poisoned/afflicted.
+  $: poisoned = $game.run.illness !== 'none';
+  $: heartPhases = (() => {
+    const hearts = Math.round(maxHp($game.run) / QUARTERS_PER_HEART);
+    const cols: number[] = [];
+    for (let i = 0; i < hearts; i++) {
+      const q = Math.max(0, Math.min(QUARTERS_PER_HEART, Math.round($game.run.hp - i * QUARTERS_PER_HEART)));
+      cols.push(QUARTERS_PER_HEART - q); // 0 = full … 4 = empty
+    }
+    return cols;
+  })();
+  $: heartText = ($game.run.hp / QUARTERS_PER_HEART).toFixed(2).replace(/\.00$/, '');
+
+  // map an alignment axis value [-100,100] -> [0,100] for a centered bar
+  function axisPct(v: number): number {
+    return (v + 100) / 2;
+  }
 
   function seasonOf(day: number): string {
     const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
@@ -44,9 +66,45 @@
     <span class="label">Heat</span>
     <span class="val" class:hot={$game.run.heat > 60}>{Math.round($game.run.heat)}</span>
   </div>
-  <div class="stat wide">
+  <div class="stat hearts-stat">
+    <span class="label">Hearts</span>
+    <div class="hearts" class:starving={$game.run.needs.food <= 0} title="{heartText} / {heartPhases.length}{$game.run.illness !== 'none' ? ` · ${$game.run.illness}` : ''}">
+      {#each heartPhases as col}
+        <div
+          class="sprite heart-sprite"
+          style="background-image:url({heartsUrl}); background-position:{col * 25}% {poisoned ? 100 : 0}%"
+        ></div>
+      {/each}
+    </div>
+  </div>
+  <div class="stat wide bearing-stat">
     <span class="label">Bearing</span>
-    <span class="val align">{alignmentName($game.run.alignment)}</span>
+    <button
+      class="val align bearing-btn"
+      title="See your true bearing"
+      onclick={() => bearingOpen.update((v) => !v)}
+    >
+      {alignmentName($game.run.alignment)}
+      <span class="caret">{$bearingOpen ? '▴' : '▾'}</span>
+    </button>
+    {#if $bearingOpen}
+      <div class="bearing-pop">
+        <div class="axis">
+          <div class="axis-ends"><span>Chaotic</span><span class="tag">{ethicsBand($game.run.alignment)}</span><span>Lawful</span></div>
+          <div class="axbar">
+            <div class="tick"></div>
+            <div class="marker" style="left:{axisPct($game.run.alignment.ethics)}%"></div>
+          </div>
+        </div>
+        <div class="axis">
+          <div class="axis-ends"><span>Evil</span><span class="tag">{moralsBand($game.run.alignment)}</span><span>Good</span></div>
+          <div class="axbar">
+            <div class="tick"></div>
+            <div class="marker" style="left:{axisPct($game.run.alignment.morals)}%"></div>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 
   <div class="spacer"></div>
@@ -90,6 +148,9 @@
   .stat.wide {
     min-width: 130px;
   }
+  .bearing-stat {
+    position: relative;
+  }
   .label {
     font-size: 0.62rem;
     text-transform: uppercase;
@@ -106,6 +167,116 @@
   .val.align {
     font-size: 0.98rem;
     color: var(--ink);
+  }
+  /* hearts strip in the topbar */
+  .hearts {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+  }
+  .hearts.starving {
+    border-color: var(--blood-bright);
+    animation: starvepulse 1s ease-in-out infinite;
+  }
+  @keyframes starvepulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(200, 40, 30, 0);
+    }
+    50% {
+      box-shadow: 0 0 7px 2px rgba(200, 40, 30, 0.7);
+    }
+  }
+  .heart-sprite {
+    width: 18px;
+    height: 21px; /* sprite cell aspect 66:80 */
+    background-size: 500% 200%; /* 5 phases × 2 colours */
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  /* the Bearing value is now a button revealing the alignment axes */
+  .bearing-btn {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .bearing-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+  .bearing-btn .caret {
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+  }
+  .bearing-pop {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    z-index: 60;
+    width: 220px;
+    background: var(--bg-panel);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  }
+  .axis {
+    margin-bottom: 10px;
+  }
+  .axis:last-child {
+    margin-bottom: 0;
+  }
+  .axis-ends {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.66rem;
+    color: var(--ink-faint);
+    margin-bottom: 3px;
+  }
+  .axis-ends .tag {
+    color: var(--ink);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+  }
+  .axbar {
+    position: relative;
+    height: 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: visible;
+    background: linear-gradient(90deg, #2a1414, #0f0b07 50%, #16220f);
+  }
+  .tick {
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    bottom: -2px;
+    width: 1px;
+    background: var(--border-light);
+  }
+  .marker {
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    background: var(--gold-bright);
+    border: 1px solid #0f0b07;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.4s ease;
+    box-shadow: 0 0 5px rgba(232, 195, 74, 0.6);
   }
   .val.clock {
     font-size: 0.95rem;

@@ -12,7 +12,7 @@
 </script>
 
 <div class="panel">
-  <div class="panel-title">Standing in the World</div>
+  <div class="panel-title">Reputation</div>
   <div class="body">
     <!-- rank -->
     <div class="rank-head">

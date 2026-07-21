@@ -14,7 +14,8 @@
   import FlashOverlay from './ui/FlashOverlay.svelte';
   import SettingsModal from './ui/SettingsModal.svelte';
   import PatchNotesModal from './ui/PatchNotesModal.svelte';
-  import { illicitWarning, settingsOpen, patchOpen } from './ui/game';
+  import { illicitWarning, settingsOpen, patchOpen, activeTab } from './ui/game';
+  import type { SideTab } from './ui/game';
   import { GAME_VERSION } from './ui/patchNotes';
   import { ownsAnyBusiness, ENTERPRISE_MIN_COIN } from './engine/businesses';
   import { GUILD_MIN_RANK } from './engine/guild';
@@ -22,6 +23,22 @@
   import DeathScreen from './ui/DeathScreen.svelte';
 
   const game = gameStore;
+
+  // Two of the side-tabs only appear once the player has earned their way in:
+  // Enterprises once there's coin to invest, Wretched once the Guild opens.
+  $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
+  $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
+
+  $: tabs = [
+    { id: 'needs' as SideTab, label: 'Body & Needs', show: true },
+    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked },
+    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked },
+    { id: 'reputation' as SideTab, label: 'Reputation', show: true },
+  ].filter((t) => t.show);
+
+  // If the active tab has since become unavailable (e.g. a new life resets rank),
+  // fall back to the always-present Body & Needs tab.
+  $: effectiveTab = tabs.some((t) => t.id === $activeTab) ? $activeTab : 'needs';
 </script>
 
 <button class="version-badge" title="Chronicle of Changes" onclick={() => patchOpen.set(true)}>
@@ -36,30 +53,46 @@
 <Topbar />
 
 <main class="layout">
-  <aside class="col">
+  <aside class="col leftcol">
     <CharacterPanel />
-    <SurvivalPanel />
-    <ProgressPanel />
+
+    <div class="tabbar" role="tablist">
+      {#each tabs as tab}
+        <button
+          class="tab"
+          class:active={effectiveTab === tab.id}
+          role="tab"
+          aria-selected={effectiveTab === tab.id}
+          onclick={() => activeTab.set(tab.id)}
+        >
+          {tab.label}
+        </button>
+      {/each}
+    </div>
+
+    <div class="tabpanel">
+      {#if effectiveTab === 'enterprises'}
+        <BusinessesPanel />
+      {:else if effectiveTab === 'wretched'}
+        <GuildPanel />
+      {:else if effectiveTab === 'reputation'}
+        <ProgressPanel />
+      {:else}
+        <SurvivalPanel />
+      {/if}
+    </div>
   </aside>
 
-  <section class="center">
+  <section class="center col">
     {#if $game.run.stocksUntil !== null}
       <StocksPanel />
     {:else if $game.run.encounter}
       <EncounterView />
     {:else}
-      <div class="col">
-        {#if $game.run.merchantHere}
-          <MerchantPanel />
-        {/if}
-        <ActivitiesPanel />
-        {#if $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run)}
-          <BusinessesPanel />
-        {/if}
-        {#if $game.run.rank >= GUILD_MIN_RANK}
-          <GuildPanel />
-        {/if}
-      </div>
+      {#if $game.run.merchantHere}
+        <MerchantPanel />
+      {/if}
+      <ActivitiesPanel />
     {/if}
   </section>
 
@@ -121,9 +154,15 @@
     font-style: italic;
     font-size: 0.95rem;
   }
+  /* Two columns — a fixed-width column for The Wretch and its tabbed panels,
+     and a wide column for Ply Your Trade — with the Chronicle stretched across
+     the full width beneath, like a long console. */
   .layout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr) 320px;
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-areas:
+      'left center'
+      'log log';
     gap: 16px;
     margin-top: 16px;
     align-items: start;
@@ -131,6 +170,15 @@
   /* every column must be allowed to shrink, or wide content overflows the page */
   .layout > * {
     min-width: 0;
+  }
+  .leftcol {
+    grid-area: left;
+  }
+  .center {
+    grid-area: center;
+  }
+  .rightcol {
+    grid-area: log;
   }
   .col {
     display: flex;
@@ -142,20 +190,46 @@
     min-height: 420px;
     min-width: 0;
   }
-  /* Tablets (incl. iPad landscape): drop to two columns and float the Chronicle
-     full-width beneath, so nothing spills past the screen edge. */
-  @media (max-width: 1120px) {
-    .layout {
-      grid-template-columns: 280px minmax(0, 1fr);
-    }
-    .rightcol {
-      grid-column: 1 / -1;
-    }
+  /* the tab strip that switches the lower-left panel */
+  .tabbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .tab {
+    flex: 1 1 auto;
+    font-family: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 7px 8px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .tab:hover {
+    border-color: var(--border-light);
+    color: var(--ink);
+  }
+  .tab.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(201, 162, 39, 0.1);
+  }
+  .tabpanel {
+    min-width: 0;
   }
   /* Phones and iPad portrait: a single stacked column. */
   @media (max-width: 780px) {
     .layout {
       grid-template-columns: 1fr;
+      grid-template-areas:
+        'left'
+        'center'
+        'log';
     }
   }
 </style>

@@ -36,6 +36,18 @@ export function versionForOrdinal(n: number): string {
 // Newest first. Versions are computed from position below.
 const RAW: RawPatch[] = [
   {
+    date: 'July 21, 2026',
+    time: '9:30 AM MST',
+    title: 'Tabs & the Long Console',
+    changes: [
+      'Reworked the layout to end the endless scrolling on tablet and phone: two columns now instead of three. The Wretch keeps its narrow column, Ply Your Trade fills the wide one, and the Chronicle stretches across the bottom like a long console.',
+      'The lower-left panel is now tabbed: Body & Needs, Enterprises, Wretched (the Guild), and Reputation (formerly "Standing in the World"). Tap a tab to switch — no more hunting up and down the page. Enterprises appears once you have coin to invest, Wretched once the Guild opens to you.',
+      'Moved your Hearts up to the top bar, right beside your Bearing. Heat lives on the top bar too now.',
+      'The Wretch panel is pared down to just your Attributes and Skills.',
+      'Your Bearing (e.g. "True Neutral") is now a button on the top bar — click it to see your true standing on the Lawful–Chaotic and Good–Evil axes at a glance.',
+    ],
+  },
+  {
     date: 'July 20, 2026',
     time: '10:50 PM MST',
     title: 'The Hunter & the Merchant\'s Wares',

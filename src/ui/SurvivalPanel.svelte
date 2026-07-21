@@ -67,6 +67,22 @@
       {/each}
     </div>
 
+    <!-- deeds -->
+    <div class="section-label">Tend to Yourself</div>
+    <div class="deeds">
+      {#each deedRows as row (row.def.id)}
+        <button
+          class="btn deed"
+          disabled={!row.enabled}
+          title={row.def.blurb}
+          onclick={() => actions.doDeed(row.def.id)}
+        >
+          {row.def.name}
+          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+        </button>
+      {/each}
+    </div>
+
     <!-- larder: six slots just for food, so ingredients never crowd out cooking -->
     <div class="section-label">
       Larder
@@ -89,6 +105,9 @@
               </div>
             {/if}
             <div class="slot-actions">
+              {#if isEdible(def)}
+                <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
               </button>
@@ -122,6 +141,9 @@
               </div>
             {/if}
             <div class="slot-actions">
+              {#if isEdible(def)}
+                <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
               </button>
@@ -152,22 +174,6 @@
       {:else}
         <span class="faint shut">The town vendor is shut — open 8am to 5pm.</span>
       {/if}
-    </div>
-
-    <!-- deeds -->
-    <div class="section-label">Tend to Yourself</div>
-    <div class="deeds">
-      {#each deedRows as row (row.def.id)}
-        <button
-          class="btn deed"
-          disabled={!row.enabled}
-          title={row.def.blurb}
-          onclick={() => actions.doDeed(row.def.id)}
-        >
-          {row.def.name}
-          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
-        </button>
-      {/each}
     </div>
   </div>
 </div>
@@ -322,6 +328,13 @@
   .mini:hover {
     border-color: var(--gold);
     color: var(--gold-bright);
+  }
+  .mini.eat {
+    color: var(--green);
+  }
+  .mini.eat:hover {
+    border-color: var(--green);
+    color: var(--green);
   }
   .mini.sell {
     color: var(--gold);

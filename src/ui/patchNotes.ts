@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '2:00 PM MST',
+    title: 'A Clear Eat Button',
+    changes: [
+      'Every food in your Larder or Pockets — including pastries, cakes, fried fish, curry, and potions won at the Market Stall — now shows an explicit green "Eat" button beside "Sell". (Tapping the item name still eats it too.)',
+      'Moved "Tend to Yourself" up above the Larder, so your remedies sit right under your needs.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '1:20 PM MST',
     title: "The Guild's Ledger",
     changes: [

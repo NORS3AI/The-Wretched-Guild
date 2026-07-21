@@ -15,7 +15,7 @@ import { gainSkill, skillLevel } from './skills';
 /** A find dropped by work: try to pocket it, and say so. */
 function stallDrop(run: RunState, id: string): void {
   if (addItem(run, id, 1)) {
-    pushLog(run, `You come away with a ${ITEMS[id].name.toLowerCase()} — into your pocket it goes.`, 'good');
+    pushLog(run, `You come away with a ${ITEMS[id].name.toLowerCase()} — and stow it away.`, 'good');
   } else {
     pushLog(run, `You come by a ${ITEMS[id].name.toLowerCase()}, but have nowhere to put it.`, 'plain');
   }

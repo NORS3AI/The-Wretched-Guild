@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '9:45 PM MST',
+    title: 'Tend Yourself Mid-Event',
+    changes: [
+      'Fixed a bug where an event in motion locked every Tend to Yourself deed — you could not even drink or relieve yourself while an encounter waited. You can now tend to your body whenever you like; the event stays on the Events tab to handle when you\'re ready.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '9:20 PM MST',
     title: 'Three Rows, and Oil Restored',
     changes: [

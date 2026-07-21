@@ -1624,5 +1624,20 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.stocksUntil === null, 'a skilled thief (50 Stealth) is almost never caught');
 }
 
+// 54) With an event in motion, you can still Tend to Yourself (drink, relieve…),
+//     and the event stays open to handle afterwards.
+{
+  const g = newGame();
+  g.run.encounter = { defId: 'event_mired_cart', nodeId: 'start', lastOutcomeText: null };
+  g.run.needs.water = 20;
+  g.run.needs.relief = 10;
+  g.run.waterskinCharges = 4;
+  dispatch(g, { type: 'doDeed', id: 'drink' });
+  assert(g.run.needs.water > 20 && g.run.waterskinCharges === 3, 'you can drink with an event in motion');
+  dispatch(g, { type: 'doDeed', id: 'relieve' });
+  assert(g.run.needs.relief === 100, 'you can relieve yourself with an event in motion');
+  assert(g.run.encounter !== null, 'the event stays open to handle after tending yourself');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

@@ -394,16 +394,23 @@ export function dispatch(game: GameState, cmd: Command): void {
     }
 
     case 'doDeed': {
-      if (!run.alive || run.encounter || run.stocksUntil !== null) break;
+      // Deeds may be done even with an event pending — you can still drink,
+      // relieve yourself, seek warmth, and so on while an encounter waits on the
+      // Events tab. Only the stocks (imprisonment) or death stop you.
+      if (!run.alive || run.stocksUntil !== null) break;
       const deed = deedById(cmd.id);
       if (!deed) break;
       if (deed.available && !deed.available(run)) break;
-      // the deed consumes time — needs decay while it happens
+      // the deed consumes time — needs decay while it happens. A deed doesn't
+      // touch the open encounter; but if a NEW encounter springs up mid-deed
+      // (only possible when none was open to begin with), it aborts the deed.
+      const startEncounter = run.encounter;
       for (let i = 0; i < deed.timeTicks; i++) {
         advanceTick(game);
-        if (!run.alive || run.encounter) break;
+        if (!run.alive) break;
+        if (run.encounter && run.encounter !== startEncounter) break;
       }
-      if (run.alive && !run.encounter) deed.effect(game, run);
+      if (run.alive) deed.effect(game, run);
       break;
     }
 

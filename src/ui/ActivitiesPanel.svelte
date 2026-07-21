@@ -1,18 +1,13 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
   import { ACTIVITIES } from '../engine/activities';
-  import { ownsAnyBusiness } from '../engine/businesses';
   import { REAL_MS_PER_TICK } from '../engine/timeconst';
 
   const game = gameStore;
 
-  // Once you own an enterprise, the begging life is behind you — drop it. And
-  // Hunting only appears once you've bought a bow from the wandering merchant.
-  $: trades = ACTIVITIES.filter(
-    (a) =>
-      !(a.id === 'beg' && ownsAnyBusiness($game.run)) &&
-      !(a.id === 'hunt' && !$game.run.hasBow),
-  );
+  // Trades open by coin and gear: Beg until 40 copper, then Fell Timber; the Coal
+  // Mines at 1 shilling; the Fields at 2 shillings; Hunting once you own a bow.
+  $: trades = ACTIVITIES.filter((a) => !a.available || a.available($game.run));
 
   // The fill glides smoothly over each cycle's real duration (ticks × tick time,
   // divided by speed) via a CSS animation, rather than jumping per tick.

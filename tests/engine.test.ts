@@ -46,9 +46,10 @@ console.log('The Wretched Guild — engine tests\n');
 // 1) Idle labour accrues coin and nudges alignment toward Lawful.
 {
   const g = newGame();
+  g.run.coin = 40; // Fell Timber opens once you have 40 copper (begging is behind you)
   dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 200);
-  assert(g.run.coin > 0, `idle labour earned coin (got ${g.run.coin})`);
+  assert(g.run.coin > 40, `idle labour earned coin (got ${g.run.coin})`);
   assert(g.run.alignment.ethics > 0, `honest toil nudged toward Lawful (ethics ${g.run.alignment.ethics.toFixed(1)})`);
 }
 
@@ -89,6 +90,7 @@ console.log('The Wretched Guild — engine tests\n');
 // 4) Permadeath yields Legacy, and a new life carries meta forward.
 {
   const g = newGame();
+  g.run.coin = 40; // open Fell Timber
   dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   let ticks = 0;
   while (g.run.alive && ticks++ < 400000) ff(g, 1); // fed, so death comes by age/illness
@@ -105,6 +107,7 @@ console.log('The Wretched Guild — engine tests\n');
 //    the Church (alignment gates the path).
 {
   const g = newGame();
+  g.run.coin = 40; // open Fell Timber
   dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 300);
   assert(g.run.factions.commons > 0, `labour builds Commons standing (${g.run.factions.commons.toFixed(1)})`);
@@ -587,6 +590,7 @@ console.log('The Wretched Guild — engine tests\n');
 // 15k) Honest Labour occasionally raises Brawn (10% chance, +0.1–0.4 each).
 {
   const g = newGame();
+  g.run.coin = 40; // open Fell Timber
   const before = g.run.attrs.brawn;
   dispatch(g, { type: 'setActivity', id: 'fell_timber' });
   ff(g, 8 * 60); // many labour cycles — a gain becomes near-certain
@@ -1346,6 +1350,21 @@ console.log('The Wretched Guild — engine tests\n');
   const coin0 = f.run.coin;
   advance(f);
   assert(f.run.coin > coin0, `a foreman works your top enterprise for coin (${coin0} -> ${f.run.coin.toFixed(1)})`);
+}
+
+// 41) Trade ladder opens by coin: Beg → Fell Timber (40c) → Coal (1sh) → Fields (2sh).
+{
+  const { ACTIVITIES } = await import('../src/engine/activities');
+  const open = (id: string, coin: number) => {
+    const g = newGame();
+    g.run.coin = coin;
+    const a = ACTIVITIES.find((x) => x.id === id)!;
+    return !a.available || a.available(g.run);
+  };
+  assert(open('beg', 0) && !open('beg', 40), 'Beg is open below 40 copper and gone at 40');
+  assert(!open('fell_timber', 39) && open('fell_timber', 40), 'Fell Timber opens at 40 copper');
+  assert(!open('coal_mine', 999) && open('coal_mine', 1000), 'the Coal Mines open at 1 shilling');
+  assert(!open('till_fields', 1999) && open('till_fields', 2000), 'the Fields open at 2 shillings');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

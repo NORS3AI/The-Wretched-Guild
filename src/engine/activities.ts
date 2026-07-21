@@ -6,7 +6,7 @@ import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
 import { addItem, ITEMS, MAX_POUCHES, syncCapacity } from './items';
-import { ownedLevel, workMultiplier, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
+import { ownedLevel, ownsAnyBusiness, workMultiplier, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
 import { churchOpen, illicitPrime } from './time';
 import { driftBearing, shiftAlignment } from './alignment';
@@ -44,6 +44,9 @@ export interface ActivityDef {
   /** the copper a cycle pays, shown as a tag (e.g. "3–5c"). Omit for activities
    *  that yield goods or nothing rather than coin. */
   earns?: string;
+  /** whether this trade is open to the player right now (coin thresholds, gear).
+   *  Omitted → always available. */
+  available?: (run: RunState) => boolean;
   /** run one completed cycle; returns a short log line (or null for silence) */
   complete: (run: RunState) => void;
 }
@@ -57,6 +60,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 6,
     trains: 'charm',
     earns: '≈1c',
+    available: (run) => run.coin < 40 && !ownsAnyBusiness(run), // 40 copper (or an enterprise) puts begging behind you
     complete(run) {
       gainStanding(run, 'commons', 0.15);
       if (chance(run, 0.05)) raiseAttr(run, 'charm', 0.1, 0.3); // 5% → +0.1–0.3 Charm
@@ -86,6 +90,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'brawn',
     earns: '3–5c',
+    available: (run) => run.coin >= 40,
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'wooden_log');
@@ -99,6 +104,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'brawn',
     earns: '3–5c',
+    available: (run) => run.coin >= 1000, // opens at 1 shilling
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'coal');
@@ -113,6 +119,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'brawn',
     earns: '3–5c',
+    available: (run) => run.coin >= 2000, // opens at 2 shillings
     complete(run) {
       labourEarn(run);
       if (chance(run, 0.1)) stallDrop(run, 'wheat_seeds');
@@ -230,6 +237,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'stealth',
     earns: 'game',
+    available: (run) => run.hasBow, // needs a bow from the wandering merchant
     complete(run) {
       gainStanding(run, 'commons', 0.15);
       if (!chance(run, 0.6)) {

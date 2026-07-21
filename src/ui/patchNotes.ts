@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '1:00 PM MST',
+    title: 'The Trade Ladder & Quieter Events',
+    changes: [
+      'Ply Your Trade now opens by degrees: you Beg in the Square until you have 40 copper, at which point begging falls away and Fell Timber opens. Work the Coal Mines opens at 1 shilling, and Till the Fields at 2 shillings.',
+      'Events no longer yank you to the Events tab the instant they appear. You keep doing what you were doing; the Events tab flags its red ❗️, and you tend to it when you please.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '12:15 PM MST',
     title: 'The Household — Servants',
     changes: [

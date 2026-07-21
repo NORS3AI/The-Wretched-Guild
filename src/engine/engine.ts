@@ -14,7 +14,7 @@ import { nextFloat } from './rng';
 import { META_UNLOCKS, unlockCost } from './unlocks';
 import { canJoinShadow } from './alignment';
 import { advancement, completeAdvance, devAdvance } from './ranks';
-import { processBusinesses, invest, BUSINESSES, ownedLevel, ownsAnyBusiness } from './businesses';
+import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
 import { processServants, hireServant, dismissServant } from './servants';
 import { tickSurvival, heal } from './survival';
@@ -228,12 +228,14 @@ export function dispatch(game: GameState, cmd: Command): void {
       if (!run.alive || run.stocksUntil !== null) break;
       const id = cmd.id;
       if (id) {
-        // once you own an enterprise, the begging life is behind you
-        if (id === 'beg' && ownsAnyBusiness(run)) break;
-        // you can only work an enterprise you actually own
-        if (id.startsWith('work_') && ownedLevel(run, id.slice(5)) < 1) break;
-        // hunting needs a bow (bought from the wandering merchant)
-        if (id === 'hunt' && !run.hasBow) break;
+        if (id.startsWith('work_')) {
+          // you can only work an enterprise you actually own
+          if (ownedLevel(run, id.slice(5)) < 1) break;
+        } else {
+          // trades gate by coin thresholds and gear (see each activity's available)
+          const def = activityById(id);
+          if (def?.available && !def.available(run)) break;
+        }
       }
       run.activity = id ? { id, progress: 0 } : null;
       break;

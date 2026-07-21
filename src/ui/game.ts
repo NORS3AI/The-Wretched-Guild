@@ -2,7 +2,7 @@
 // drives the tick loop, exposes commands, and autosaves. The engine mutates the
 // state object in place; we notify subscribers by re-setting the store.
 
-import { writable, get } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { GameState } from '../engine/types';
 import type { Command } from '../engine/engine';
 import { advanceTick, dispatch } from '../engine/engine';
@@ -52,25 +52,7 @@ let game: GameState = loadGame();
 const store = writable<GameState>(game);
 export const gameStore = store;
 
-// When an encounter or the stocks opens (a random event, an accepted contract, a
-// Rite of Passage, or a punishment), whisk the player to the Events tab so they
-// always see it — then return them to where they were once it's resolved.
-let lastEventActive = false;
-let preEventTab: SideTab = 'wretch';
-function syncEventTab(): void {
-  const active = game.run.alive && (game.run.encounter !== null || game.run.stocksUntil !== null);
-  if (active && !lastEventActive) {
-    preEventTab = get(activeTab);
-    activeTab.set('events');
-  } else if (!active && lastEventActive) {
-    // only pull them back if they're still parked on the (now empty) Events tab
-    if (get(activeTab) === 'events') activeTab.set(preEventTab);
-  }
-  lastEventActive = active;
-}
-
 function notify(): void {
-  syncEventTab();
   store.set(game);
 }
 

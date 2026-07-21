@@ -40,9 +40,9 @@ const RAW: RawPatch[] = [
     time: '9:20 PM MST',
     title: 'Three Rows, and Oil Restored',
     changes: [
-      'Corrected an error: roasting a hunted beast (Roast Meat) has ALWAYS required a goblet of cooking oil, and does again — that was never meant to change.',
-      'Tend to Yourself now has three rows. Row one: your everyday deeds, always shown. Row two: Make a Campfire, Seek Warmth, Seek Shade, Cook a Fish, See a Doctor. Row three: Bake a Potato and Roast Meat.',
-      'Cook a Fish and Roast Meat are once more separate options, each needing oil.',
+      'Corrected an error: cooking flesh has ALWAYS required a goblet of cooking oil, and does again — that was never meant to change.',
+      'Tend to Yourself now has three rows. Row one: your everyday deeds, always shown. Row two: Make a Campfire, Seek Warmth, Seek Shade, See a Doctor. Row three: Bake a Potato and Roast Meat.',
+      'Cooking flesh is a single Roast Meat deed: it cooks a hunted beast OR a river fish (a beast first), both over a goblet of oil. No separate Cook a Fish button.',
       'Removed the "Fill a Bucket" deed — any empty bucket you carry is now filled automatically whenever you Refill at the Well or Wash-up at the River.',
     ],
   },

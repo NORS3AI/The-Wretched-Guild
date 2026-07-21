@@ -548,7 +548,7 @@ console.log('The Wretched Guild — engine tests\n');
   for (let n = 0; n < 200 && g.run.skills['cooking'] <= cookStart; n++) {
     if (countItem(g.run, 'fish') < 1) addItem(g.run, 'fish', 1);
     if (countItem(g.run, 'cooking_oil') < 1) addItem(g.run, 'cooking_oil', 1);
-    dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+    dispatch(g, { type: 'doDeed', id: 'cook_game' });
     if (countItem(g.run, 'cooked_fish') + countItem(g.run, 'burnt_fish') > 0) everProduced = true;
     // clear any produced dish so there is always room to cook again
     for (let i = 0; i < g.run.pockets.length; i++) {
@@ -915,10 +915,11 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.pockets = [null, null];
   g.run.illness = 'none';
 
-  // Cook a Fish is hidden with no fish, revealed once you hold one
-  assert(byId('cook_fish').reveal!(g.run) === false, 'Cook a River Fish is hidden without a fish');
+  // Roast Meat (the one cooking deed) is hidden with nothing to cook, revealed
+  // once you hold a fish (or a hunted beast)
+  assert(byId('cook_game').reveal!(g.run) === false, 'Roast Meat is hidden with nothing to cook');
   addItem(g.run, 'fish', 1);
-  assert(byId('cook_fish').reveal!(g.run) === true, 'Cook a River Fish appears once you hold a fish');
+  assert(byId('cook_game').reveal!(g.run) === true, 'Roast Meat appears once you hold a catch to cook');
 
   // Bake a Potato likewise
   assert(byId('bake_potato').reveal!(g.run) === false, 'Bake a Potato is hidden without a potato');
@@ -1100,7 +1101,7 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.pockets = [{ item: 'cooking_oil', qty: 1 }, { item: 'fish', qty: 1 }, null, null];
   g.run.skills['cooking'] = 90; // at 90: 90% cooked / 10% burnt / 0% fail — always teaches
   const before = g.run.skills['cooking'];
-  dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+  dispatch(g, { type: 'doDeed', id: 'cook_game' });
   const gained = g.run.skills['cooking'] - before;
   assert(gained === 1 || gained === 2, `cooking teaches (+1 on a burn, +2 on a success): got +${gained}`);
   assert(

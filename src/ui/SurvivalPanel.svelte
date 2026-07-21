@@ -29,7 +29,7 @@
   // always on show; rows two and three hold the situational ones, shown only when
   // the game permits (each deed appears only when its own `reveal` is met).
   const ROW1_ORDER = ['drink', 'relieve', 'refill_well', 'bathe_well', 'wash_river'];
-  const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'cook_fish', 'see_doctor'];
+  const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'see_doctor'];
   const ROW3_ORDER = ['bake_potato', 'cook_game'];
   const orderIndex = (order: string[], id: string): number => {
     const i = order.indexOf(id);

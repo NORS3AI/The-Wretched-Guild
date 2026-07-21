@@ -25,12 +25,12 @@
     return '';
   }
 
-  // Tend to Yourself is two rows. Row one holds the everyday deeds that are
-  // ALWAYS on show (they carry no `reveal`). Row two holds the situational ones,
-  // shown only when the game permits — a fire when cold, cooking once you hold a
-  // catch, a doctor only when sick, and so on (they carry a `reveal`).
+  // Tend to Yourself is laid out in three rows. Row one holds the everyday deeds
+  // always on show; rows two and three hold the situational ones, shown only when
+  // the game permits (each deed appears only when its own `reveal` is met).
   const ROW1_ORDER = ['drink', 'relieve', 'refill_well', 'bathe_well', 'wash_river'];
-  const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'cook_food', 'bake_potato', 'fill_bucket', 'see_doctor'];
+  const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'cook_fish', 'see_doctor'];
+  const ROW3_ORDER = ['bake_potato', 'cook_game'];
   const orderIndex = (order: string[], id: string): number => {
     const i = order.indexOf(id);
     return i < 0 ? 999 : i;
@@ -38,18 +38,18 @@
 
   $: deedRows = DEEDS.filter((d) => !d.reveal || d.reveal(run)).map((d) => ({
     def: d,
-    label: d.label ? d.label(run) : d.name,
     enabled:
       run.stocksUntil === null &&
       (!d.available || d.available(run)) &&
       !(d.cost && run.coin < d.cost),
   }));
-  $: alwaysRows = deedRows
-    .filter((r) => !r.def.reveal)
-    .sort((a, b) => orderIndex(ROW1_ORDER, a.def.id) - orderIndex(ROW1_ORDER, b.def.id));
-  $: conditionalRows = deedRows
-    .filter((r) => r.def.reveal)
-    .sort((a, b) => orderIndex(ROW2_ORDER, a.def.id) - orderIndex(ROW2_ORDER, b.def.id));
+  const inRow = (order: string[], rows: typeof deedRows) =>
+    rows
+      .filter((r) => order.includes(r.def.id))
+      .sort((a, b) => orderIndex(order, a.def.id) - orderIndex(order, b.def.id));
+  $: row1 = inRow(ROW1_ORDER, deedRows);
+  $: row2 = inRow(ROW2_ORDER, deedRows);
+  $: row3 = inRow(ROW3_ORDER, deedRows);
 </script>
 
 <div class="panel">
@@ -87,31 +87,46 @@
       {/each}
     </div>
 
-    <!-- deeds: row one always shown, row two only when the game permits -->
+    <!-- deeds: row one always shown; rows two and three only when the game permits -->
     <div class="section-label">Tend to Yourself</div>
     <div class="deeds">
-      {#each alwaysRows as row (row.def.id)}
+      {#each row1 as row (row.def.id)}
         <button
           class="btn deed"
           disabled={!row.enabled}
           title={row.def.blurb}
           onclick={() => actions.doDeed(row.def.id)}
         >
-          {row.label}
+          {row.def.name}
           {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
         </button>
       {/each}
     </div>
-    {#if conditionalRows.length > 0}
+    {#if row2.length > 0}
       <div class="deeds second">
-        {#each conditionalRows as row (row.def.id)}
+        {#each row2 as row (row.def.id)}
           <button
             class="btn deed"
             disabled={!row.enabled}
             title={row.def.blurb}
             onclick={() => actions.doDeed(row.def.id)}
           >
-            {row.label}
+            {row.def.name}
+            {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
+    {#if row3.length > 0}
+      <div class="deeds second">
+        {#each row3 as row (row.def.id)}
+          <button
+            class="btn deed"
+            disabled={!row.enabled}
+            title={row.def.blurb}
+            onclick={() => actions.doDeed(row.def.id)}
+          >
+            {row.def.name}
             {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
           </button>
         {/each}

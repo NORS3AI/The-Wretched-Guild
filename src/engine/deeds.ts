@@ -59,9 +59,6 @@ function doCook(run: RunState, ingredients: string[], cookedId: string, burntId:
 export interface DeedDef {
   id: string;
   name: string;
-  /** an optional context-dependent label shown instead of `name` (e.g. the one
-   *  cooking deed reads "Roast Meat" with game in hand, "Cook a Fish" otherwise). */
-  label?: (run: RunState) => string;
   blurb: string;
   timeTicks: number; // in-game time the deed consumes
   cost?: number; // copper cost
@@ -133,29 +130,18 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'refill_well',
     name: 'Refill at the Well',
-    blurb: 'Top up your waterskin and drink your fill. Quick and unremarkable.',
+    blurb: 'Top up your waterskin and drink your fill. Quick and unremarkable. Any empty bucket you carry is filled here too.',
     timeTicks: 2,
     effect: (_g, run) => {
       run.waterskinCharges = run.waterskinMax;
       run.needs.water = clamp100(run.needs.water + 20);
       pushLog(run, 'You draw clean water at the well and fill your skin to the brim.', 'plain');
-    },
-  },
-  {
-    id: 'fill_bucket',
-    name: 'Fill a Bucket at the Well',
-    blurb: 'Draw water into an empty bucket at the well — ready for the farmer\'s board.',
-    timeTicks: 1,
-    // only when you hold an empty bucket to fill
-    reveal: (run) => countItem(run, 'bucket') >= 1,
-    available: (run) => countItem(run, 'bucket') >= 1,
-    effect: (_g, run) => {
-      if (!removeItem(run, 'bucket', 1)) {
-        pushLog(run, 'You have no empty bucket to fill.', 'bad');
-        return;
+      // any empty bucket you carry is filled at the well, automatically
+      const buckets = countItem(run, 'bucket');
+      if (buckets > 0 && removeItem(run, 'bucket', buckets)) {
+        addItem(run, 'bucket_water', buckets);
+        pushLog(run, buckets === 1 ? 'You draw your bucket brimful of well-water too.' : `You draw your ${buckets} buckets brimful of well-water too.`, 'good');
       }
-      addItem(run, 'bucket_water', 1);
-      pushLog(run, 'You draw the bucket brimful of clean well-water.', 'good');
     },
   },
   {
@@ -234,40 +220,46 @@ export const DEEDS: DeedDef[] = [
     },
   },
   {
-    // one cooking deed for both catches: roast a hunted beast on a spit (no oil
-    // needed), or fry a river fish in a goblet of oil — whichever you carry. Game
-    // is roasted first; the label reads "Roast Meat" or "Cook a Fish" to suit.
-    id: 'cook_food',
+    id: 'cook_fish',
     name: 'Cook a Fish',
-    label: (run) => (bestRawGame(run) !== null ? 'Roast Meat' : 'Cook a Fish'),
-    blurb: 'Roast a hunted beast on a spit (no oil needed), or fry a river fish in a goblet of oil. Your Cooking skill decides how it comes out; a roasted beast also yields a skin or a ruined hide.',
+    blurb: 'Fry a raw river fish in a goblet of cooking oil. It may come out golden, burn, or refuse to cook at all.',
     timeTicks: 1,
-    reveal: (run) => bestRawGame(run) !== null || countItem(run, 'fish') >= 1,
-    available: (run) => bestRawGame(run) !== null || (countItem(run, 'fish') >= 1 && hasCookingOil(run)),
+    reveal: (run) => countItem(run, 'fish') >= 1,
+    available: (run) => countItem(run, 'fish') >= 1 && hasCookingOil(run),
     effect: (_g, run) => {
-      // roast game first — it needs no oil — else fry a fish (which does)
+      if (countItem(run, 'fish') < 1 || !hasCookingOil(run)) {
+        pushLog(run, 'You need a raw river fish and a goblet of cooking oil to fry it.', 'bad');
+        return;
+      }
+      doCook(run, ['fish', 'cooking_oil'], 'cooked_fish', 'burnt_fish');
+    },
+  },
+  {
+    id: 'cook_game',
+    name: 'Roast Meat',
+    blurb: 'Roast a beast you have hunted over a goblet of cooking oil. Your Cooking skill decides how it comes out, and the beast yields a skin or a ruined hide.',
+    timeTicks: 1,
+    reveal: (run) => bestRawGame(run) !== null,
+    available: (run) => bestRawGame(run) !== null && hasCookingOil(run),
+    effect: (_g, run) => {
       const raw = bestRawGame(run);
-      if (raw) {
-        const res = doCook(run, [raw], GAME_ROAST[raw], 'burnt_meat');
-        // the beast is skinned in the roasting: a clean skin for the tanner (30%),
-        // or a hide ruined by the fire (60%) — only when it was truly put to the fire.
-        if (res !== 'failed') {
-          const r = nextFloat(run);
-          if (r < 0.3) {
-            addItem(run, 'animal_skin', 1);
-            pushLog(run, 'You skin the beast cleanly — a good hide for the tanner.', 'good');
-          } else if (r < 0.9) {
-            addItem(run, 'ruined_hide', 1);
-            pushLog(run, 'The hide is scorched in the roasting — ruined, but a pedlar will give a copper or two.', 'plain');
-          }
+      if (!raw || !hasCookingOil(run)) {
+        pushLog(run, 'You need a hunted beast and a goblet of cooking oil to roast it.', 'bad');
+        return;
+      }
+      const res = doCook(run, [raw, 'cooking_oil'], GAME_ROAST[raw], 'burnt_meat');
+      // the beast is skinned in the roasting: a clean skin for the tanner (30%),
+      // or a hide ruined by the fire (60%) — only when it was truly cooked.
+      if (res !== 'failed') {
+        const r = nextFloat(run);
+        if (r < 0.3) {
+          addItem(run, 'animal_skin', 1);
+          pushLog(run, 'You skin the beast cleanly — a good hide for the tanner.', 'good');
+        } else if (r < 0.9) {
+          addItem(run, 'ruined_hide', 1);
+          pushLog(run, 'The hide is scorched in the roasting — ruined, but a pedlar will give a copper or two.', 'plain');
         }
-        return;
       }
-      if (countItem(run, 'fish') >= 1 && hasCookingOil(run)) {
-        doCook(run, ['fish', 'cooking_oil'], 'cooked_fish', 'burnt_fish');
-        return;
-      }
-      pushLog(run, 'You have nothing to cook — a raw river fish (and oil), or a hunted beast.', 'bad');
     },
   },
   {

@@ -37,6 +37,17 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '9:20 PM MST',
+    title: 'Three Rows, and Oil Restored',
+    changes: [
+      'Corrected an error: roasting a hunted beast (Roast Meat) has ALWAYS required a goblet of cooking oil, and does again — that was never meant to change.',
+      'Tend to Yourself now has three rows. Row one: your everyday deeds, always shown. Row two: Make a Campfire, Seek Warmth, Seek Shade, Cook a Fish, See a Doctor. Row three: Bake a Potato and Roast Meat.',
+      'Cook a Fish and Roast Meat are once more separate options, each needing oil.',
+      'Removed the "Fill a Bucket" deed — any empty bucket you carry is now filled automatically whenever you Refill at the Well or Wash-up at the River.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '8:45 PM MST',
     title: 'Pay That Climbs, Hands That Steady',
     changes: [
@@ -51,7 +62,7 @@ const RAW: RawPatch[] = [
     title: 'Two Rows of Deeds',
     changes: [
       'Tend to Yourself is now laid out in two rows. The first — Drink, Relieve Yourself, Refill at the Well, Bathe at the Well, Wash-up at the River — is always on show. The second — Make a Campfire, Seek Warmth, Seek Shade, cooking, and the rest — appears only when the moment calls for it.',
-      'Cooking is now a single deed: it roasts a hunted beast on a spit (no oil) or fries a river fish in oil — whichever you carry — and reads "Roast Meat" or "Cook a Fish" to suit. No more separate buttons.',
+      'Cook a Fish and Roast Meat sit in the situational row, revealed once you hold a catch to cook.',
     ],
   },
   {
@@ -73,7 +84,7 @@ const RAW: RawPatch[] = [
       'Smithing: smelt coal and ore into Iron Bars, then forge nails, a hammer, hoe/spade/pickaxe, a felling axe, a bucket, iron rivets, and two treasures — the Iron Spike (a dagger that sharpens your Stealth and cutpurse\'s luck by 10% while carried) and the Weatherman (a great shield that turns the guard\'s hand half the time they would drag you to the stocks).',
       'Farming: fill a bucket at the well (or automatically at the river), mill wheat seeds and water into grain, and bake it into scones, loaves, pies, cakes, French toast, and Winters\' Leek Pie.',
       'Leatherworking: the bench is in place (opening at Farming 20%) but isn\'t fitted out with patterns yet — animal skins are kept back for it, coming soon.',
-      'Hunting (renamed from Hunt with Bow) now roasts game over an open fire with no oil needed — and the beast yields a clean Animal Skin (30%, a tanner\'s reagent) or a Ruined Hide (60%, sells for 3c). This also fixes Roast Game doing nothing when you had no oil.',
+      'Hunting (renamed from Hunt with Bow): roasting a hunted beast (the Roast Meat deed, which still needs a goblet of oil) now also yields a clean Animal Skin (30%, a tanner\'s reagent) or a Ruined Hide (60%, sells for 3c).',
       'Inventory reworked: every item now stacks to a single pile of 20, and anything over the cap is auto-sold for its worth instead of cluttering a second slot. Raw catch and ingredients (game, fish, potatoes) now wait in your Pockets until cooked; only edible food sits in the Larder.',
       'Bearings, retuned: Hard Labour and the Commons trades pull you back toward True Neutral; Serving at the Chapel turns you Lawful; Pick Pockets turns you Chaotic — each without touching the other axis. Grinding honest work no longer locks you into an alignment you didn\'t choose.',
       'Scavenging is now a proper skill, trained by Scavenge for Salvage — a keener eye finds more.',

@@ -88,6 +88,13 @@ export function canBuyCarry(run: RunState, offer: CarryOffer): boolean {
   return !offer.maxed && run.coin >= offer.cost && run.factions[offer.faction] >= offer.factionReq;
 }
 
+/** Has the player bought EVERYTHING the wandering merchant will ever sell — every
+ *  carry upgrade maxed and every piece of gear owned? Once so, there's no reason
+ *  to send the pedlar into town again. */
+export function merchantSoldOut(run: RunState): boolean {
+  return carryOffers(run).every((o) => o.maxed) && gearOffers(run).every((o) => o.maxed);
+}
+
 // ── gear: waterskins, warm clothes, and a hunting bow ─────────────────────────
 
 export type GearKind = 'waterskin' | 'warm_clothes' | 'hat' | 'bow';

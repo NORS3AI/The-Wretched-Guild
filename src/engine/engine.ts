@@ -20,7 +20,7 @@ import { deedById } from './deeds';
 import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from './items';
 import { chance, nextInt } from './rng';
 import { shopOpen } from './time';
-import { buyCarryUpgrade, buyGear, type CarryKind, type GearKind } from './merchant';
+import { buyCarryUpgrade, buyGear, merchantSoldOut, type CarryKind, type GearKind } from './merchant';
 import { MERCHANT_COOLDOWN, EVENT_COOLDOWN_MIN, EVENT_COOLDOWN_MAX } from './state';
 import { pickEvent } from './events';
 
@@ -122,7 +122,7 @@ export function advanceTick(game: GameState): void {
 
   // a wandering merchant rolls into town now and then (arriving by daylight) and
   // stays until the player waves them off (see the dismissMerchant command).
-  if (!run.merchantHere) {
+  if (!run.merchantHere && !merchantSoldOut(run)) {
     run.merchantCooldown--;
     if (run.merchantCooldown <= 0 && shopOpen(run)) {
       run.merchantHere = true;

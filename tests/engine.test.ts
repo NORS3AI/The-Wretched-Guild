@@ -1232,5 +1232,26 @@ console.log('The Wretched Guild — engine tests\n');
   assert(r.run.rank === 100, 'auto rank up: climbs to rank 100 and stops there');
 }
 
+// 38) The wandering merchant stops coming once every ware is bought.
+{
+  const { merchantSoldOut } = await import('../src/engine/merchant');
+  const { MAX_POCKETS, MAX_POUCHES, MAX_CONTAINER } = await import('../src/engine/items');
+  const g = newGame();
+  g.run.pocketSlots = MAX_POCKETS;
+  g.run.pouches = MAX_POUCHES;
+  g.run.container = MAX_CONTAINER;
+  g.run.waterskinMax = 12; // MAX_WATERSKIN
+  g.run.warmClothes = true;
+  g.run.weatherproof = true;
+  g.run.hasBow = true;
+  assert(merchantSoldOut(g.run), 'the merchant is sold out once every ware is owned');
+  // set up the arrival window (shop hours, cooldown ready) and confirm none comes
+  g.run.merchantHere = false;
+  g.run.merchantCooldown = 1;
+  g.run.dayMs = 10 * 15000; // 10am — within shop hours
+  for (let i = 0; i < 50; i++) advance(g);
+  assert(!g.run.merchantHere, 'a sold-out merchant is never sent into town');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

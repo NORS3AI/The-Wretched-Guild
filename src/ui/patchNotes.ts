@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '1:35 AM MST',
+    title: 'The Pedlar Retires',
+    changes: [
+      'Once you\'ve bought everything the wandering merchant will ever sell — every carry upgrade maxed and every piece of gear owned — the pedlar stops rolling into town. No more pointless visits with nothing left to offer.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '1:10 AM MST',
     title: 'Enterprises Run Cool',
     changes: [

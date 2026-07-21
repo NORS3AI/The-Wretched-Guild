@@ -30,6 +30,7 @@
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
 
   $: tabs = [
+    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true },
     { id: 'needs' as SideTab, label: 'Body & Needs', show: true },
     { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked },
     { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked },
@@ -37,8 +38,8 @@
   ].filter((t) => t.show);
 
   // If the active tab has since become unavailable (e.g. a new life resets rank),
-  // fall back to the always-present Body & Needs tab.
-  $: effectiveTab = tabs.some((t) => t.id === $activeTab) ? $activeTab : 'needs';
+  // fall back to the always-present Ply Your Trade view.
+  $: effectiveTab = tabs.some((t) => t.id === $activeTab) ? $activeTab : 'trade';
 </script>
 
 <button class="version-badge" title="Chronicle of Changes" onclick={() => patchOpen.set(true)}>
@@ -69,22 +70,18 @@
 <main class="layout">
   <aside class="col leftcol">
     <CharacterPanel />
-
-    <div class="tabpanel">
-      {#if effectiveTab === 'enterprises'}
-        <BusinessesPanel />
-      {:else if effectiveTab === 'wretched'}
-        <GuildPanel />
-      {:else if effectiveTab === 'reputation'}
-        <ProgressPanel />
-      {:else}
-        <SurvivalPanel />
-      {/if}
-    </div>
   </aside>
 
-  <section class="center col">
-    {#if $game.run.stocksUntil !== null}
+  <section class="center col tabpanel">
+    {#if effectiveTab === 'needs'}
+      <SurvivalPanel />
+    {:else if effectiveTab === 'enterprises'}
+      <BusinessesPanel />
+    {:else if effectiveTab === 'wretched'}
+      <GuildPanel />
+    {:else if effectiveTab === 'reputation'}
+      <ProgressPanel />
+    {:else if $game.run.stocksUntil !== null}
       <StocksPanel />
     {:else if $game.run.encounter}
       <EncounterView />

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '12:40 PM MST',
+    title: 'One Main Panel, Fully Tabbed',
+    changes: [
+      'The tabs now swap the whole main panel. Ply Your Trade is the default tab; tap Body & Needs, Enterprises, Wretched, or Reputation and it takes over the main area — tap Ply Your Trade to return. The Wretch stays on the left and the Chronicle along the bottom, always.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '12:05 PM MST',
     title: 'Tabs Across the Top',
     changes: [

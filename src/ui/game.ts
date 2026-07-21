@@ -20,10 +20,10 @@ export const dangerFlash = writable(0);
 export const settingsOpen = writable(false);
 export const patchOpen = writable(false);
 
-// Which of the tabbed side-panels is showing (Body & Needs / Enterprises /
-// Wretched / Reputation). Purely a view concern, so it lives outside the save.
-export type SideTab = 'needs' | 'enterprises' | 'wretched' | 'reputation';
-export const activeTab = writable<SideTab>('needs');
+// Which panel fills the main column (Ply Your Trade by default, or one of the
+// tabbed panels). Purely a view concern, so it lives outside the save.
+export type SideTab = 'trade' | 'needs' | 'enterprises' | 'wretched' | 'reputation';
+export const activeTab = writable<SideTab>('trade');
 // The topbar's Bearing button toggles a small popover with the alignment axes.
 export const bearingOpen = writable(false);
 let lastStarveHits = 0;

@@ -19,6 +19,7 @@ function hidden(): boolean {
 export const dangerFlash = writable(0);
 export const settingsOpen = writable(false);
 export const patchOpen = writable(false);
+export const legacyOpen = writable(false);
 
 // Which panel fills the main column (Ply Your Trade by default, or one of the
 // tabbed panels). Purely a view concern, so it lives outside the save.

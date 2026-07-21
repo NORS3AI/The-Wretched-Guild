@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '1:20 PM MST',
+    title: "The Guild's Ledger",
+    changes: [
+      'Added a Legacy button to the top bar. It opens the Guild\'s Ledger: your banked Legacy and Wretched Tokens, what your kept Legacy is adding to your Luck (every 10 unspent Legacy = +0.1 Luck), what Luck actually does and how it\'s calculated, which Guild unlocks you hold and at what level, and a live "were you to die now" tally of the Legacy and Tokens this life would yield.',
+      'You cannot spend anything from the Ledger — spending Legacy and Tokens still happens only on the death screen. This is purely the reckoning.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '12:40 PM MST',
     title: 'One Main Panel, Fully Tabbed',
     changes: [

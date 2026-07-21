@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { gameStore, actions, settingsOpen, bearingOpen } from './game';
+  import { gameStore, actions, settingsOpen, bearingOpen, legacyOpen } from './game';
   import { currentDay, TICKS_PER_DAY } from '../engine/engine';
   import { alignmentName, ethicsBand, moralsBand } from '../engine/alignment';
   import { maxHp, QUARTERS_PER_HEART } from '../engine/survival';
@@ -110,6 +110,9 @@
   <div class="spacer"></div>
 
   <div class="controls">
+    <button class="btn legacy-btn" title="The Guild's Ledger — your Legacy, Tokens, and Luck" onclick={() => legacyOpen.set(true)}>
+      ⚜ Legacy
+    </button>
     <button
       class="btn"
       onclick={() => actions.togglePause()}
@@ -310,5 +313,12 @@
   .btn.gear {
     padding: 6px 9px;
     font-size: 0.95rem;
+  }
+  .btn.legacy-btn {
+    color: var(--gold);
+  }
+  .btn.legacy-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
   }
 </style>

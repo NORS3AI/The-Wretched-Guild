@@ -14,7 +14,8 @@
   import FlashOverlay from './ui/FlashOverlay.svelte';
   import SettingsModal from './ui/SettingsModal.svelte';
   import PatchNotesModal from './ui/PatchNotesModal.svelte';
-  import { illicitWarning, settingsOpen, patchOpen, activeTab } from './ui/game';
+  import LegacyModal from './ui/LegacyModal.svelte';
+  import { illicitWarning, settingsOpen, patchOpen, legacyOpen, activeTab } from './ui/game';
   import type { SideTab } from './ui/game';
   import { GAME_VERSION } from './ui/patchNotes';
   import { ownsAnyBusiness, ENTERPRISE_MIN_COIN } from './engine/businesses';
@@ -112,6 +113,10 @@
 
 {#if $patchOpen}
   <PatchNotesModal />
+{/if}
+
+{#if $legacyOpen}
+  <LegacyModal />
 {/if}
 
 <FlashOverlay />

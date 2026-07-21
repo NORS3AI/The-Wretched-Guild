@@ -96,9 +96,6 @@ export function advanceTick(game: GameState): void {
     for (const m of run.members) m.heat = 0;
   }
 
-  // dev "auto rank up": climb one rung each tick, free of cost or rite
-  if (game.settings?.autoRankUp) devAdvance(run);
-
   // the law answers accumulated notoriety (§10)
   if (lawEnforcement(game, run)) return;
 
@@ -211,7 +208,9 @@ export type Command =
   | { type: 'buyGear'; kind: GearKind }
   | { type: 'dismissMerchant' }
   | { type: 'declineContract' }
-  | { type: 'dismissEncounter' };
+  | { type: 'dismissEncounter' }
+  | { type: 'devRankUp' }
+  | { type: 'devResetRank' };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -298,6 +297,19 @@ export function dispatch(game: GameState, cmd: Command): void {
       }
       // completeAdvance spends the required coin + combined standing and logs
       completeAdvance(run);
+      break;
+    }
+
+    case 'devRankUp': {
+      if (!run.alive) break;
+      devAdvance(run); // free rise, auto-passing any Rite of Passage
+      break;
+    }
+
+    case 'devResetRank': {
+      run.rank = 1;
+      run.milestones = {};
+      pushLog(run, 'By some dark whim of the Guild, you are cast back to rank 1 — a Beggar once more.', 'system');
       break;
     }
 

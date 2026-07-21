@@ -1222,14 +1222,15 @@ console.log('The Wretched Guild — engine tests\n');
   advance(f);
   assert(f.run.activity?.progress === 0, `fast cards: a ${multi.ticks}-tick card (${multi.id}) completes in one tick`);
 
-  // auto rank up: climb a rung each tick, no requirements
+  // dev rank buttons: rank up one at a time on demand, and reset back to 1
   const r = newGame();
-  r.settings = { ...r.settings, autoRankUp: true };
   const rank0 = r.run.rank;
-  advance(r);
-  assert(r.run.rank === rank0 + 1, `auto rank up: rose from ${rank0} to ${r.run.rank} in one tick, cost-free`);
-  for (let i = 0; i < 200; i++) advance(r);
-  assert(r.run.rank === 100, 'auto rank up: climbs to rank 100 and stops there');
+  dispatch(r, { type: 'devRankUp' });
+  assert(r.run.rank === rank0 + 1, `dev rank up: rose from ${rank0} to ${r.run.rank}, cost-free and rite-free`);
+  for (let i = 0; i < 20; i++) dispatch(r, { type: 'devRankUp' });
+  assert(r.run.rank === rank0 + 21, 'dev rank up climbs one rung per press');
+  dispatch(r, { type: 'devResetRank' });
+  assert(r.run.rank === 1, 'dev reset rank returns the wretch to rank 1');
 }
 
 // 38) The wandering merchant stops coming once every ware is bought.

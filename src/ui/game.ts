@@ -248,4 +248,6 @@ export const actions = {
     saveGame(game);
     notify();
   },
+  devRankUp: () => run({ type: 'devRankUp' }),
+  devResetRank: () => run({ type: 'devResetRank' }),
 };

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '1:55 AM MST',
+    title: 'Rank Buttons in the Dev Panel',
+    changes: [
+      'Replaced the auto rank-up toggle with buttons you press on your own terms: "Rank up +1" rises one rung (free of cost and rites), and "Reset to rank 1" casts you all the way back to Beggar. The panel shows your current rank right above them.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '1:35 AM MST',
     title: 'The Pedlar Retires',
     changes: [

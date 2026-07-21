@@ -6,7 +6,6 @@
   $: godMode = $game.settings?.godMode ?? false;
   $: noHeat = $game.settings?.noHeat ?? false;
   $: fastCards = $game.settings?.fastCards ?? false;
-  $: autoRankUp = $game.settings?.autoRankUp ?? false;
 </script>
 
 <div class="overlay">
@@ -43,13 +42,12 @@
         </span>
       </label>
 
-      <label class="opt" class:on={autoRankUp}>
-        <input type="checkbox" checked={autoRankUp} onchange={() => actions.toggleSetting('autoRankUp')} />
-        <span class="opt-text">
-          <span class="opt-name">Auto rank up</span>
-          <span class="opt-desc faint">Climb a rung every tick with no requirements and no Rite of Passage — up to rank 100. Toggle off when you reach the rank you want.</span>
-        </span>
-      </label>
+      <div class="cat">Rank</div>
+      <p class="rank-line faint">Current rank: <strong class="gold">{$game.run.rank}</strong> of 100</p>
+      <div class="grants">
+        <button class="btn" disabled={$game.run.rank >= 100} onclick={() => actions.devRankUp()}>Rank up +1</button>
+        <button class="btn" disabled={$game.run.rank <= 1} onclick={() => actions.devResetRank()}>Reset to rank 1</button>
+      </div>
 
       <div class="cat">Grants</div>
       <div class="grants">
@@ -153,6 +151,13 @@
     font-size: 0.78rem;
     margin: 10px 0 0;
     font-variant-numeric: tabular-nums;
+  }
+  .rank-line {
+    font-size: 0.82rem;
+    margin: 0 0 10px;
+  }
+  .gold {
+    color: var(--gold-bright);
   }
   .close {
     width: 100%;

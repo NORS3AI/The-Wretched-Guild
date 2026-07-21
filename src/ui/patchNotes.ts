@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '3:10 PM MST',
+    title: 'Three Trades Across',
+    changes: [
+      'Ply Your Trade now lays its trades out three columns wide (dropping to two, then one, on narrower screens) — less scrolling, more of your options in view at a glance.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '2:45 PM MST',
     title: 'The Merchant Tab',
     changes: [

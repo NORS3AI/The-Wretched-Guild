@@ -3,12 +3,12 @@
 import type { GameState, RunState } from './types';
 import { pushLog } from './helpers';
 
-/** Legacy earned by a life: reward wealth, longevity, and — most of all — how
- *  high you climbed the ladder. */
+/** Legacy earned by a life: reward wealth, longevity, and how high you climbed
+ *  the ladder. */
 export function computeLegacy(run: RunState): number {
-  const fromCoin = Math.floor(run.coin / 8);
-  const fromAge = Math.max(0, run.ageYears - 16);
-  const fromRank = (run.rank - 1) * 4;
+  const fromCoin = Math.floor(run.coin / 1000); // 1 Legacy per 1,000 copper held
+  const fromAge = Math.floor(Math.max(0, run.ageYears - 16) / 2); // 1 per 2 years past 16
+  const fromRank = run.rank - 1; // 1 per rank above Beggar
   return fromCoin + fromAge + fromRank;
 }
 
@@ -34,7 +34,7 @@ export function computeTokens(run: RunState): number {
 
   // wealth — by denomination reached
   const peak = run.peakCoin;
-  if (peak >= 1_000) t += 0.25; // a shilling
+  if (peak >= 2_000) t += 0.25; // two shillings
   if (peak >= 100_000) t += 0.5;
   if (peak >= 1_000_000) t += 0.75; // a silver
   if (peak >= 100_000_000) t += 1.0;

@@ -32,7 +32,11 @@ export function newRun(meta: MetaState): RunState {
   const lvl = (id: string): number => meta.unlocks[id] ?? 0;
   const startCoin = 15 * lvl('stashed_coin') + Math.floor(meta.vault); // +15 copper per level
   const heartsBonus = lvl('hardened'); // +1 heart per level
-  const startLuck = 2 * lvl('beggars_luck'); // +2 Luck per level
+  // Luck comes from the Beggar's Luck unlock (+2/level) AND from the Legacy you
+  // keep unspent: every 10 Legacy held grants +1 Luck. Spend Legacy on unlocks
+  // and you trade that Luck away. Capped at the 100 attribute ceiling.
+  const legacyLuck = Math.floor((meta.legacy ?? 0) / 10);
+  const startLuck = Math.min(100, 2 * lvl('beggars_luck') + legacyLuck);
 
   const run: RunState = {
     seed: freshSeed(),

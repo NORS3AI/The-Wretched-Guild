@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '6:55 PM MST',
+    title: 'The Weight of Legacy',
+    changes: [
+      'Legacy is rebalanced: 1 per 1,000 copper held at death, 1 per 2 years lived past 16, and 1 per rank above Beggar.',
+      'Wretched Tokens: the first wealth token now needs 2 shillings (2,000 copper) of peak wealth, not 1. The other thresholds are unchanged.',
+      'Kept Legacy now sharpens your Luck: every 10 unspent Legacy grants +1 Luck to your next wretch (based on what you hold, not what you\'ve earned or spent). Spending Legacy trades that Luck away — a real choice on the death screen.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '6:30 PM MST',
     title: 'Blood, Bread & the Working Wage',
     changes: [

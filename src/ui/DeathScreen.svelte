@@ -43,6 +43,10 @@
         <strong class="token">{availableTokens}</strong> Wretched Tokens
         <span class="faint">(anything left carries over — buy as much as you like).</span>
       </p>
+      <p class="muted small luck-note">
+        Legacy you <em>keep</em> sharpens your Luck — every 10 unspent Legacy grants
+        <strong class="gold">+{Math.floor(availableLegacy / 10)} Luck</strong> to your next wretch. Spend it, and you trade that Luck away.
+      </p>
 
       <div class="shop">
         {#each META_UNLOCKS as u}
@@ -142,6 +146,10 @@
   }
   .small {
     font-size: 0.82rem;
+  }
+  .luck-note {
+    margin: 6px 0 0;
+    line-height: 1.5;
   }
   .shop {
     display: flex;

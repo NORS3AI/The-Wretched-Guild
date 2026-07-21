@@ -179,16 +179,26 @@ console.log('The Wretched Guild — engine tests\n');
   assert(rankTitle(g.run) === 'King of England', 'rank 100 is the King of England');
 }
 
-// 7) A higher rank yields more Legacy on death.
+// 7) Legacy rewards coin (1 per 1,000), longevity (1 per 2 years past 16), and
+//    the climb (1 per rank above Beggar); a higher rank yields more.
 {
+  const { computeLegacy } = await import('../src/engine/death');
   const low = newGame();
   low.run.coin = 40;
   const high = newGame();
   high.run.coin = 40;
   high.run.rank = 8;
-  const lowLegacy = Math.floor(low.run.coin / 8) + Math.max(0, low.run.ageYears - 16) + (low.run.rank - 1) * 4;
-  const highLegacy = Math.floor(high.run.coin / 8) + Math.max(0, high.run.ageYears - 16) + (high.run.rank - 1) * 4;
-  assert(highLegacy > lowLegacy, `climbing the ladder is rewarded on death (${lowLegacy} -> ${highLegacy})`);
+  assert(computeLegacy(high.run) > computeLegacy(low.run), `climbing the ladder is rewarded on death (${computeLegacy(low.run)} -> ${computeLegacy(high.run)})`);
+
+  const rich = newGame();
+  rich.run.coin = 5000;
+  assert(computeLegacy(rich.run) === 5, '5,000 copper yields 5 Legacy (1 per 1,000)');
+  const old = newGame();
+  old.run.ageYears = 40; // 24 years past 16 → 12 Legacy
+  assert(computeLegacy(old.run) === 12, '24 years past 16 yields 12 Legacy (1 per 2 years)');
+  const climbed = newGame();
+  climbed.run.rank = 10;
+  assert(computeLegacy(climbed.run) === 9, 'rank 10 yields 9 Legacy (1 per rank above Beggar)');
 }
 
 // 8) Businesses: buying earns passive income; illicit ventures raise Heat; the
@@ -745,16 +755,20 @@ console.log('The Wretched Guild — engine tests\n');
   const bornHard = newRun(g.meta);
   assert(bornHard.heartsBonus === 2, 'two levels of Hardened Stock grant +2 hearts at birth');
 
-  // Beggar's Luck: +2 Luck per level
+  // Beggar's Luck: +2 Luck per level (plus the kept-Legacy Luck bonus)
   const h = newGame();
-  h.meta.legacy = 100;
+  h.meta.legacy = 4; // exactly the cost of three levels, so nothing is kept
   dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 1, cost 1
   dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 2, cost 1
   dispatch(h, { type: 'buyUnlock', id: 'beggars_luck' }); // level 3, cost 2
   assert(h.meta.unlocks['beggars_luck'] === 3, "Beggar's Luck climbs to level 3");
-  assert(h.meta.legacy === 100 - 1 - 1 - 2, "the ladder charges 1, 1, 2 Legacy");
+  assert(h.meta.legacy === 0, 'the ladder charges 1, 1, 2 Legacy');
   const bornLucky = newRun(h.meta);
-  assert(bornLucky.attrs.luck === 6, 'three levels of +2 Luck begin life at Luck 6');
+  assert(bornLucky.attrs.luck === 6, 'three levels of +2 Luck begin life at Luck 6 (no Legacy kept)');
+
+  // kept Legacy adds to Luck: +1 per 10 held
+  h.meta.legacy = 55; // → +5 Luck on top of the +6 from the unlock
+  assert(newRun(h.meta).attrs.luck === 11, '55 kept Legacy adds +5 Luck at birth (6 + 5)');
 
   // A Coin in the Lining: 15 copper per level, and levels are infinite
   const c = newGame();

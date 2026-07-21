@@ -25,8 +25,8 @@ export const SERVANT_GROUPS: ServantGroup[] = [
   { id: 'steward', name: 'Table Stewards', reqRank: 60, wage: 0.8, blurb: 'Feed and water you the instant either need falls to half (51%).' },
   { id: 'bath', name: 'Bath Servants', reqRank: 70, wage: 0.8, blurb: 'Draw hot water and bathe you at half hygiene (51%).' },
   { id: 'chamber', name: 'Chamber Servants', reqRank: 80, wage: 0.8, blurb: 'Change your chamber pots, relieving you at half (51%).' },
-  { id: 'foreman1', name: 'Head Foreman', reqRank: 90, wage: 3, blurb: 'Runs your single most advanced enterprise forever — freeing you to work another venture or a trade.' },
-  { id: 'foreman2', name: 'Second Foreman', reqRank: 95, wage: 5, blurb: 'Runs your second most advanced enterprise the very same way.' },
+  { id: 'foreman1', name: 'Head Foreman', reqRank: 90, wage: 3, blurb: 'Runs your grandest enterprise — and switches to a finer one the moment you acquire it, abandoning a humbler venture. Frees you to work another venture or a trade.' },
+  { id: 'foreman2', name: 'Second Foreman', reqRank: 95, wage: 5, blurb: 'Runs your second-grandest enterprise the very same way, shifting as your holdings grow.' },
   { id: 'labourers', name: 'Trade Labourers', reqRank: 100, wage: 8, blurb: 'Work three of your Ply-Your-Trade tasks alongside whatever you are doing.' },
 ];
 
@@ -90,11 +90,15 @@ export function dismissServant(run: RunState, id: string): boolean {
   return true;
 }
 
-/** Owned businesses, most advanced first (highest level, then priciest). */
+/** Owned businesses, MOST ADVANCED first — ranked by the grandeur of the venture
+ *  itself (its base cost / tier), not by how far you have levelled it. So the
+ *  foremen always tend your finest buildings, and the moment you acquire a grander
+ *  one they abandon a humbler venture (the market stall first) to run it instead.
+ *  Level only breaks ties between two ventures of the same standing. */
 export function advancedBusinesses(run: RunState): { def: BusinessDef; level: number }[] {
   return BUSINESSES.map((def) => ({ def, level: ownedLevel(run, def.id) }))
     .filter((b) => b.level > 0)
-    .sort((a, b) => b.level - a.level || b.def.baseCost - a.def.baseCost);
+    .sort((a, b) => b.def.baseCost - a.def.baseCost || b.level - a.level);
 }
 
 const LABOURER_TRADE_COIN = 3; // avg coin/tick per trade a labourer works

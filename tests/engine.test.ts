@@ -1639,5 +1639,23 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.encounter !== null, 'the event stays open to handle after tending yourself');
 }
 
+// 55) Foremen tend your MOST ADVANCED enterprises (by tier), and a finer new one
+//     bumps a humbler venture they were running.
+{
+  const { advancedBusinesses } = await import('../src/engine/servants');
+  const g = newGame();
+  // a well-levelled market stall (cheapest tier) and a lesser-levelled alehouse
+  g.run.businesses = { market_stall: 5, alehouse: 3 };
+  let top = advancedBusinesses(g.run);
+  assert(top[0].def.id === 'alehouse', 'the grander venture (alehouse) is tended first, even at a lower level');
+  // acquire a finer enterprise — the foremen shift to it; the market stall is set aside
+  g.run.businesses = { market_stall: 5, alehouse: 3, fencing_den: 1 };
+  top = advancedBusinesses(g.run);
+  assert(
+    top[0].def.id === 'fencing_den' && top[1].def.id === 'alehouse' && top[2].def.id === 'market_stall',
+    'a finer new enterprise is worked first; the market stall drops to last',
+  );
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

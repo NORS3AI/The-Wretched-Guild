@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '10:15 PM MST',
+    title: 'Foremen Tend Your Finest',
+    changes: [
+      'Your foremen now run your MOST ADVANCED enterprises by their grandeur (tier), not by how far you have levelled them. So the moment you acquire a finer venture, a foreman abandons a humbler one — the market stall first — to run the new building instead. With both foremen, they always tend your two grandest holdings, shifting as you grow.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '9:45 PM MST',
     title: 'Tend Yourself Mid-Event',
     changes: [

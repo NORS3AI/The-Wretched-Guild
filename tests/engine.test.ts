@@ -1286,5 +1286,67 @@ console.log('The Wretched Guild — engine tests\n');
   assert(!hasCookingOil(g.run), 'without the buff and without a Goblet, there is no oil to cook with');
 }
 
+// 40) Household servants (§14): unlock by rank, do chores, take wages or desert,
+//     and turn free & 2.2× for the Chaotic-Evil and Lawful-Good.
+{
+  const { servantsFree, servantMultiplier, totalServantWage } = await import('../src/engine/servants');
+
+  // gated by rank: cannot hire before 50
+  const early = newGame();
+  early.run.rank = 49;
+  dispatch(early, { type: 'hireServant', id: 'kitchen' });
+  assert(!early.run.servants.kitchen, 'servants cannot be hired before rank 50');
+
+  // kitchen servants cook a raw catch each tick
+  const k = newGame();
+  k.run.rank = 50;
+  k.run.coin = 1000;
+  dispatch(k, { type: 'hireServant', id: 'kitchen' });
+  assert(k.run.servants.kitchen, 'kitchen servants are taken on at rank 50');
+  k.run.larder = [{ item: 'fish', qty: 3 }, null, null, null, null, null];
+  advance(k);
+  assert(countItem(k.run, 'cooked_fish') >= 1 && countItem(k.run, 'fish') === 2, 'kitchen servants cook a fish each tick');
+
+  // stewards feed and water you at half
+  const s = newGame();
+  s.run.rank = 60;
+  s.run.coin = 1000;
+  dispatch(s, { type: 'hireServant', id: 'steward' });
+  s.run.needs.food = 40;
+  s.run.needs.water = 30;
+  advance(s);
+  assert(s.run.needs.food === 100 && s.run.needs.water === 100, 'stewards feed and water at half');
+
+  // unpaid servants desert
+  const poor = newGame();
+  poor.run.rank = 60;
+  poor.run.coin = 0;
+  poor.run.alignment = { ethics: 0, morals: 0 }; // neutral — wages apply
+  dispatch(poor, { type: 'hireServant', id: 'steward' });
+  advance(poor);
+  assert(!poor.run.servants.steward, 'unpaid servants desert');
+
+  // Chaotic-Evil: free slaves, 2.2×
+  const ce = newGame();
+  ce.run.rank = 90;
+  ce.run.coin = 0;
+  ce.run.alignment = { ethics: -80, morals: -80 };
+  dispatch(ce, { type: 'hireServant', id: 'kitchen' });
+  assert(servantsFree(ce.run) && servantMultiplier(ce.run) === 2.2 && totalServantWage(ce.run) === 0, 'Chaotic-Evil keeps free slaves who toil 2.2×');
+  ce.run.larder = [{ item: 'fish', qty: 2 }, null, null, null, null, null];
+  advance(ce);
+  assert(ce.run.servants.kitchen, 'free servants never desert for unpaid wages');
+
+  // a foreman works your most advanced enterprise for coin
+  const f = newGame();
+  f.run.rank = 90;
+  f.run.coin = 1000;
+  f.run.businesses = { market_stall: 30 };
+  dispatch(f, { type: 'hireServant', id: 'foreman1' });
+  const coin0 = f.run.coin;
+  advance(f);
+  assert(f.run.coin > coin0, `a foreman works your top enterprise for coin (${coin0} -> ${f.run.coin.toFixed(1)})`);
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

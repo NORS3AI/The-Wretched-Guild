@@ -135,6 +135,8 @@ export interface RunState {
   factions: Record<FactionId, number>;
   /** owned ventures by id → level (§11) */
   businesses: Record<string, number>;
+  /** hired household servant groups by id → hired (§14, rank 50+) */
+  servants: Record<string, boolean>;
   /** the Guild roster and the current pool of candidates (§12) */
   members: Member[];
   recruits: Member[];

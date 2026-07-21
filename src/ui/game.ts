@@ -24,7 +24,7 @@ export const devOpen = writable(false);
 
 // Which panel fills the main column (Ply Your Trade by default, or one of the
 // tabbed panels). Purely a view concern, so it lives outside the save.
-export type SideTab = 'wretch' | 'events' | 'trade' | 'merchant' | 'needs' | 'enterprises' | 'wretched' | 'reputation';
+export type SideTab = 'wretch' | 'events' | 'trade' | 'merchant' | 'needs' | 'enterprises' | 'wretched' | 'household' | 'reputation';
 export const activeTab = writable<SideTab>('wretch');
 // The topbar's Bearing button toggles a small popover with the alignment axes.
 export const bearingOpen = writable(false);
@@ -195,6 +195,8 @@ export const actions = {
   investBusiness: (id: string) => run({ type: 'investBusiness', id }),
   recruitMember: (id: string) => run({ type: 'recruitMember', id }),
   dismissMember: (id: string) => run({ type: 'dismissMember', id }),
+  hireServant: (id: string) => run({ type: 'hireServant', id }),
+  dismissServant: (id: string) => run({ type: 'dismissServant', id }),
   assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
   rerollRecruits: () => run({ type: 'rerollRecruits' }),
   doDeed: (id: string) => run({ type: 'doDeed', id }),

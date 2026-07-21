@@ -90,6 +90,7 @@ export function newRun(meta: MetaState): RunState {
     milestones: {},
     factions: emptyStanding(),
     businesses: {},
+    servants: {},
     members: [],
     recruits: [],
     guildUnpaidTicks: 0,

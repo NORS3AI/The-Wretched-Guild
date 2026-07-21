@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '12:15 PM MST',
+    title: 'The Household — Servants',
+    changes: [
+      'At rank 50 a new Household tab opens: hire servant groups to run your affairs. Each unlocks as you climb — Kitchen Servants (50) cook your fish and roast your game; Table Stewards (60) feed and water you at 51%; Bath Servants (70) bathe you at 51% hygiene; Chamber Servants (80) relieve you at 51%; a Head Foreman (90) runs your most advanced enterprise forever, and a Second Foreman (95) your second, freeing you to work other ventures or trades; and Trade Labourers (100) ply three trades alongside you.',
+      'Servants draw wages each moment — leave them unpaid and they desert you. But a Chaotic-Evil master keeps them as SLAVES and a Lawful-Good one as DISCIPLES: either way they toil 2.2× as hard, and for free.',
+      'Bug fix: on mobile the Purse now sits on its own fixed line and no longer jumps between rows as your coin ticks up.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '11:30 AM MST',
     title: 'Rites Read in Denominations',
     changes: [

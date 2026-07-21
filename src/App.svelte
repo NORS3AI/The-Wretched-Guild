@@ -10,6 +10,7 @@
   import VendorPanel from './ui/VendorPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
+  import ServantsPanel from './ui/ServantsPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import StocksPanel from './ui/StocksPanel.svelte';
   import WarningModal from './ui/WarningModal.svelte';
@@ -32,6 +33,7 @@
   // Enterprises once there's coin to invest, Wretched once the Guild opens.
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
+  $: householdUnlocked = $game.run.rank >= 50; // servants open at rank 50
 
   // The Events tab gathers everything that needs handling — encounters, the
   // stocks, and the wandering merchant. A red ! flags when any of them is waiting.
@@ -53,6 +55,7 @@
     { id: 'needs' as SideTab, label: 'Body & Needs', show: true, alert: needsAlert },
     { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, alert: false },
     { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked, alert: false },
+    { id: 'household' as SideTab, label: 'Household', show: householdUnlocked, alert: false },
     { id: 'reputation' as SideTab, label: 'Reputation', show: true, alert: false },
   ].filter((t) => t.show);
 
@@ -121,6 +124,8 @@
       <BusinessesPanel />
     {:else if effectiveTab === 'wretched'}
       <GuildPanel />
+    {:else if effectiveTab === 'household'}
+      <ServantsPanel />
     {:else if effectiveTab === 'reputation'}
       <ProgressPanel />
     {:else}

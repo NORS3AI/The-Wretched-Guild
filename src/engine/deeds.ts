@@ -74,7 +74,7 @@ function clamp100(v: number): number {
 }
 
 /** Hunted game → the roast it becomes when cooked. */
-const GAME_ROAST: Record<string, string> = {
+export const GAME_ROAST: Record<string, string> = {
   raw_weasel: 'roast_weasel',
   raw_rabbit: 'roast_rabbit',
   raw_boar: 'roast_boar',
@@ -85,7 +85,7 @@ const GAME_ROAST: Record<string, string> = {
 };
 
 /** The most valuable raw beast the player is carrying (roast the best first). */
-function bestRawGame(run: RunState): string | null {
+export function bestRawGame(run: RunState): string | null {
   let best: string | null = null;
   let bestVal = -1;
   for (const id of Object.keys(GAME_ROAST)) {

@@ -64,6 +64,7 @@
     <span class="label">Age</span>
     <span class="val">{$game.run.ageYears}</span>
   </div>
+  <div class="row-break"></div>
   <div class="stat purse-stat">
     <span class="label">Purse</span>
     <button class="val gold purse-btn" title="See the coin of the realm" onclick={() => purseOpen.update((v) => !v)}>
@@ -98,6 +99,7 @@
       </div>
     {/if}
   </div>
+  <div class="row-break"></div>
   <div class="stat">
     <span class="label">Heat</span>
     <span class="val" class:hot={$game.run.heat > 60}>{Math.round($game.run.heat)}</span>
@@ -221,10 +223,27 @@
   .purse-btn:hover {
     border-color: var(--gold);
   }
+  .purse-btn {
+    font-variant-numeric: tabular-nums;
+  }
   .purse-btn .caret {
     font-size: 0.7rem;
     color: var(--ink-faint);
     font-weight: 400;
+  }
+  /* On phones the topbar wraps; give the Purse its own fixed line so its
+     constantly-changing value never bumps other stats between rows (which was
+     making the whole bar jitter up and down as coin ticked in). */
+  .row-break {
+    display: none;
+  }
+  @media (max-width: 700px) {
+    .row-break {
+      display: block;
+      flex-basis: 100%;
+      width: 100%;
+      height: 0;
+    }
   }
   .purse-pop {
     position: absolute;

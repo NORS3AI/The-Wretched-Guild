@@ -16,6 +16,7 @@ import { canJoinShadow } from './alignment';
 import { advancement, completeAdvance, devAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel, ownsAnyBusiness } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
+import { processServants, hireServant, dismissServant } from './servants';
 import { tickSurvival, heal } from './survival';
 import { deedById } from './deeds';
 import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from './items';
@@ -71,6 +72,9 @@ export function advanceTick(game: GameState): void {
 
   // the Guild works in parallel (§12)
   processGuild(game, run);
+
+  // the household of servants tends chores and runs your ventures (§14)
+  processServants(game, run);
 
   // idle activity (suspended while imprisoned)
   if (run.activity && run.stocksUntil === null) {
@@ -211,7 +215,9 @@ export type Command =
   | { type: 'declineContract' }
   | { type: 'dismissEncounter' }
   | { type: 'devRankUp' }
-  | { type: 'devResetRank' };
+  | { type: 'devResetRank' }
+  | { type: 'hireServant'; id: string }
+  | { type: 'dismissServant'; id: string };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -315,6 +321,18 @@ export function dispatch(game: GameState, cmd: Command): void {
       run.rank = 1;
       run.milestones = {};
       pushLog(run, 'By some dark whim of the Guild, you are cast back to rank 1 — a Beggar once more.', 'system');
+      break;
+    }
+
+    case 'hireServant': {
+      if (!run.alive) break;
+      hireServant(run, cmd.id);
+      break;
+    }
+
+    case 'dismissServant': {
+      if (!run.alive) break;
+      dismissServant(run, cmd.id);
       break;
     }
 

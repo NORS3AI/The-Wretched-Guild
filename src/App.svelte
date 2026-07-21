@@ -75,7 +75,14 @@
 
 <main class="layout">
   <section class="center col tabpanel">
-    {#if effectiveTab === 'wretch'}
+    <!-- Stocks and encounters (events, accepted contracts, and Rites of Passage)
+         take over the main panel no matter which tab is open, so they can never
+         be triggered "invisibly" from another tab. -->
+    {#if $game.run.stocksUntil !== null}
+      <StocksPanel />
+    {:else if $game.run.encounter}
+      <EncounterView />
+    {:else if effectiveTab === 'wretch'}
       <CharacterPanel />
     {:else if effectiveTab === 'merchant'}
       <VendorPanel />
@@ -87,10 +94,6 @@
       <GuildPanel />
     {:else if effectiveTab === 'reputation'}
       <ProgressPanel />
-    {:else if $game.run.stocksUntil !== null}
-      <StocksPanel />
-    {:else if $game.run.encounter}
-      <EncounterView />
     {:else}
       {#if $game.run.merchantHere}
         <MerchantPanel />

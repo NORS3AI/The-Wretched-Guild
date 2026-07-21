@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '8:10 PM MST',
+    title: 'Rites You Can Actually See',
+    changes: [
+      'Fixed a snag where undertaking a Rite of Passage (or hitting any encounter/event) from a tab other than Ply Your Trade did nothing visible — the rite was opening on a tab you weren\'t looking at. Encounters, events, Rites of Passage, and the stocks now take over the main panel no matter which tab you\'re on, so you can always see and complete them.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '7:35 PM MST',
     title: 'Purse Fits the Screen',
     changes: [

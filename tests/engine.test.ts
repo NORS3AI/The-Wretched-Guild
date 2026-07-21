@@ -268,22 +268,24 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.recruits.length === 0, 'no candidates appear before rank 3');
 
   g.run.rank = 4;
+  g.run.attrs.brawn = 80; // unlock Divine Authority
+  g.run.attrs.stealth = 65; // unlock Assassination
   advance(g); // ensureRecruits fills the pool
   assert(g.run.recruits.length === 3, 'candidates appear once the Guild is unlocked');
 
   // hand-craft a Lawful Good friar and confirm they refuse shadow work
   const friar = { id: 'test-friar', name: 'Brother Test', archetype: 'Friar', skill: 10, alignment: { ethics: 60, morals: 60 }, job: null, upkeep: 0.1, heat: 0 };
   g.run.members.push(friar as any);
-  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'thieve' });
-  assert(friar.job === null, 'a Lawful Good friar refuses to thieve (member alignment gate)');
-  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'alms' });
-  assert(friar.job === 'alms', 'the friar will do church almswork');
+  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'assassin' });
+  assert(friar.job === null, 'a Lawful Good friar refuses shadow work like Assassination (member alignment gate)');
+  dispatch(g, { type: 'assignMember', memberId: 'test-friar', jobId: 'divine' });
+  assert(friar.job === 'divine', 'the friar will serve as Divine Authority (church work)');
 
   // the assigned member earns for the Guild treasury
   g.run.coin = 100;
   const before = g.run.coin;
   ff(g, 50);
-  // net of the friar's small upkeep, almswork should still add coin + church standing
+  // Divine Authority should still add coin + Church standing
   assert(g.run.factions.church > 0, `the friar builds the Guild's Church standing (${g.run.factions.church.toFixed(1)})`);
   assert(before !== g.run.coin, 'the treasury changes as the member works and is paid');
 }
@@ -1406,6 +1408,30 @@ console.log('The Wretched Guild — engine tests\n');
   let guard = 0;
   while (g.run.stocksUntil === null && g.run.alive && guard++ < 800) advance(g);
   assert(g.run.stocksUntil !== null, 'the 7th pickpocket catch lands you in the stocks');
+}
+
+// 45) Guild candidates' skill scales with rank (~1000 at rank 100); intensive
+//     duties gate on the master's attributes and pay more at higher rank.
+{
+  const g = newGame();
+  g.run.rank = 100;
+  g.run.recruits = [];
+  advance(g); // ensureRecruits fills the pool at the current rank
+  const s = g.run.recruits[0].skill;
+  assert(s >= 975 && s <= 1025, `a rank-100 candidate's skill is ~1000 with a 5–25 overlap (got ${s})`);
+
+  const { jobById, jobUnlocked, incomeOf } = await import('../src/engine/guild');
+  const assassin = jobById('assassin')!;
+  const h = newGame();
+  h.run.attrs.stealth = 64;
+  assert(!jobUnlocked(h.run, assassin), 'Assassination is locked below 65 Stealth');
+  h.run.attrs.stealth = 65;
+  assert(jobUnlocked(h.run, assassin), 'Assassination unlocks at 65 Stealth');
+
+  const m = { skill: 500 } as any;
+  assert(incomeOf(m, assassin, 100) > incomeOf(m, assassin, 50), 'a duty pays more at a higher rank');
+  const night = jobById('night')!;
+  assert(night.baseIncome > assassin.baseIncome, 'more intensive duties pay far more (Woman of the Night > Assassination)');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

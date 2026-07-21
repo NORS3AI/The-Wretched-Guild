@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '3:00 PM MST',
+    title: 'The Guild Reforged',
+    changes: [
+      'The Wretched Guild lists Candidates above the Sworn now, and candidates grow far keener as you rise — a wretch\'s skill is roughly ten times your rank (about 1000 at rank 100), with a random 5–25 overlap so the tiers blur together.',
+      'New, more intuitive duties (and grander pay): Assassination unlocks at 65 Stealth and pays 2 silver/tick; Divine Authority at 80 Brawn for 10 silver/tick; The Joker at 33 Luck for 1 crown/tick; and the Woman of the Night at 90 Charm and 90 Cunning for 10 tritons/tick. Two humble duties — Street Scavenging and Hired Muscle — keep early members busy.',
+      'A duty\'s pay now scales with both your rank and the wretch\'s own skill, so the same work earns more the higher you climb. More intensive duties pay a great deal more.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '2:00 PM MST',
     title: 'Trade Pay, Thieving Risk & Steered Events',
     changes: [

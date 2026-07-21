@@ -3,6 +3,7 @@
   import {
     MEMBER_JOBS,
     memberCanDo,
+    jobUnlocked,
     incomeOf,
     jobById,
     maxMembers,
@@ -10,6 +11,7 @@
     totalUpkeep,
     GUILD_MIN_RANK,
     REROLL_COST,
+    type MemberJob,
   } from '../engine/guild';
   import { alignmentName } from '../engine/alignment';
   import { formatMoney } from '../engine/money';
@@ -21,10 +23,20 @@
 
   function memberIncome(m: (typeof run.members)[number]): number {
     const job = m.job ? jobById(m.job) : null;
-    return job ? incomeOf(m, job) : 0;
+    return job ? incomeOf(m, job, run.rank) : 0;
   }
   $: grossIncome = run.members.reduce((s, m) => s + memberIncome(m), 0);
   $: netIncome = grossIncome - totalUpkeep(run);
+
+  // signed money, since a net loss must read as a minus, not "0c"
+  function signedMoney(n: number): string {
+    return (n < 0 ? '-' : '+') + formatMoney(Math.abs(n));
+  }
+  const cap1 = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  function reqHint(job: MemberJob): string {
+    if (!job.req) return '';
+    return Object.entries(job.req).map(([k, v]) => `${v} ${cap1(k)}`).join(', ');
+  }
 
   function onAssign(memberId: string, e: Event) {
     const val = (e.target as HTMLSelectElement).value;
@@ -44,45 +56,11 @@
       <div class="summary">
         <span class="muted">{run.members.length}/{cap} sworn</span>
         <span class="net" class:loss={netIncome < 0}>
-          net {netIncome >= 0 ? '+' : ''}{netIncome.toFixed(2)} <span class="faint">coin/tick</span>
+          net {signedMoney(netIncome)} <span class="faint">/tick</span>
         </span>
       </div>
 
-      <!-- roster -->
-      {#if run.members.length === 0}
-        <p class="faint empty">The roster is empty. Take on a candidate below.</p>
-      {:else}
-        <div class="roster">
-          {#each run.members as m (m.id)}
-            <div class="member">
-              <div class="m-head">
-                <span class="m-name">{m.name}</span>
-                <button class="dismiss" title="Cast out" onclick={() => actions.dismissMember(m.id)}>✕</button>
-              </div>
-              <div class="m-meta faint">
-                {m.archetype} · {alignmentName(m.alignment)} · skill {m.skill.toFixed(0)}
-                {#if m.heat > 0}· <span class="m-heat">heat {Math.round(m.heat)}</span>{/if}
-              </div>
-              <div class="m-controls">
-                <select class="job-select" onchange={(e) => onAssign(m.id, e)}>
-                  <option value="" selected={m.job === null}>— Idle —</option>
-                  {#each MEMBER_JOBS as job}
-                    <option value={job.id} selected={m.job === job.id} disabled={!memberCanDo(m, job)}>
-                      {job.name}{memberCanDo(m, job) ? '' : ' (refuses)'}
-                    </option>
-                  {/each}
-                </select>
-                <span class="m-income">
-                  {m.job ? `+${memberIncome(m).toFixed(2)}` : '—'}
-                  <span class="faint">/ -{m.upkeep.toFixed(2)}</span>
-                </span>
-              </div>
-            </div>
-          {/each}
-        </div>
-      {/if}
-
-      <!-- recruitment -->
+      <!-- recruitment (candidates first) -->
       <div class="section-label">Candidates</div>
       <div class="recruits">
         {#each run.recruits as r (r.id)}
@@ -100,7 +78,7 @@
               title={full ? 'Roster is full' : !affordable ? 'Not enough coin' : ''}
               onclick={() => actions.recruitMember(r.id)}
             >
-              Hire · {cost}
+              Hire · {formatMoney(cost)}
             </button>
           </div>
         {/each}
@@ -112,6 +90,42 @@
       >
         Post word for others ({formatMoney(REROLL_COST)})
       </button>
+
+      <!-- sworn roster -->
+      <div class="section-label">Sworn</div>
+      {#if run.members.length === 0}
+        <p class="faint empty">No wretches sworn yet. Take on a candidate above.</p>
+      {:else}
+        <div class="roster">
+          {#each run.members as m (m.id)}
+            <div class="member">
+              <div class="m-head">
+                <span class="m-name">{m.name}</span>
+                <button class="dismiss" title="Cast out" onclick={() => actions.dismissMember(m.id)}>✕</button>
+              </div>
+              <div class="m-meta faint">
+                {m.archetype} · {alignmentName(m.alignment)} · skill {m.skill.toFixed(0)}
+                {#if m.heat > 0}· <span class="m-heat">heat {Math.round(m.heat)}</span>{/if}
+              </div>
+              <div class="m-controls">
+                <select class="job-select" onchange={(e) => onAssign(m.id, e)}>
+                  <option value="" selected={m.job === null}>— Idle —</option>
+                  {#each MEMBER_JOBS as job}
+                    {@const canDo = memberCanDo(m, job)}
+                    {@const unlocked = jobUnlocked(run, job)}
+                    <option value={job.id} selected={m.job === job.id} disabled={!canDo || !unlocked}>
+                      {job.name}{!canDo ? ' (refuses)' : !unlocked ? ` (needs ${reqHint(job)})` : ''}
+                    </option>
+                  {/each}
+                </select>
+                <span class="m-income">
+                  {m.job ? `+${formatMoney(memberIncome(m))}` : '—'}
+                </span>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
     {/if}
   </div>
 </div>

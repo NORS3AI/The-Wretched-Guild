@@ -2,7 +2,7 @@
 // own alignment that gates what work they'll take, assign them to jobs that run
 // in parallel, and manage their wages and mortality.
 
-import type { GameState, Member, RunState } from './types';
+import type { AttrKey, GameState, Member, RunState } from './types';
 import type { FactionId } from './factions';
 import { factionById } from './factions';
 import { nextInt, nextFloat } from './rng';
@@ -24,19 +24,22 @@ export interface MemberJob {
   id: string;
   name: string;
   faction: FactionId;
-  baseIncome: number; // coin/tick, before skill scaling
+  baseIncome: number; // coin/tick, before rank & skill scaling
   standingGain: number; // guild faction standing/tick
   heatGain: number; // added to the member's own heat/tick
   risky: boolean;
+  /** attributes the MASTER (the player) must have honed to set a wretch to this
+   *  duty; the more intensive the work, the steeper the demand — and the pay. */
+  req?: Partial<Record<AttrKey, number>>;
 }
 
 export const MEMBER_JOBS: MemberJob[] = [
-  { id: 'scavenge', name: 'Scavenge & Beg', faction: 'commons', baseIncome: 0.06, standingGain: 0.02, heatGain: 0, risky: false },
-  { id: 'labour', name: 'Honest Labour', faction: 'commons', baseIncome: 0.12, standingGain: 0.03, heatGain: 0, risky: false },
-  { id: 'trade', name: 'Market Trade', faction: 'merchants', baseIncome: 0.16, standingGain: 0.04, heatGain: 0.005, risky: false },
-  { id: 'alms', name: 'Church Almswork', faction: 'church', baseIncome: 0.1, standingGain: 0.05, heatGain: 0, risky: false },
-  { id: 'thieve', name: 'Thieving', faction: 'shadow', baseIncome: 0.22, standingGain: 0.04, heatGain: 0.03, risky: true },
-  { id: 'collect', name: 'Collect Debts', faction: 'shadow', baseIncome: 0.3, standingGain: 0.05, heatGain: 0.06, risky: true },
+  { id: 'scavenge', name: 'Street Scavenging', faction: 'commons', baseIncome: 0.1, standingGain: 0.02, heatGain: 0, risky: false },
+  { id: 'muscle', name: 'Hired Muscle', faction: 'shadow', baseIncome: 0.6, standingGain: 0.04, heatGain: 0.02, risky: true, req: { brawn: 40 } },
+  { id: 'assassin', name: 'Assassination', faction: 'shadow', baseIncome: 2_000_000, standingGain: 0.06, heatGain: 0.06, risky: true, req: { stealth: 65 } }, // 2 silver/tick
+  { id: 'divine', name: 'Divine Authority', faction: 'church', baseIncome: 10_000_000, standingGain: 0.06, heatGain: 0, risky: false, req: { brawn: 80 } }, // 10 silver/tick
+  { id: 'joker', name: 'The Joker', faction: 'commons', baseIncome: 1_000_000_000, standingGain: 0.06, heatGain: 0, risky: false, req: { luck: 33 } }, // 1 crown/tick
+  { id: 'night', name: 'Woman of the Night', faction: 'shadow', baseIncome: 10_000_000_000_000, standingGain: 0.06, heatGain: 0.02, risky: false, req: { charm: 90, cunning: 90 } }, // 10 tritons/tick
 ];
 
 export function jobById(id: string): MemberJob | undefined {
@@ -50,8 +53,15 @@ export function memberCanDo(member: Member, job: MemberJob): boolean {
   return factionById(job.faction).admits(member.alignment);
 }
 
-export function incomeOf(member: Member, job: MemberJob): number {
-  return job.baseIncome * (0.5 + member.skill / 20);
+/** Whether the master's own attributes have unlocked this duty for assignment. */
+export function jobUnlocked(run: RunState, job: MemberJob): boolean {
+  if (!job.req) return true;
+  return (Object.keys(job.req) as AttrKey[]).every((k) => run.attrs[k] >= (job.req![k] ?? 0));
+}
+
+/** A duty's pay scales with the master's rank and the wretch's own skill. */
+export function incomeOf(member: Member, job: MemberJob, rank: number): number {
+  return job.baseIncome * (0.5 + rank / 100) * (0.5 + member.skill / 1000);
 }
 
 // ── Recruitment ─────────────────────────────────────────────────────────────
@@ -90,7 +100,10 @@ function genName(run: RunState): string {
 function generateRecruit(run: RunState): Member {
   const id = `m${run.rngCursor}`;
   const arch = ARCHETYPES[nextInt(run, 0, ARCHETYPES.length - 1)];
-  const skill = nextInt(run, 3, 9) + nextInt(run, 0, Math.min(12, run.rank));
+  // candidates grow keener with the master's rank — skill ≈ rank × 10, reaching
+  // 1000 at rank 100 — with a random 5–25 overlap so the tiers blur together.
+  const spread = nextInt(run, 5, 25);
+  const skill = Math.max(1, run.rank * 10 + nextInt(run, -spread, spread));
   const alignment = {
     ethics: clampAxis(arch.ethicsBias + nextInt(run, -22, 22)),
     morals: clampAxis(arch.moralsBias + nextInt(run, -22, 22)),
@@ -147,7 +160,7 @@ export function assignMemberJob(run: RunState, memberId: string, jobId: string |
     return true;
   }
   const job = jobById(jobId);
-  if (!job || !memberCanDo(member, job)) return false;
+  if (!job || !memberCanDo(member, job) || !jobUnlocked(run, job)) return false;
   member.job = jobId;
   return true;
 }
@@ -166,14 +179,14 @@ export function processGuild(game: GameState, run: RunState): void {
   for (const m of run.members) {
     if (!m.job) continue;
     const job = jobById(m.job);
-    if (!job || !memberCanDo(m, job)) {
-      m.job = null; // alignment drifted out of eligibility (defensive)
+    if (!job || !memberCanDo(m, job) || !jobUnlocked(run, job)) {
+      m.job = null; // alignment drifted out, or the duty is no longer unlocked
       continue;
     }
-    run.coin += incomeOf(m, job);
+    run.coin += incomeOf(m, job, run.rank);
     run.factions[job.faction] = Math.min(100, run.factions[job.faction] + job.standingGain);
     if (job.heatGain > 0) m.heat = Math.min(100, m.heat + job.heatGain);
-    m.skill = Math.min(40, m.skill + 0.015);
+    m.skill = Math.min(1000, m.skill + 0.015);
   }
 
   // wages — unpaid members grumble but stay sworn to the Guild; only their own

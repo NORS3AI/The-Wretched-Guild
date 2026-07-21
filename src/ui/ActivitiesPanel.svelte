@@ -18,7 +18,7 @@
   // divided by speed) via a CSS animation, rather than jumping per tick.
   function fillDurationMs(id: string): number {
     const def = ACTIVITIES.find((a) => a.id === id);
-    const ticks = def?.ticks ?? 1;
+    const ticks = $game.settings?.fastCards ? 1 : (def?.ticks ?? 1);
     return (ticks * REAL_MS_PER_TICK) / Math.max(1, $game.speed);
   }
 </script>

@@ -1206,5 +1206,23 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.hp >= maxHp(g.run) - 0.001, 'god mode: hearts pinned to the max');
 }
 
+// 37) Dev toggles: "never gain Heat" and "fast cards" (one-tick cycles).
+{
+  const g = newGame();
+  g.settings = { ...g.settings, noHeat: true };
+  g.run.heat = 100;
+  advance(g);
+  assert(g.run.heat === 0, 'no-heat: Heat is pinned to 0 each tick');
+
+  const { ACTIVITIES } = await import('../src/engine/activities');
+  const safe = ['beg', 'fell_timber', 'coal_mine', 'till_fields', 'forage', 'fish', 'scavenge'];
+  const multi = ACTIVITIES.find((a) => (a.ticks ?? 1) > 1 && safe.includes(a.id))!;
+  const f = newGame();
+  f.settings = { ...f.settings, fastCards: true };
+  dispatch(f, { type: 'setActivity', id: multi.id });
+  advance(f);
+  assert(f.run.activity?.progress === 0, `fast cards: a ${multi.ticks}-tick card (${multi.id}) completes in one tick`);
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

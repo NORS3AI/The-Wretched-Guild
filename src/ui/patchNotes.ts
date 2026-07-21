@@ -36,6 +36,15 @@ export function versionForOrdinal(n: number): string {
 // Newest first. Versions are computed from position below.
 const RAW: RawPatch[] = [
   {
+    date: 'July 22, 2026',
+    time: '12:20 AM MST',
+    title: 'More Dev Toggles',
+    changes: [
+      'Dev Panel gains "Never gain Heat" — your Heat (and your Guild\'s) is pinned to 0, so the watch never comes.',
+      'Dev Panel gains "Fast cards" — every Ply Your Trade and enterprise-work cycle finishes in a single tick, for quick testing.',
+    ],
+  },
+  {
     date: 'July 21, 2026',
     time: '11:55 PM MST',
     title: 'A Dev Panel',

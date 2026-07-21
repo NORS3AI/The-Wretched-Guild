@@ -4,6 +4,8 @@
 
   const game = gameStore;
   $: godMode = $game.settings?.godMode ?? false;
+  $: noHeat = $game.settings?.noHeat ?? false;
+  $: fastCards = $game.settings?.fastCards ?? false;
 </script>
 
 <div class="overlay">
@@ -13,7 +15,7 @@
     <div class="body">
       <p class="warn faint">Debug tools — cheats that reshape the run. Use at your own peril.</p>
 
-      <label class="opt god" class:on={godMode}>
+      <label class="opt" class:on={godMode}>
         <input type="checkbox" checked={godMode} onchange={() => actions.toggleSetting('godMode')} />
         <span class="opt-text">
           <span class="opt-name">God mode</span>
@@ -21,6 +23,22 @@
             Freezes every body function (food, water, comfort, hygiene, relief) full, banishes
             illness, and pins your hearts to the max — the wretch can take no harm and cannot die.
           </span>
+        </span>
+      </label>
+
+      <label class="opt" class:on={noHeat}>
+        <input type="checkbox" checked={noHeat} onchange={() => actions.toggleSetting('noHeat')} />
+        <span class="opt-text">
+          <span class="opt-name">Never gain Heat</span>
+          <span class="opt-desc faint">Your Heat (and your Guild's) is pinned to 0 — the watch never comes for you.</span>
+        </span>
+      </label>
+
+      <label class="opt" class:on={fastCards}>
+        <input type="checkbox" checked={fastCards} onchange={() => actions.toggleSetting('fastCards')} />
+        <span class="opt-text">
+          <span class="opt-name">Fast cards</span>
+          <span class="opt-desc faint">Every Ply Your Trade and enterprise-work cycle finishes in a single tick.</span>
         </span>
       </label>
 
@@ -79,6 +97,7 @@
     gap: 10px;
     align-items: flex-start;
     padding: 10px;
+    margin-bottom: 8px;
     cursor: pointer;
     border: 1px solid var(--border);
     border-radius: 6px;

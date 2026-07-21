@@ -76,7 +76,10 @@ export function advanceTick(game: GameState): void {
     const def = activityById(run.activity.id);
     if (def) {
       run.activity.progress++;
-      if (run.activity.progress >= def.ticks) {
+      // dev "fast cards": every Ply-Your-Trade and enterprise-work cycle finishes
+      // in a single tick instead of its full duration.
+      const need = game.settings?.fastCards ? 1 : def.ticks;
+      if (run.activity.progress >= need) {
         run.activity.progress = 0;
         def.complete(run);
         if (run.hp <= 0 && run.alive) {
@@ -85,6 +88,12 @@ export function advanceTick(game: GameState): void {
         }
       }
     }
+  }
+
+  // dev "no heat": keep the player (and their Guild) forever cool
+  if (game.settings?.noHeat) {
+    run.heat = 0;
+    for (const m of run.members) m.heat = 0;
   }
 
   // the law answers accumulated notoriety (§10)

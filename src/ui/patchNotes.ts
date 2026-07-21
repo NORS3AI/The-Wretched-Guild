@@ -37,6 +37,19 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '2:00 PM MST',
+    title: 'Trade Pay, Thieving Risk & Steered Events',
+    changes: [
+      'Rebalanced the trades: the Coal Mines pay 7–10c and take 15% longer than felling timber; Tilling the Fields pays 12–17c and takes 15% longer than the mines; Serving at the Chapel now earns 3–7c of alms and Church standing.',
+      'Pick Pockets now nets 2–9c on a success — and five times that if worked in the dead of night (2–5am). But get caught seven times and the watch hauls you to the stocks for a day.',
+      'Events now read your bearing: once you\'re barred from the Church (a maxed Shadow soul) you\'ll get no more chapel events, and once you\'re barred from the Shadow Guild (a devout soul) no more theft temptations. The game stops nudging you down a road you\'ve closed.',
+      'When a stack of goods reaches ×5, a "Sell all" button appears to clear the whole lot at once.',
+      '"Tend to Yourself" now holds a steady two-row height, so deeds popping in and out no longer make the panel jump.',
+      'Undertaking a Rite of Passage from the Reputation tab now takes you straight to the Events tab where the rite is waiting (a deliberate jump you asked for — random events still leave you where you are).',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '1:00 PM MST',
     title: 'The Trade Ladder & Quieter Events',
     changes: [

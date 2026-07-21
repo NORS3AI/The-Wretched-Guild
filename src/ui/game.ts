@@ -172,7 +172,13 @@ export const actions = {
   declineContract: () => run({ type: 'declineContract' }),
   dismissEncounter: () => run({ type: 'dismissEncounter' }),
   chooseEncounter: (index: number) => run({ type: 'chooseEncounter', index }),
-  seekAdvancement: () => run({ type: 'seekAdvancement' }),
+  seekAdvancement: () => {
+    run({ type: 'seekAdvancement' });
+    // If this opened a Rite of Passage encounter, the player asked for it — take
+    // them straight to the Events tab where the rite lives (this is a deliberate
+    // request, not the auto-jump we removed for random events).
+    if (game.run.encounter) activeTab.set('events');
+  },
   payStocks: () => run({ type: 'payStocks' }),
   investBusiness: (id: string) => run({ type: 'investBusiness', id }),
   recruitMember: (id: string) => run({ type: 'recruitMember', id }),
@@ -184,6 +190,7 @@ export const actions = {
   doDeed: (id: string) => run({ type: 'doDeed', id }),
   eatItem: (id: string) => run({ type: 'eatItem', id }),
   sellItem: (id: string) => run({ type: 'sellItem', id }),
+  sellAllItem: (id: string) => run({ type: 'sellAllItem', id }),
   buyItem: (id: string) => run({ type: 'buyItem', id }),
   buyCarry: (kind: 'pocket' | 'pouch' | 'container') => run({ type: 'buyCarry', kind }),
   buyGear: (kind: 'waterskin' | 'warm_clothes' | 'hat' | 'bow') => run({ type: 'buyGear', kind }),

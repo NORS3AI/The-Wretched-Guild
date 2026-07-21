@@ -6,6 +6,8 @@
 
 import type { RunState } from './types';
 import type { EncounterDef } from './encounters';
+import type { FactionId } from './factions';
+import { factionById } from './factions';
 import { sway } from './alignment';
 import { pushLog, trainAttr, gainStanding } from './helpers';
 import { nextInt, chance } from './rng';
@@ -322,7 +324,23 @@ export const EVENTS: EncounterDef[] = [
   },
 ];
 
-/** Pick a random event to spring on the player. */
+/** Events that push a particular faction's path. If the player's bearing has
+ *  barred them from that faction (e.g. a maxed Shadow soul barred from the
+ *  Church, or a devout one barred from the Shadow Guild), stop offering it —
+ *  they've plainly chosen the other road. */
+const EVENT_PROMOTES: Record<string, FactionId> = {
+  event_chapel_bell: 'church',
+  event_preacher: 'church',
+  event_unguarded_stall: 'shadow',
+};
+
+/** Pick a random event to spring on the player, skipping any that promote a
+ *  path their alignment has closed off. */
 export function pickEvent(run: RunState): EncounterDef {
-  return EVENTS[nextInt(run, 0, EVENTS.length - 1)];
+  const pool = EVENTS.filter((e) => {
+    const f = EVENT_PROMOTES[e.id];
+    return !f || factionById(f).admits(run.alignment);
+  });
+  const list = pool.length > 0 ? pool : EVENTS;
+  return list[nextInt(run, 0, list.length - 1)];
 }

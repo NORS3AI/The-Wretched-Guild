@@ -2,7 +2,8 @@
   import { gameStore, actions } from './game';
   import { DEEDS } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
-  import { itemDef, isEdible } from '../engine/items';
+  import { itemDef, isEdible, countItem, MAX_STACK } from '../engine/items';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
   $: run = $game.run;
@@ -115,9 +116,14 @@
               {:else if def.kind === 'food'}
                 <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
               {/if}
-              <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
-                Sell {def.value}c
+              <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
+                Sell {formatMoney(def.value)}
               </button>
+              {#if slot.qty >= MAX_STACK}
+                <button class="mini sell" title="Sell the whole stack to the pedlar" onclick={() => actions.sellAllItem(slot.item)}>
+                  Sell all {formatMoney(def.value * countItem(run, slot.item))}
+                </button>
+              {/if}
             </div>
           {:else}
             <span class="slot-empty faint">— empty —</span>
@@ -153,9 +159,14 @@
               {:else if def.kind === 'food'}
                 <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
               {/if}
-              <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
-                Sell {def.value}c
+              <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
+                Sell {formatMoney(def.value)}
               </button>
+              {#if slot.qty >= MAX_STACK}
+                <button class="mini sell" title="Sell the whole stack to the pedlar" onclick={() => actions.sellAllItem(slot.item)}>
+                  Sell all {formatMoney(def.value * countItem(run, slot.item))}
+                </button>
+              {/if}
             </div>
           {:else}
             <span class="slot-empty faint">— empty —</span>
@@ -354,6 +365,9 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    align-content: flex-start;
+    /* reserve two rows so deeds appearing/disappearing never jostle the layout */
+    min-height: 64px;
   }
   .deed {
     font-size: 0.8rem;

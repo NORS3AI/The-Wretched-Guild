@@ -21,10 +21,11 @@ function stallDrop(run: RunState, id: string): void {
   }
 }
 
-/** Shared payout for the three Hard Labour activities: 3–5 copper, a nudge
- *  toward Lawful, Commons standing, and the odd burst of Brawn. */
-function labourEarn(run: RunState): void {
-  const coin = nextInt(run, 3, 5);
+/** Shared payout for the Hard Labour activities: a coin range, a nudge toward
+ *  Lawful, Commons standing, and the odd burst of Brawn. Each labour sets its
+ *  own pay (Fell Timber 3–5, Coal Mines 7–10, Fields 12–17). */
+function labourEarn(run: RunState, lo = 3, hi = 5): void {
+  const coin = nextInt(run, lo, hi);
   run.coin += coin;
   gainStanding(run, 'commons', 0.5);
   driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
@@ -101,12 +102,12 @@ export const ACTIVITIES: ActivityDef[] = [
     name: 'Work the Coal Mines',
     path: 'Hard Labour',
     blurb: 'Hew at the black seam underground — a chance at coal or iron ore.',
-    ticks: 8,
+    ticks: 9, // 15% longer than felling timber
     trains: 'brawn',
-    earns: '3–5c',
+    earns: '7–10c',
     available: (run) => run.coin >= 1000, // opens at 1 shilling
     complete(run) {
-      labourEarn(run);
+      labourEarn(run, 7, 10);
       if (chance(run, 0.1)) stallDrop(run, 'coal');
       if (chance(run, 0.1)) stallDrop(run, 'iron_ore');
     },
@@ -116,12 +117,12 @@ export const ACTIVITIES: ActivityDef[] = [
     name: 'Till the Fields',
     path: 'Hard Labour',
     blurb: 'Break the earth behind the plough — a chance at seed or a stray potato.',
-    ticks: 8,
+    ticks: 10, // 15% longer than the coal mines
     trains: 'brawn',
-    earns: '3–5c',
+    earns: '12–17c',
     available: (run) => run.coin >= 2000, // opens at 2 shillings
     complete(run) {
-      labourEarn(run);
+      labourEarn(run, 12, 17);
       if (chance(run, 0.1)) stallDrop(run, 'wheat_seeds');
       if (chance(run, 0.1)) stallDrop(run, 'potato');
     },
@@ -133,7 +134,7 @@ export const ACTIVITIES: ActivityDef[] = [
     blurb: 'Quick coin from careless purses — but every lift raises your Heat. Safest worked in the dead of night (2–5 am).',
     ticks: 5,
     trains: 'stealth',
-    earns: '1–5c',
+    earns: '2–9c',
     complete(run) {
       trainAttr(run, 'stealth');
       // caught? scales with heat, mitigated by stealth — and the dead of night
@@ -143,9 +144,19 @@ export const ACTIVITIES: ActivityDef[] = [
       if (chance(run, caughtP)) {
         run.heat = Math.min(100, run.heat + nextInt(run, 4, 8));
         run.hp = Math.max(0, run.hp - 1); // a beating — engine checks for death
-        pushLog(run, 'A mark seizes your wrist — you wrench free, bruised and marked.', 'bad');
+        run.pickpocketStrikes = (run.pickpocketStrikes ?? 0) + 1;
+        // caught seven times over, the watch finally hauls you to the stocks
+        if (run.pickpocketStrikes >= 7) {
+          run.pickpocketStrikes = 0;
+          run.stocksUntil = run.tick + TICKS_PER_DAY;
+          run.activity = null;
+          pushLog(run, 'Caught cutting purses once too often, the watch drags you to the stocks for a day.', 'bad');
+        } else {
+          pushLog(run, `A mark seizes your wrist — you wrench free, bruised and marked (${run.pickpocketStrikes}/7 before the stocks).`, 'bad');
+        }
       } else {
-        const coin = nextInt(run, 1, 5);
+        let coin = nextInt(run, 2, 9);
+        if (illicitPrime(run)) coin *= 5; // the dead of night pays five-fold
         run.coin += coin;
         run.heat = Math.min(100, run.heat + 1);
         driftBearing(run, -1, 0); // thieving pulls you toward Chaos
@@ -162,6 +173,7 @@ export const ACTIVITIES: ActivityDef[] = [
     blurb: 'Sweep the nave, tend the poor, learn your letters — but the Chaotic of spirit are turned away.',
     ticks: 7,
     trains: 'piety',
+    earns: '3–7c',
     complete(run) {
       // the chapel doors are barred outside its hours (6 am – 9 pm)
       if (!churchOpen(run)) {
@@ -175,9 +187,9 @@ export const ACTIVITIES: ActivityDef[] = [
         if (chance(run, 0.3)) {
           shiftAlignment(run, 0, 0.2 + nextFloat(run) * 0.2);
         }
-        const alms = nextInt(run, 0, 1);
+        const alms = nextInt(run, 3, 7);
         run.coin += alms;
-        pushLog(run, 'You serve at the chapel; the priest marks your devotion.', 'plain');
+        pushLog(run, `You serve at the chapel; the priest presses ${alms} copper of alms into your hand and marks your devotion.`, 'coin');
       } else {
         // alignment gate in action — a Chaotic soul earns nothing here.
         pushLog(run, 'You kneel, but the words ring hollow. The Church has no place for one so wild of spirit.', 'bad');

@@ -917,7 +917,7 @@ console.log('The Wretched Guild — engine tests\n');
   // coin activities carry an earnings tag; none of the blurbs leak their attribute
   const labour = ACTIVITIES.find((a) => a.id === 'fell_timber')!;
   assert(labour.earns === '3–5c', 'Fell Timber shows its 3–5c earnings');
-  assert(ACTIVITIES.find((a) => a.id === 'pickpocket')!.earns === '1–5c', 'Pick Pockets shows its earnings');
+  assert(ACTIVITIES.find((a) => a.id === 'pickpocket')!.earns === '2–9c', 'Pick Pockets shows its earnings');
   const leaks = ACTIVITIES.filter((a) => /\b(Brawn|Wits|Charm|Stealth|Piety|Luck|skill)\b/i.test(a.blurb));
   assert(leaks.length === 0, `no activity blurb reveals what it trains (leaks: ${leaks.map((a) => a.id).join(', ')})`);
 }
@@ -1365,6 +1365,47 @@ console.log('The Wretched Guild — engine tests\n');
   assert(!open('fell_timber', 39) && open('fell_timber', 40), 'Fell Timber opens at 40 copper');
   assert(!open('coal_mine', 999) && open('coal_mine', 1000), 'the Coal Mines open at 1 shilling');
   assert(!open('till_fields', 1999) && open('till_fields', 2000), 'the Fields open at 2 shillings');
+}
+
+// 42) Sell-all empties a full stack in one go.
+{
+  const g = newGame();
+  g.run.coin = 0;
+  g.run.pockets = [{ item: 'firewood', qty: 5 }, null];
+  const val = itemDef('firewood')!.value;
+  dispatch(g, { type: 'sellAllItem', id: 'firewood' });
+  assert(countItem(g.run, 'firewood') === 0 && g.run.coin === val * 5, 'Sell all sells the whole stack for its full worth');
+}
+
+// 43) Events steer clear of a path the player's bearing has barred.
+{
+  const { pickEvent } = await import('../src/engine/events');
+  const lg = newGame();
+  lg.run.alignment = { ethics: 80, morals: 80 }; // Lawful Good — barred from the Shadow Guild
+  let sawTheft = false;
+  for (let i = 0; i < 400; i++) if (pickEvent(lg.run).id === 'event_unguarded_stall') sawTheft = true;
+  assert(!sawTheft, 'a devout soul is never tempted with the theft event');
+
+  const ce = newGame();
+  ce.run.alignment = { ethics: -80, morals: -80 }; // Chaotic Evil — barred from the Church
+  let sawChurch = false;
+  for (let i = 0; i < 400; i++) {
+    const id = pickEvent(ce.run).id;
+    if (id === 'event_chapel_bell' || id === 'event_preacher') sawChurch = true;
+  }
+  assert(!sawChurch, 'a wicked soul is never nudged toward the chapel');
+}
+
+// 44) Seven pickpocket catches lands you in the stocks.
+{
+  const g = newGame();
+  g.run.heat = 100;
+  g.run.attrs.stealth = 0; // maximise the catch chance
+  g.run.pickpocketStrikes = 6; // one more catch does it
+  dispatch(g, { type: 'setActivity', id: 'pickpocket' });
+  let guard = 0;
+  while (g.run.stocksUntil === null && g.run.alive && guard++ < 800) advance(g);
+  assert(g.run.stocksUntil !== null, 'the 7th pickpocket catch lands you in the stocks');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

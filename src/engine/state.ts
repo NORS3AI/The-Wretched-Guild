@@ -57,6 +57,7 @@ export function newRun(meta: MetaState): RunState {
     starveClock: 0,
     filthClock: 0,
     starveHits: 0,
+    pickpocketStrikes: 0,
     waterskinCharges: 4,
     waterskinMax: 4,
     warmClothes: false,

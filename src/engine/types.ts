@@ -97,6 +97,8 @@ export interface RunState {
   filthClock: number;
   /** count of starvation heart-losses this life — drives the screen flash */
   starveHits: number;
+  /** times caught pickpocketing since the last stocks — 7 lands you in them */
+  pickpocketStrikes: number;
   waterskinCharges: number;
   waterskinMax: number;
   /** warm woollens bought from the merchant — keep the cold from draining comfort */

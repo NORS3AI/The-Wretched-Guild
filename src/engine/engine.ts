@@ -19,7 +19,7 @@ import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJ
 import { processServants, hireServant, dismissServant } from './servants';
 import { tickSurvival, heal } from './survival';
 import { deedById } from './deeds';
-import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from './items';
+import { itemDef, isEdible, removeItem, addItem, hasRoom, countItem, VENDOR_STOCK } from './items';
 import { chance, nextInt } from './rng';
 import { shopOpen } from './time';
 import { buyCarryUpgrade, buyGear, merchantSoldOut, type CarryKind, type GearKind } from './merchant';
@@ -206,6 +206,7 @@ export type Command =
   | { type: 'doDeed'; id: string }
   | { type: 'eatItem'; id: string }
   | { type: 'sellItem'; id: string }
+  | { type: 'sellAllItem'; id: string }
   | { type: 'beginNewLife' }
   | { type: 'buyUnlock'; id: string }
   | { type: 'buyItem'; id: string }
@@ -415,6 +416,17 @@ export function dispatch(game: GameState, cmd: Command): void {
       if (!removeItem(run, cmd.id, 1)) break;
       run.coin += def.value;
       pushLog(run, `The pedlar buys your ${def.name.toLowerCase()} for ${def.value} copper.`, 'coin');
+      break;
+    }
+
+    case 'sellAllItem': {
+      if (!run.alive) break;
+      const def = itemDef(cmd.id);
+      if (!def) break;
+      const n = countItem(run, cmd.id);
+      if (n <= 0 || !removeItem(run, cmd.id, n)) break;
+      run.coin += def.value * n;
+      pushLog(run, `The pedlar buys all ${n} of your ${def.name.toLowerCase()} for ${def.value * n} copper.`, 'coin');
       break;
     }
 

@@ -208,6 +208,7 @@ function migrate(data: unknown): GameState {
     if (typeof r.hasBow !== 'boolean') r.hasBow = false;
     if (typeof r.oilBuffMs !== 'number') r.oilBuffMs = 0;
     if (!r.servants || typeof r.servants !== 'object') r.servants = {};
+    if (typeof r.pickpocketStrikes !== 'number') r.pickpocketStrikes = 0;
     g.version = 19;
   }
   g.version = SAVE_VERSION;

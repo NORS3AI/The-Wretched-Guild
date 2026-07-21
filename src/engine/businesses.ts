@@ -1,7 +1,7 @@
 // Economy & Businesses (§11). Ventures you buy with coin that then earn passively
-// each tick — turning "assign yourself to labour" into "own the trade". Legal
-// ventures are quiet; illicit ones pay more but generate Heat, which the law
-// eventually answers (see lawEnforcement in engine.ts).
+// each tick — turning "assign yourself to labour" into "own the trade". Illicit
+// ventures pay more and are still gated by a shadow-friendly bearing, but no
+// venture raises Heat any more — they all run cool.
 
 import type { AttrKey, RunState } from './types';
 import type { FactionId } from './factions';
@@ -56,7 +56,7 @@ export const BUSINESSES: BusinessDef[] = [
     baseCost: 250,
     costGrowth: 2.2,
     incomePerLevel: 0.2,
-    heatPerLevel: 0.004,
+    heatPerLevel: 0,
     standingPerLevel: 0.03,
     maxLevel: 50,
     reqStanding: 10,
@@ -73,7 +73,7 @@ export const BUSINESSES: BusinessDef[] = [
     baseCost: 2000,
     costGrowth: 2.3,
     incomePerLevel: 0.4,
-    heatPerLevel: 0.05,
+    heatPerLevel: 0,
     standingPerLevel: 0.05,
     maxLevel: 50,
     reqStanding: 15,
@@ -90,7 +90,7 @@ export const BUSINESSES: BusinessDef[] = [
     baseCost: 5_000_000,
     costGrowth: 2.3,
     incomePerLevel: 0.34,
-    heatPerLevel: 0.01,
+    heatPerLevel: 0,
     standingPerLevel: 0.04,
     maxLevel: 50,
     reqStanding: 20,
@@ -107,7 +107,7 @@ export const BUSINESSES: BusinessDef[] = [
     baseCost: 1_000_000_000,
     costGrowth: 2.4,
     incomePerLevel: 0.9,
-    heatPerLevel: 0.13,
+    heatPerLevel: 0,
     standingPerLevel: 0.06,
     maxLevel: 50,
     reqStanding: 40,
@@ -124,7 +124,7 @@ export const BUSINESSES: BusinessDef[] = [
     baseCost: 200_000_000_000_000,
     costGrowth: 2.4,
     incomePerLevel: 0.75,
-    heatPerLevel: 0.03,
+    heatPerLevel: 0,
     standingPerLevel: 0.05,
     maxLevel: 50,
     reqStanding: 45,
@@ -222,13 +222,13 @@ export function totalIncomePerTick(run: RunState): number {
   return sum;
 }
 
-/** Run every owned venture for one tick: income, Heat, and faction standing. */
+/** Run every owned venture for one tick: income and faction standing. No venture
+ *  raises Heat any longer — even the illicit ones run cool. */
 export function processBusinesses(run: RunState): void {
   for (const def of BUSINESSES) {
     const level = ownedLevel(run, def.id);
     if (level <= 0) continue;
     run.coin += def.incomePerLevel * level;
-    if (def.heatPerLevel > 0) run.heat = Math.min(100, run.heat + def.heatPerLevel * level);
     if (def.standingPerLevel > 0) gainStanding(run, def.faction, def.standingPerLevel * level);
   }
 }

@@ -46,7 +46,7 @@
           </div>
           <div class="biz-meta">
             <span class="faction-tag">{factionById(b.faction).name}</span>
-            {#if b.illicit}<span class="illicit-tag">illicit · raises Heat</span>{/if}
+            {#if b.illicit}<span class="illicit-tag">illicit</span>{/if}
             {#if level > 0}
               <span class="earning">+{(b.incomePerLevel * level).toFixed(2)}/tick idle</span>
               {#if working}

@@ -210,8 +210,7 @@ console.log('The Wretched Guild — engine tests\n');
   assert(computeLegacy(climbed.run) === 9, 'rank 10 yields 9 Legacy (1 per rank above Beggar)');
 }
 
-// 8) Businesses: buying earns passive income; illicit ventures raise Heat; the
-//    law eventually answers high Heat.
+// 8) Businesses: buying earns passive income; NO venture (even illicit) raises Heat.
 {
   const g = newGame();
   g.run.coin = 100;
@@ -221,7 +220,7 @@ console.log('The Wretched Guild — engine tests\n');
   ff(g, 100);
   assert(g.run.coin > coinAfterBuy, `the stall earns passive income (${coinAfterBuy.toFixed(1)} -> ${g.run.coin.toFixed(1)})`);
 
-  // an illicit venture requires its Base Cost + shadow standing; set them and confirm Heat rises
+  // an illicit venture requires its Base Cost + shadow standing; confirm it runs COOL
   const h = newGame();
   h.run.coin = 2500; // Fencing Den now costs 2,000 (2 shillings)
   h.run.factions.shadow = 20;
@@ -229,7 +228,7 @@ console.log('The Wretched Guild — engine tests\n');
   assert(h.run.businesses['fencing_den'] === 1, 'a Fencing Den is acquired once coin + shadow standing are met');
   const heatBefore = h.run.heat;
   ff(h, 200);
-  assert(h.run.heat > heatBefore, `the illicit den raises Heat over time (${heatBefore} -> ${h.run.heat.toFixed(1)})`);
+  assert(h.run.heat === heatBefore, `no enterprise raises Heat any more (${heatBefore} -> ${h.run.heat.toFixed(1)})`);
 }
 
 // 9) Business requirements gate acquisition (Base Cost + standing).

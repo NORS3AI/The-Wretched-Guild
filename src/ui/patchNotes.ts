@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '1:10 AM MST',
+    title: 'Enterprises Run Cool',
+    changes: [
+      'No enterprise raises Heat any longer — not even the illicit Fencing Den or Smuggler\'s Wharf. Own whatever ventures you like without drawing the watch through them. (Illicit ventures are still gated by a shadow-friendly bearing.)',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '12:45 AM MST',
     title: 'Auto Rank Up',
     changes: [

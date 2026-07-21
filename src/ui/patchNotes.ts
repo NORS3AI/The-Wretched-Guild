@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '7:45 PM MST',
+    title: 'A Fresh Start',
+    changes: [
+      'A new life now begins with all needs at 100% and pockets reset to the base two (any extra pockets, pouches, or containers are cleared) — everything resets except what you keep in the Guild (Legacy, Tokens, unlocks, and the vault).',
+      'The Enterprises panel stays hidden until you have at least 50 copper (enough to acquire your first venture).',
+      'The Wretched Guild panel stays hidden until you reach rank 3.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '7:20 PM MST',
     title: 'A Clean Page',
     changes: [

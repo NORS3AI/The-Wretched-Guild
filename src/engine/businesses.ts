@@ -148,6 +148,10 @@ export const BUSINESSES: BusinessDef[] = [
   },
 ];
 
+/** The Enterprises panel stays hidden until the player can afford the cheapest
+ *  venture (the Market Stall's base cost). */
+export const ENTERPRISE_MIN_COIN = 50;
+
 export function businessById(id: string): BusinessDef | undefined {
   return BUSINESSES.find((b) => b.id === id);
 }

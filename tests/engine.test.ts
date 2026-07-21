@@ -944,5 +944,29 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.log[0].text.includes('new wretch'), 'and that entry is the new wretch\'s opening line');
 }
 
+// 28) A new life fully resets the run (needs at 100%, pockets back to base),
+//     while meta (Legacy/Tokens/unlocks/vault) carries over.
+{
+  const { inventoryCapacity } = await import('../src/engine/items');
+  const g = newGame();
+  // wreck the run: drain needs and expand carry capacity
+  Object.assign(g.run.needs, { food: 10, water: 5, comfort: 8, hygiene: 3, relief: 0 });
+  g.run.pocketSlots = 6;
+  g.run.pouches = 6;
+  g.run.container = 3;
+  g.meta.legacy = 200; // meta that should survive
+  const before = inventoryCapacity(g.run);
+  assert(before > 2, 'the wretch had expanded carry capacity');
+
+  const { die } = await import('../src/engine/death');
+  die(g, g.run, 'slain for the test');
+  dispatch(g, { type: 'beginNewLife' });
+
+  assert(g.run.needs.food === 100 && g.run.needs.water === 100 && g.run.needs.comfort === 100 && g.run.needs.hygiene === 100 && g.run.needs.relief === 100, 'a new life begins with all needs at 100%');
+  assert(g.run.pocketSlots === 2 && g.run.pouches === 0 && g.run.container === 0, 'pockets/pouches/container reset to base');
+  assert(inventoryCapacity(g.run) === 2, 'carry capacity resets to two pockets');
+  assert(g.meta.legacy > 0, 'meta Legacy carries over (only meta survives a death)');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

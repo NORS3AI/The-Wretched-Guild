@@ -48,7 +48,7 @@ export function newRun(meta: MetaState): RunState {
     deathCause: null,
     hp: 0, // set below once maxHp is known
     heartsBonus,
-    needs: { food: 80, water: 80, comfort: 80, hygiene: 70, relief: 90 },
+    needs: { food: 100, water: 100, comfort: 100, hygiene: 100, relief: 100 },
     illness: 'none',
     starveClock: 0,
     filthClock: 0,

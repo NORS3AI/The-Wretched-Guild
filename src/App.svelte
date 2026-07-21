@@ -16,6 +16,8 @@
   import PatchNotesModal from './ui/PatchNotesModal.svelte';
   import { illicitWarning, settingsOpen, patchOpen } from './ui/game';
   import { GAME_VERSION } from './ui/patchNotes';
+  import { ownsAnyBusiness, ENTERPRISE_MIN_COIN } from './engine/businesses';
+  import { GUILD_MIN_RANK } from './engine/guild';
   import LogPanel from './ui/LogPanel.svelte';
   import DeathScreen from './ui/DeathScreen.svelte';
 
@@ -51,8 +53,12 @@
           <MerchantPanel />
         {/if}
         <ActivitiesPanel />
-        <BusinessesPanel />
-        <GuildPanel />
+        {#if $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run)}
+          <BusinessesPanel />
+        {/if}
+        {#if $game.run.rank >= GUILD_MIN_RANK}
+          <GuildPanel />
+        {/if}
       </div>
     {/if}
   </section>

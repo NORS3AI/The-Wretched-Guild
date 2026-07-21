@@ -1436,10 +1436,17 @@ console.log('The Wretched Guild — engine tests\n');
 {
   const g = newGame();
   g.run.rank = 100;
-  g.run.recruits = [];
-  advance(g); // ensureRecruits fills the pool at the current rank
-  const s = g.run.recruits[0].skill;
-  assert(s >= 975 && s <= 1025, `a rank-100 candidate's skill is ~1000 with a 5–25 overlap (got ${s})`);
+  // most candidates cluster ~1000 (5–25 overlap), but a rare prodigy exceeds it
+  // (never wildly, e.g. 1500+). Draw a large sample and check the shape.
+  const { generateRecruit } = await import('../src/engine/guild');
+  const skills: number[] = [];
+  for (let n = 0; n < 1500; n++) skills.push(generateRecruit(g.run).skill);
+  const minS = Math.min(...skills);
+  const maxS = Math.max(...skills);
+  const normal = skills.filter((x) => x >= 975 && x <= 1025).length / skills.length;
+  assert(minS >= 975, `candidates never fall below ~975 (min ${minS})`);
+  assert(maxS > 1025 && maxS < 1300, `rare prodigies rise above 1025 but never to 1500+ (max ${maxS})`);
+  assert(normal > 0.8, `the vast majority cluster near 1000 (${(normal * 100).toFixed(0)}% in 975–1025)`);
 
   const { jobById, jobUnlocked, incomeOf } = await import('../src/engine/guild');
   const assassin = jobById('assassin')!;
@@ -1580,7 +1587,7 @@ console.log('The Wretched Guild — engine tests\n');
   const c = newGame();
   c.run.alignment = { ethics: 0, morals: 0 };
   dispatch(c, { type: 'setActivity', id: 'pray' });
-  for (let n = 0; n < 700; n++) ff(c, 1);
+  for (let n = 0; n < 1400; n++) ff(c, 1); // enough cycles that damping still clears 20 even on unlucky rolls
   assert(c.run.alignment.ethics > 20, `serving at the chapel turns you Lawful (ethics ${c.run.alignment.ethics.toFixed(0)})`);
   assert(Math.abs(c.run.alignment.morals) < 8, `chapel service leaves Good/Evil untouched (morals ${c.run.alignment.morals.toFixed(0)})`);
 

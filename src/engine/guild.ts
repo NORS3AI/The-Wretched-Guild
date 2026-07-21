@@ -97,13 +97,20 @@ function genName(run: RunState): string {
   return first;
 }
 
-function generateRecruit(run: RunState): Member {
+export function generateRecruit(run: RunState): Member {
   const id = `m${run.rngCursor}`;
   const arch = ARCHETYPES[nextInt(run, 0, ARCHETYPES.length - 1)];
   // candidates grow keener with the master's rank — skill ≈ rank × 10, reaching
-  // 1000 at rank 100 — with a random 5–25 overlap so the tiers blur together.
+  // ≈1000 at rank 100 — with a random 5–25 overlap so the tiers blur together.
+  // Most cluster tight around that, but a rare prodigy exceeds the usual ceiling:
+  // ~5% are 3–5% keener (a 1030–1050 at rank 100), and ~1% are a true find, 15–25%
+  // above it (a ~1200). Their gift is theirs to keep — it is never clamped back
+  // down once sworn (see processGuild), so hiring a 1030 keeps a 1030.
   const spread = nextInt(run, 5, 25);
-  const skill = Math.max(1, run.rank * 10 + nextInt(run, -spread, spread));
+  let skill = Math.max(1, run.rank * 10 + nextInt(run, -spread, spread));
+  const prodigy = nextFloat(run);
+  if (prodigy < 0.01) skill = Math.round(skill * (1.15 + nextFloat(run) * 0.1)); // ~1% → ×1.15–1.25
+  else if (prodigy < 0.06) skill = Math.round(skill * (1.03 + nextFloat(run) * 0.02)); // ~5% → ×1.03–1.05
   const alignment = {
     ethics: clampAxis(arch.ethicsBias + nextInt(run, -22, 22)),
     morals: clampAxis(arch.moralsBias + nextInt(run, -22, 22)),
@@ -186,7 +193,9 @@ export function processGuild(game: GameState, run: RunState): void {
     run.coin += incomeOf(m, job, run.rank);
     run.factions[job.faction] = Math.min(100, run.factions[job.faction] + job.standingGain);
     if (job.heatGain > 0) m.heat = Math.min(100, m.heat + job.heatGain);
-    m.skill = Math.min(1000, m.skill + 0.015);
+    // skill creeps toward 1000 with work — but a prodigy sworn in ABOVE 1000
+    // keeps their gift; the cap never clamps an existing skill back down.
+    m.skill = Math.max(m.skill, Math.min(1000, m.skill + 0.015));
   }
 
   // wages — unpaid members grumble but stay sworn to the Guild; only their own

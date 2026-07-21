@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '11:20 PM MST',
+    title: 'Prodigies Among the Sworn',
+    changes: [
+      'Guild candidates can now be true prodigies whose skill exceeds the usual ceiling — and once sworn, they KEEP it: a wretch hired at 1030 stays at 1030, never clamped back down to 1000.',
+      'Most candidates still cluster near your rank×10 (about 1000 at rank 100), but rarely a finer one appears: roughly 5% are a few percent keener (a 1030–1050), and about 1% are a rare find far above (a ~1200). They never come wildly out of range (no 1500+).',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '10:50 PM MST',
     title: 'Labourers You Command',
     changes: [

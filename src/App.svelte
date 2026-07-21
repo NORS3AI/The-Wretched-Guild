@@ -6,6 +6,7 @@
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
   import MerchantPanel from './ui/MerchantPanel.svelte';
+  import ContractOffer from './ui/ContractOffer.svelte';
   import VendorPanel from './ui/VendorPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
@@ -34,7 +35,10 @@
   // The Events tab gathers everything that needs handling — encounters, the
   // stocks, and the wandering merchant. A red ! flags when any of them is waiting.
   $: eventsAlert =
-    $game.run.encounter !== null || $game.run.stocksUntil !== null || $game.run.merchantHere;
+    $game.run.encounter !== null ||
+    $game.run.stocksUntil !== null ||
+    $game.run.merchantHere ||
+    $game.run.contractAvailable;
   // Body & Needs flags a red ! when any need has fallen to half or lower.
   $: needsAlert = Object.values($game.run.needs).some((v) => v <= 50);
 
@@ -93,6 +97,9 @@
         <StocksPanel />
       {:else if $game.run.encounter}
         <EncounterView />
+      {/if}
+      {#if $game.run.contractAvailable}
+        <ContractOffer />
       {/if}
       {#if $game.run.merchantHere}
         <MerchantPanel />

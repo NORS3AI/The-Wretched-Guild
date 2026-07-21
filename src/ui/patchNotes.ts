@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '10:15 PM MST',
+    title: 'The Whisper Moves to Events',
+    changes: [
+      '"A Whisper in the Dark" (the Shadow Guild contract offer) is an event, so it now lives on the Events tab alongside encounters, contracts, Rites, the stocks, and the wandering merchant — no longer cluttering Ply Your Trade. It flags the Events tab with a red ! while it waits.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '9:40 PM MST',
     title: 'Lay Low Until All Is Quiet',
     changes: [

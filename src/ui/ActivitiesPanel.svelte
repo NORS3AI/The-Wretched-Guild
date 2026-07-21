@@ -3,15 +3,8 @@
   import { ACTIVITIES } from '../engine/activities';
   import { ownsAnyBusiness } from '../engine/businesses';
   import { REAL_MS_PER_TICK } from '../engine/timeconst';
-  import { CONTRACTS, contractById, contractPay } from '../engine/contracts';
 
   const game = gameStore;
-
-  // The waiting mark, so the offer names who the Guild wants dealt with — and
-  // what it pays at the player's current rank (higher rank, weightier fee).
-  $: mark = $game.run.contractTargetId ? CONTRACTS[$game.run.contractTargetId] : null;
-  $: markTarget = $game.run.contractTargetId ? contractById($game.run.contractTargetId) : null;
-  $: markFee = markTarget ? contractPay(markTarget, $game.run.rank) : null;
 
   // Once you own an enterprise, the begging life is behind you — drop it. And
   // Hunting only appears once you've bought a bow from the wandering merchant.
@@ -31,28 +24,6 @@
 </script>
 
 <div class="stack">
-  {#if $game.run.contractAvailable}
-    <div class="panel contract">
-      <div class="panel-title">A Whisper in the Dark</div>
-      <div class="contract-body">
-        <p class="muted">
-          A hooded factor of the Shadow Guild waits for you. There is bloody work —
-          {#if mark}a mark called <strong class="markname">{mark.title}</strong> — {/if}worth
-          {#if markFee}<strong class="markfee">{markFee} copper</strong>{:else}good coin{/if} at your standing.
-          The offer keeps; open it whenever you like and slip away to decide later.
-        </p>
-        <div class="contract-actions">
-          <button class="btn primary" onclick={() => actions.acceptContract()}>
-            Read the Contract →
-          </button>
-          <button class="btn" onclick={() => actions.declineContract()}>
-            Leave
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
   <div class="panel">
     <div class="panel-title">Ply Your Trade</div>
     <div class="acts">
@@ -95,34 +66,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-  .contract-body {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  .contract-body p {
-    margin: 0;
-  }
-  .contract {
-    border-color: var(--blood);
-  }
-  .contract .panel-title {
-    color: var(--blood-bright);
-  }
-  .markname {
-    color: var(--blood-bright);
-    font-style: italic;
-  }
-  .markfee {
-    color: var(--gold-bright);
-  }
-  .contract-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
   }
   .acts {
     display: grid;

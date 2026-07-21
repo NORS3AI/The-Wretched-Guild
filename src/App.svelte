@@ -82,7 +82,7 @@
       onclick={() => activeTab.set(tab.id)}
     >
       {tab.label}
-      {#if tab.alert}<span class="alert-badge" title="Needs your attention">!</span>{/if}
+      {#if tab.alert}<span class="alert-badge" title="Needs your attention">❗️</span>{/if}
     </button>
   {/each}
 </div>
@@ -271,18 +271,8 @@
     }
   }
   .alert-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 15px;
-    height: 15px;
-    margin-left: 5px;
-    padding: 0 3px;
-    border-radius: 8px;
-    background: var(--blood-bright);
-    color: #fff;
-    font-size: 0.62rem;
-    font-weight: 700;
+    margin-left: 4px;
+    font-size: 0.82rem;
     line-height: 1;
     vertical-align: middle;
   }

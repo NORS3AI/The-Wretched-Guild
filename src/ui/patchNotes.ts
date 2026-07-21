@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '10:40 PM MST',
+    title: 'A Red ❗️ for Events',
+    changes: [
+      'When an event, contract, rite, the stocks, or the wandering merchant is waiting, the Events tab now shows a bright red ❗️ so you can\'t miss that something needs your attention. (Body & Needs shows it too when a need runs low.)',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '10:15 PM MST',
     title: 'The Whisper Moves to Events',
     changes: [

@@ -1594,5 +1594,34 @@ console.log('The Wretched Guild — engine tests\n');
   );
 }
 
+// 52) Trade pay scales with rank: base at rank 1, +7–10% per rank above.
+{
+  const { rankPay } = await import('../src/engine/activities');
+  const g = newGame();
+  g.run.rank = 1;
+  assert(rankPay(g.run, 100) === 100, 'at rank 1, a trade pays exactly its base');
+  g.run.rank = 11; // ten ranks up → +70% (min) to +100% (max)
+  let lo = Infinity, hi = 0;
+  for (let n = 0; n < 300; n++) {
+    const p = rankPay(g.run, 100);
+    lo = Math.min(lo, p);
+    hi = Math.max(hi, p);
+  }
+  assert(lo >= 170 && hi <= 200, `rank 11 pays 170–200 on a base of 100 (got ${lo}–${hi})`);
+}
+
+// 53) Stealth sharply cuts the pickpocket catch rate (3% per point).
+{
+  const g = newGame();
+  g.run.attrs.stealth = 50; // 50 × 3% dwarfs the 18% base → floored to a whisper
+  g.run.heat = 0;
+  dispatch(g, { type: 'setActivity', id: 'pickpocket' });
+  for (let n = 0; n < 80; n++) {
+    g.run.hp = 20; // a rare catch must not kill and end the test early
+    ff(g, 1);
+  }
+  assert(g.run.stocksUntil === null, 'a skilled thief (50 Stealth) is almost never caught');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

@@ -25,8 +25,17 @@ function stallDrop(run: RunState, id: string): void {
 /** Shared payout for the Hard Labour activities: a coin range, a nudge toward
  *  Lawful, Commons standing, and the odd burst of Brawn. Each labour sets its
  *  own pay (Fell Timber 3–5, Coal Mines 7–10, Fields 12–17). */
+/** Coin earned from a trade scales with rank. The hard-coded amounts are the
+ *  rank-1 pay; every rank above the first adds a random 7–10% of the base on top,
+ *  so a Baron out-earns a Beggar at the same task without the numbers exploding. */
+export function rankPay(run: RunState, base: number): number {
+  if (run.rank <= 1) return base;
+  const perRank = 0.07 + nextFloat(run) * 0.03; // 7–10% per rank above the first
+  return Math.round(base * (1 + (run.rank - 1) * perRank));
+}
+
 function labourEarn(run: RunState, lo = 3, hi = 5): void {
-  const coin = nextInt(run, lo, hi);
+  const coin = rankPay(run, nextInt(run, lo, hi));
   run.coin += coin;
   gainStanding(run, 'commons', 0.5);
   // Honest toil has no moral or political colour — the pull back toward True
@@ -70,8 +79,9 @@ export const ACTIVITIES: ActivityDef[] = [
       if (chance(run, 0.05)) raiseAttr(run, 'charm', 0.1, 0.3); // 5% → +0.1–0.3 Charm
       const roll = nextFloat(run);
       if (roll < 0.9) {
-        run.coin += 1;
-        pushLog(run, 'A passer-by drops a copper into your palm.', 'coin');
+        const alms = rankPay(run, 1);
+        run.coin += alms;
+        pushLog(run, alms <= 1 ? 'A passer-by drops a copper into your palm.' : `A passer-by drops ${alms} copper into your palm.`, 'coin');
       } else if (roll < 0.98) {
         pushLog(run, 'You are cursed at and given nothing.', 'plain');
       } else {
@@ -140,15 +150,16 @@ export const ACTIVITIES: ActivityDef[] = [
     earns: '2–9c',
     complete(run) {
       trainAttr(run, 'stealth');
-      // caught? scales with heat, mitigated by stealth — and the dead of night
-      // (2–5 am) halves the risk, when honest folk and the watch are abed. The
-      // Iron Spike dagger sharpens the hand: +10% Stealth in the reckoning and a
-      // flat −10% chance of being caught (a +10% success rate).
+      // caught? scales with heat, but every point of Stealth cuts the odds by 3%
+      // (a +3% success rate per point) — and the dead of night (2–5 am) halves the
+      // risk, when honest folk and the watch are abed. The Iron Spike dagger
+      // sharpens the hand further: +10 effective Stealth and a flat −10% catch.
       const spike = hasIronSpike(run);
       const effStealth = run.attrs.stealth + (spike ? 10 : 0);
-      let caughtP = Math.max(0.05, 0.18 + run.heat / 400 - effStealth / 120);
-      if (spike) caughtP = Math.max(0.03, caughtP - 0.1);
+      let caughtP = 0.18 + run.heat / 400 - effStealth * 0.03;
+      if (spike) caughtP -= 0.1;
       if (illicitPrime(run)) caughtP *= 0.5;
+      caughtP = Math.max(0.02, caughtP); // a whisper of risk always remains
       if (chance(run, caughtP)) {
         run.heat = Math.min(100, run.heat + nextInt(run, 4, 8));
         run.hp = Math.max(0, run.hp - 1); // a beating — engine checks for death
@@ -164,11 +175,13 @@ export const ACTIVITIES: ActivityDef[] = [
           run.pickpocketStrikes = 0;
           pushLog(run, 'The watch lunges to haul you off — but the great shield on your back turns them, and you slip away.', 'good');
         } else {
-          pushLog(run, `A mark seizes your wrist — you wrench free, bruised and marked (${run.pickpocketStrikes}/7 before the stocks).`, 'bad');
+          // the running tally toward the stocks is a hidden thing — never shown
+          pushLog(run, 'A mark seizes your wrist — you wrench free, bruised and lucky to keep your hand.', 'bad');
         }
       } else {
         let coin = nextInt(run, 2, 9);
         if (illicitPrime(run)) coin *= 5; // the dead of night pays five-fold
+        coin = rankPay(run, coin);
         run.coin += coin;
         run.heat = Math.min(100, run.heat + 1);
         driftBearing(run, -1, 0); // thieving pulls you toward Chaos
@@ -198,7 +211,7 @@ export const ACTIVITIES: ActivityDef[] = [
         // service to the Church is service to Order — it pulls the bearing toward
         // Lawful (ethics), and never touches Good/Evil.
         shiftAlignment(run, 0.2 + nextFloat(run) * 0.2, 0);
-        const alms = nextInt(run, 3, 7);
+        const alms = rankPay(run, nextInt(run, 3, 7));
         run.coin += alms;
         pushLog(run, `You serve at the chapel; the priest presses ${alms} copper of alms into your hand and marks your devotion.`, 'coin');
       } else {

@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '8:45 PM MST',
+    title: 'Pay That Climbs, Hands That Steady',
+    changes: [
+      'Every Ply-Your-Trade task that pays coin now earns more as you rise: the listed amounts are a Beggar\'s (rank 1) pay, and each rank above adds a random 7–10% on top. A Baron out-earns a Beggar at the very same work.',
+      'Stealth now truly protects the cutpurse — each point cuts your chance of being caught by 3% (a matching rise in your success rate). A practised thief slips almost every purse.',
+      'The Chronicle no longer counts your near-misses toward the stocks aloud — that running tally was never meant for your eyes.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '8:00 PM MST',
     title: 'Two Rows of Deeds',
     changes: [

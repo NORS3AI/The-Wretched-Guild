@@ -229,10 +229,11 @@
   .purse-pop {
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0; /* anchor to the right so it never spills off a narrow screen */
     margin-top: 6px;
     z-index: 60;
     width: 250px;
+    max-width: calc(100vw - 20px);
     max-height: 360px;
     overflow-y: auto;
     background: var(--bg-panel);
@@ -367,10 +368,11 @@
   .bearing-pop {
     position: absolute;
     top: 100%;
-    left: 0;
+    right: 0; /* anchor right so it stays on-screen on mobile */
     margin-top: 6px;
     z-index: 60;
     width: 220px;
+    max-width: calc(100vw - 20px);
     background: var(--bg-panel);
     border: 1px solid var(--gold);
     border-radius: 6px;

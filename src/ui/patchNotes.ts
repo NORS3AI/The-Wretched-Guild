@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '7:35 PM MST',
+    title: 'Purse Fits the Screen',
+    changes: [
+      'Fixed the Purse (Coin of the Realm) popover being cut off on mobile — it now anchors to the right and never spills past the screen edge. The Bearing popover is held to the screen the same way.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '7:05 PM MST',
     title: 'No Fire Without Firewood',
     changes: [

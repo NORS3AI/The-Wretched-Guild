@@ -66,6 +66,9 @@
   {:else}
     {@const b = CRAFT_BENCHES.find((x) => x.id === bench)}
     <p class="bench-blurb">{b?.blurb}</p>
+    {#if recipes.length === 0}
+      <p class="locked-note">This bench isn't fitted out yet — its patterns are still to come.</p>
+    {/if}
     <div class="recipes">
       {#each recipes as r (r.id)}
         {@const active = run.activity?.id === r.id}

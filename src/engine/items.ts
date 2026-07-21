@@ -70,8 +70,7 @@ export const ITEMS: Record<string, ItemDef> = {
   oak_board: { id: 'oak_board', name: 'Oak Board', kind: 'goods', value: 0, blurb: 'Sawn and planed at the lumberyard. Stock for finer joinery.' },
   iron_bar: { id: 'iron_bar', name: 'Iron Bar', kind: 'goods', value: 0, blurb: 'Smelted from ore and coal at the forge. The smith\'s raw stock.' },
   grain_pouch: { id: 'grain_pouch', name: 'Pouch of Grain', kind: 'goods', value: 0, blurb: 'Threshed grain, bagged and ready for the baker\'s board.' },
-  animal_skin: { id: 'animal_skin', name: 'Animal Skin', kind: 'goods', value: 0, blurb: 'A clean hide off a roasted beast. Tanned into leather.' },
-  leather: { id: 'leather', name: 'Leather', kind: 'goods', value: 0, blurb: 'Tanned and supple. The leatherworker\'s stock.' },
+  animal_skin: { id: 'animal_skin', name: 'Animal Skin', kind: 'goods', value: 0, blurb: 'A clean hide off a roasted beast. Kept back for the leatherworker\'s bench.' },
   bucket_water: { id: 'bucket_water', name: 'Bucket of Water', kind: 'goods', value: 0, blurb: 'A brimming bucket, drawn from the well or the river.' },
   ruined_hide: { id: 'ruined_hide', name: 'Ruined Hide', kind: 'goods', value: 3, blurb: 'A hide torn ragged in the roasting — fit only to be sold for a copper or three.' },
 
@@ -101,11 +100,6 @@ export const ITEMS: Record<string, ItemDef> = {
   grandmaster_cake: { id: 'grandmaster_cake', name: "Grand Master's Cake", kind: 'food', food: 30, water: 5, value: 22, blurb: 'A towering, moist cake fit for the Guild\'s master.' },
   french_toast: { id: 'french_toast', name: 'French Toast', kind: 'food', food: 40, water: 10, value: 34, blurb: 'Griddled in butter, rich and filling.' },
   leek_pie: { id: 'leek_pie', name: "Winters' Leek Pie", kind: 'food', food: 55, water: 20, value: 50, blurb: 'A great steaming leek pie, oiled and buttered — a feast against the winter.' },
-
-  // ── Leatherworking wares ──
-  leather_pouch: { id: 'leather_pouch', name: 'Leather Pouch', kind: 'goods', value: 40, blurb: 'A finely stitched belt-pouch.' },
-  leather_boots: { id: 'leather_boots', name: 'Leather Boots', kind: 'goods', value: 60, blurb: 'Tall, water-shed boots. A rare luxury for the feet.' },
-  leather_satchel_good: { id: 'leather_satchel_good', name: 'Tooled Satchel', kind: 'goods', value: 90, blurb: 'A broad tooled-leather satchel — the mark of a made man.' },
 };
 
 /** Does carrying this item grant a passive effect (equipment)? */

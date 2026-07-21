@@ -73,11 +73,7 @@ export const RECIPES: CraftRecipe[] = [
   { id: 'craft_french_toast', skill: 'farming', name: 'French Toast', inputs: [{ item: 'grain_pouch', qty: 7 }, { item: 'slab_of_butter', qty: 1 }], output: { item: 'french_toast', qty: 1 }, ticks: 9, gain: 2.2, blurb: 'Griddle French toast in butter.' },
   { id: 'craft_leek_pie', skill: 'farming', name: "Winters' Leek Pie", inputs: [{ item: 'grain_pouch', qty: 9 }, { item: 'slab_of_butter', qty: 1 }, { item: 'cooking_oil', qty: 1 }], output: { item: 'leek_pie', qty: 1 }, ticks: 11, gain: 2.6, blurb: 'Bake a great leek pie, oiled and buttered.' },
 
-  // Leatherworking ─────────────────────────────────────────────────────────
-  { id: 'craft_leather', skill: 'leatherworking', name: 'Leather', inputs: [{ item: 'animal_skin', qty: 2 }], output: { item: 'leather', qty: 1 }, ticks: 5, gain: 1.5, blurb: 'Tan two skins into a hide of leather.' },
-  { id: 'craft_leather_pouch', skill: 'leatherworking', name: 'Leather Pouch', inputs: [{ item: 'leather', qty: 3 }], output: { item: 'leather_pouch', qty: 1 }, ticks: 8, gain: 1.8, blurb: 'Stitch three hides into a belt-pouch.' },
-  { id: 'craft_leather_boots', skill: 'leatherworking', name: 'Leather Boots', inputs: [{ item: 'leather', qty: 5 }], output: { item: 'leather_boots', qty: 1 }, ticks: 10, gain: 2.2, blurb: 'Cut and sew five hides into tall boots.' },
-  { id: 'craft_leather_satchel', skill: 'leatherworking', name: 'Tooled Satchel', inputs: [{ item: 'leather', qty: 8 }], output: { item: 'leather_satchel_good', qty: 1 }, ticks: 14, gain: 3, blurb: 'Tool eight hides into a broad satchel.' },
+  // Leatherworking — the bench is here, but not yet fitted out with any patterns.
 ];
 
 export function recipeById(id: string): CraftRecipe | undefined {

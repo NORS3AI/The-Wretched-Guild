@@ -104,9 +104,10 @@ if (typeof window !== 'undefined') {
       saveGame(game); // anchor lastSavedAt so time-away is measured from here
     } else {
       // advance the day/night clock by the real time spent away (capped to a day)
+      // — but only if the game was actually running, not paused.
       const awayMs = Date.now() - (game.lastSavedAt ?? Date.now());
-      if (game.run.alive) game.run.dayMs += Math.min(Math.max(0, awayMs), DAY_LENGTH_MS);
-      catchUpOffline(game); // simulate what happened while we were hidden
+      if (!game.paused && game.run.alive) game.run.dayMs += Math.min(Math.max(0, awayMs), DAY_LENGTH_MS);
+      catchUpOffline(game); // simulate what happened while we were hidden (skips if paused)
       lastStarveHits = game.run.starveHits; // don't flash for offline progress
       saveGame(game);
       notify();

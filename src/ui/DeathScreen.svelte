@@ -46,7 +46,7 @@
       </p>
       <p class="muted small luck-note">
         Legacy you <em>keep</em> sharpens your Luck — every 10 unspent Legacy grants
-        <strong class="gold">+{Math.floor(availableLegacy / 10)} Luck</strong> to your next wretch. Spend it, and you trade that Luck away.
+        <strong class="gold">+{(Math.floor(availableLegacy / 10) * 0.1).toFixed(1)} Luck</strong> to your next wretch. Spend it, and you trade that Luck away.
       </p>
 
       <div class="shop">

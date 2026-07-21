@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '8:10 PM MST',
+    title: 'Pause Means Pause',
+    changes: [
+      'A new life now begins PAUSED — press Resume when you\'re ready and time will start to flow.',
+      'Fixed the pause not truly stopping time: a paused game no longer advances in the background (offline catch-up and the day/night clock now respect the pause), so days won\'t creep forward while you\'re paused or away.',
+      'Corrected the kept-Legacy Luck bonus to the right scale: 1% Luck is 0.1 on the Luck attribute, so every 10 unspent Legacy adds 0.1 Luck (was 1.0).',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '7:45 PM MST',
     title: 'A Fresh Start',
     changes: [

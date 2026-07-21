@@ -409,7 +409,9 @@ export function dispatch(game: GameState, cmd: Command): void {
       game.run = newRun(game.meta);
       // a new life is a clean page — wipe the old wretch's Chronicle
       game.log.length = 0;
-      pushLog(game.run, 'A new wretch takes up the Guild\'s cause, born into the same cold mud.', 'system');
+      // begin paused so the player can settle in before time flows
+      game.paused = true;
+      pushLog(game.run, 'A new wretch takes up the Guild\'s cause, born into the same cold mud. (Paused — press Resume when ready.)', 'system');
       break;
     }
 

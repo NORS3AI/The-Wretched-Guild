@@ -766,9 +766,9 @@ console.log('The Wretched Guild — engine tests\n');
   const bornLucky = newRun(h.meta);
   assert(bornLucky.attrs.luck === 6, 'three levels of +2 Luck begin life at Luck 6 (no Legacy kept)');
 
-  // kept Legacy adds to Luck: +1 per 10 held
-  h.meta.legacy = 55; // → +5 Luck on top of the +6 from the unlock
-  assert(newRun(h.meta).attrs.luck === 11, '55 kept Legacy adds +5 Luck at birth (6 + 5)');
+  // kept Legacy adds to Luck: every 10 held = 1% = 0.1 on the Luck attribute
+  h.meta.legacy = 50; // 5 × 10 Legacy → +0.5 Luck, on top of the +6 from the unlock
+  assert(Math.abs(newRun(h.meta).attrs.luck - 6.5) < 1e-9, '50 kept Legacy adds +0.5 Luck at birth (5 × 0.1)');
 
   // A Coin in the Lining: 15 copper per level, and levels are infinite
   const c = newGame();
@@ -966,6 +966,29 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.pocketSlots === 2 && g.run.pouches === 0 && g.run.container === 0, 'pockets/pouches/container reset to base');
   assert(inventoryCapacity(g.run) === 2, 'carry capacity resets to two pockets');
   assert(g.meta.legacy > 0, 'meta Legacy carries over (only meta survives a death)');
+}
+
+// 29) A new life starts paused, and a paused game does not advance in the
+//     background (offline catch-up is skipped while paused).
+{
+  const { catchUpOffline } = await import('../src/engine/save');
+  const g = newGame();
+  const { die } = await import('../src/engine/death');
+  die(g, g.run, 'slain for the test');
+  dispatch(g, { type: 'beginNewLife' });
+  assert(g.paused === true, 'a new life begins paused');
+
+  // simulate a long absence while paused — no ticks should elapse
+  const tickBefore = g.run.tick;
+  g.lastSavedAt = Date.now() - 60 * 60 * 1000; // an hour ago
+  catchUpOffline(g);
+  assert(g.run.tick === tickBefore, 'a paused game does not tick in the background');
+
+  // once unpaused, the same absence does advance time
+  g.paused = false;
+  g.lastSavedAt = Date.now() - 60 * 60 * 1000;
+  catchUpOffline(g);
+  assert(g.run.tick > tickBefore, 'an unpaused game catches up on background time');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

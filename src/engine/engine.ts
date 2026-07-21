@@ -20,7 +20,7 @@ import { deedById } from './deeds';
 import { itemDef, isEdible, removeItem, addItem, hasRoom, VENDOR_STOCK } from './items';
 import { chance, nextInt } from './rng';
 import { shopOpen } from './time';
-import { buyCarryUpgrade, type CarryKind } from './merchant';
+import { buyCarryUpgrade, buyGear, type CarryKind, type GearKind } from './merchant';
 import { MERCHANT_COOLDOWN, EVENT_COOLDOWN_MIN, EVENT_COOLDOWN_MAX } from './state';
 import { pickEvent } from './events';
 
@@ -196,6 +196,7 @@ export type Command =
   | { type: 'buyUnlock'; id: string }
   | { type: 'buyItem'; id: string }
   | { type: 'buyCarry'; kind: CarryKind }
+  | { type: 'buyGear'; kind: GearKind }
   | { type: 'dismissMerchant' }
   | { type: 'declineContract' }
   | { type: 'dismissEncounter' };
@@ -213,6 +214,8 @@ export function dispatch(game: GameState, cmd: Command): void {
         if (id === 'beg' && ownsAnyBusiness(run)) break;
         // you can only work an enterprise you actually own
         if (id.startsWith('work_') && ownedLevel(run, id.slice(5)) < 1) break;
+        // hunting needs a bow (bought from the wandering merchant)
+        if (id === 'hunt' && !run.hasBow) break;
       }
       run.activity = id ? { id, progress: 0 } : null;
       break;
@@ -423,6 +426,13 @@ export function dispatch(game: GameState, cmd: Command): void {
       if (!run.alive) break;
       if (!run.merchantHere) break; // the merchant has moved on
       buyCarryUpgrade(run, cmd.kind);
+      break;
+    }
+
+    case 'buyGear': {
+      if (!run.alive) break;
+      if (!run.merchantHere) break;
+      buyGear(run, cmd.kind);
       break;
     }
 

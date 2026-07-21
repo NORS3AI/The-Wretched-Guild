@@ -13,8 +13,13 @@
   $: markTarget = $game.run.contractTargetId ? contractById($game.run.contractTargetId) : null;
   $: markFee = markTarget ? contractPay(markTarget, $game.run.rank) : null;
 
-  // Once you own an enterprise, the begging life is behind you — drop it.
-  $: trades = ACTIVITIES.filter((a) => !(a.id === 'beg' && ownsAnyBusiness($game.run)));
+  // Once you own an enterprise, the begging life is behind you — drop it. And
+  // Hunting only appears once you've bought a bow from the wandering merchant.
+  $: trades = ACTIVITIES.filter(
+    (a) =>
+      !(a.id === 'beg' && ownsAnyBusiness($game.run)) &&
+      !(a.id === 'hunt' && !$game.run.hasBow),
+  );
 
   // The fill glides smoothly over each cycle's real duration (ticks × tick time,
   // divided by speed) via a CSS animation, rather than jumping per tick.

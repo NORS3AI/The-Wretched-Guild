@@ -200,6 +200,13 @@ function migrate(data: unknown): GameState {
     }
     g.version = 18;
   }
+  // v18 → v19: merchant gear (warm clothes, bow) and the Hunter trade.
+  if (g.version < 19) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.warmClothes !== 'boolean') r.warmClothes = false;
+    if (typeof r.hasBow !== 'boolean') r.hasBow = false;
+    g.version = 19;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

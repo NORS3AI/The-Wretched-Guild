@@ -88,6 +88,78 @@ export function canBuyCarry(run: RunState, offer: CarryOffer): boolean {
   return !offer.maxed && run.coin >= offer.cost && run.factions[offer.faction] >= offer.factionReq;
 }
 
+// ── gear: waterskins, warm clothes, and a hunting bow ─────────────────────────
+
+export type GearKind = 'waterskin' | 'warm_clothes' | 'bow';
+
+export interface GearOffer {
+  kind: GearKind;
+  name: string;
+  desc: string;
+  cost: number;
+  faction: FactionId;
+  factionReq: number;
+  /** already bought / at its ceiling */
+  maxed: boolean;
+}
+
+const MAX_WATERSKIN = 12;
+
+export function gearOffers(run: RunState): GearOffer[] {
+  const skin = run.waterskinMax ?? 4;
+  return [
+    {
+      kind: 'waterskin',
+      name: 'A Larger Waterskin',
+      desc: `Carry more water — ${skin} → ${skin + 2} charges.`,
+      cost: 20 + (skin - 4) * 15,
+      faction: 'commons',
+      factionReq: 0,
+      maxed: skin >= MAX_WATERSKIN,
+    },
+    {
+      kind: 'warm_clothes',
+      name: 'Warm Woollens',
+      desc: 'Thick wool that keeps the cold out and your comfort in.',
+      cost: 80,
+      faction: 'commons',
+      factionReq: 0,
+      maxed: !!run.warmClothes,
+    },
+    {
+      kind: 'bow',
+      name: 'A Hunting Bow',
+      desc: 'Take up the Hunter\'s trade — stalk game in the wood.',
+      cost: 150,
+      faction: 'commons',
+      factionReq: 0,
+      maxed: !!run.hasBow,
+    },
+  ];
+}
+
+export function canBuyGear(run: RunState, offer: GearOffer): boolean {
+  return !offer.maxed && run.coin >= offer.cost && run.factions[offer.faction] >= offer.factionReq;
+}
+
+export function buyGear(run: RunState, kind: GearKind): boolean {
+  const offer = gearOffers(run).find((o) => o.kind === kind);
+  if (!offer || !canBuyGear(run, offer)) return false;
+  run.coin -= offer.cost;
+  if (kind === 'waterskin') {
+    run.waterskinMax += 2;
+    run.waterskinCharges = run.waterskinMax; // a new skin comes full
+    pushLog(run, `The merchant fits you a larger waterskin — ${run.waterskinMax} charges now.`, 'good');
+  } else if (kind === 'warm_clothes') {
+    run.warmClothes = true;
+    pushLog(run, 'You pull on thick warm woollens. The cold will trouble you far less.', 'good');
+  } else {
+    run.hasBow = true;
+    pushLog(run, 'You buy a hunting bow and a quiver of arrows. The Hunter\'s trade is open to you.', 'good');
+  }
+  return true;
+}
+
 /** Buy a carry upgrade. Returns true on success. */
 export function buyCarryUpgrade(run: RunState, kind: CarryKind): boolean {
   const offer = carryOffers(run).find((o) => o.kind === kind);

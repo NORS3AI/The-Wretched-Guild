@@ -14,6 +14,7 @@ export interface SkillDef {
 
 export const SKILLS: SkillDef[] = [
   { id: 'fishing', name: 'Fishing', blurb: 'Pulling fish from the water. Rises by 1 for every two fish landed.' },
+  { id: 'hunting', name: 'Hunting', blurb: 'Stalking game with a bow. The keener your eye, the rarer the quarry.' },
   { id: 'foraging', name: 'Foraging', blurb: 'Finding roots and herbs in the wild. Higher skill, more finds.' },
   { id: 'firemaking', name: 'Firemaking', blurb: 'Coaxing a campfire from firewood.' },
   { id: 'cooking', name: 'Cooking', blurb: 'Frying raw catch into a meal. Your skill % is the chance it comes out right; the rest burns or fails.' },

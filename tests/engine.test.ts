@@ -1093,5 +1093,50 @@ console.log('The Wretched Guild — engine tests\n');
   assert(h.run.tick === t0 + 1, 'the clock keeps ticking with an encounter open (no pause)');
 }
 
+// 34) The Hunter trade needs a bow (bought from the merchant); the bow, warm
+//     clothes, and a larger waterskin are merchant gear; hunted game is roasted.
+{
+  const { gearOffers, buyGear, canBuyGear } = await import('../src/engine/merchant');
+  const { itemDef } = await import('../src/engine/items');
+
+  // hunting is barred without a bow
+  const g = newGame();
+  dispatch(g, { type: 'setActivity', id: 'hunt' });
+  assert(g.run.activity === null, 'you cannot hunt without a bow');
+
+  // buy the bow (150c), warm clothes (80c), and a larger waterskin from the merchant
+  g.run.coin = 1000;
+  const bow = gearOffers(g.run).find((o) => o.kind === 'bow')!;
+  assert(bow.cost === 150, 'a hunting bow costs 150 copper');
+  assert(buyGear(g.run, 'bow'), 'the bow is bought');
+  assert(g.run.hasBow, 'the bow is owned');
+  assert(buyGear(g.run, 'warm_clothes') && g.run.warmClothes, 'warm woollens are bought');
+  const skin0 = g.run.waterskinMax;
+  assert(buyGear(g.run, 'waterskin') && g.run.waterskinMax === skin0 + 2, 'a larger waterskin adds 2 charges');
+  assert(!canBuyGear(g.run, gearOffers(g.run).find((o) => o.kind === 'warm_clothes')!), 'warm clothes cannot be bought twice');
+
+  // now hunting works and yields game (raw beasts, which are food-larder items)
+  dispatch(g, { type: 'setActivity', id: 'hunt' });
+  assert(g.run.activity?.id === 'hunt', 'with a bow, the Hunter trade is open');
+  let bagged = 0;
+  for (let n = 0; n < 400; n++) {
+    ff(g, 8);
+    bagged = ['raw_weasel', 'raw_rabbit', 'raw_boar', 'raw_sheep', 'raw_goat', 'raw_deer', 'raw_elk'].reduce((s, id) => s + countItem(g.run, id), 0);
+    if (bagged > 0) break;
+  }
+  assert(bagged > 0, 'hunting eventually brings down game');
+
+  // Elk is the rarest and richest; Weasel the commonest and cheapest
+  assert(itemDef('raw_elk')!.value === 300 && itemDef('raw_weasel')!.value === 11, 'Elk is worth 300c, Weasel 11c');
+  assert(itemDef('roast_elk')!.food === 65 && itemDef('roast_weasel')!.food === 5, 'roast Elk heals 65% food, roast Weasel 5%');
+
+  // roast a beast with oil
+  g.run.larder = [{ item: 'raw_rabbit', qty: 1 }, null, null, null, null, null];
+  g.run.pockets = [{ item: 'cooking_oil', qty: 1 }, null];
+  g.run.skills['cooking'] = 100; // guarantee success
+  dispatch(g, { type: 'doDeed', id: 'cook_game' });
+  assert(countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0, 'a rabbit is roasted with oil into food');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

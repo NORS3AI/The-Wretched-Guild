@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -99,6 +99,10 @@ export interface RunState {
   starveHits: number;
   waterskinCharges: number;
   waterskinMax: number;
+  /** warm woollens bought from the merchant — keep the cold from draining comfort */
+  warmClothes: boolean;
+  /** a hunting bow bought from the merchant — unlocks the Hunter trade */
+  hasBow: boolean;
   pockets: (ItemStack | null)[];
   /** the food larder — six slots reserved for food, apart from the pockets */
   larder: (ItemStack | null)[];

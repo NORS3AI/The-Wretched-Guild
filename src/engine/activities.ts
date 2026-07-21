@@ -223,6 +223,39 @@ export const ACTIVITIES: ActivityDef[] = [
     },
   },
   {
+    id: 'hunt',
+    name: 'Hunt with Bow',
+    path: 'Commons',
+    blurb: 'Stalk game in the wood with your bow. Rarer beasts are worth far more — roast them with oil to eat, or sell them whole.',
+    ticks: 8,
+    trains: 'stealth',
+    earns: 'game',
+    complete(run) {
+      gainStanding(run, 'commons', 0.15);
+      if (!chance(run, 0.6)) {
+        gainSkill(run, 'hunting', 0.15); // even a missed stalk teaches a little
+        pushLog(run, 'The wood is still; the game eludes you.', 'plain');
+        return;
+      }
+      gainSkill(run, 'hunting', 0.5);
+      // a keener eye (higher Hunting) tips the roll toward rarer, richer quarry
+      const r = nextFloat(run) - skillLevel(run, 'hunting') / 300;
+      let id: string;
+      if (r < 0.02) id = 'raw_elk';
+      else if (r < 0.06) id = 'raw_deer';
+      else if (r < 0.13) id = 'raw_goat';
+      else if (r < 0.25) id = 'raw_sheep';
+      else if (r < 0.43) id = 'raw_boar';
+      else if (r < 0.68) id = 'raw_rabbit';
+      else id = 'raw_weasel';
+      if (addItem(run, id, 1)) pushLog(run, `You loose an arrow and bring down a ${ITEMS[id].name.toLowerCase()}.`, 'good');
+      else {
+        run.coin += ITEMS[id].value;
+        pushLog(run, `No room for the ${ITEMS[id].name.toLowerCase()}, so you sell it whole for ${ITEMS[id].value} copper.`, 'coin');
+      }
+    },
+  },
+  {
     id: 'scavenge',
     name: 'Scavenge for Salvage',
     path: 'Commons',

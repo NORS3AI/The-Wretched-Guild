@@ -37,6 +37,17 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 20, 2026',
+    time: '10:50 PM MST',
+    title: 'The Hunter & the Merchant\'s Wares',
+    changes: [
+      'The wandering merchant now sells gear: a larger Waterskin (+2 charges), Warm Woollens that keep the cold from draining your comfort, and a Hunting Bow (150 copper).',
+      'New trade — Hunter (needs a bow): stalk game in the wood. Weasel (worth 11c) is commonest, Elk (300c) the rarest and richest; Rabbit, Boar, Sheep, Goat, and Deer fall in between. A keener Hunting skill tips you toward rarer quarry.',
+      'Roast your kills with a Goblet of Oil (the new "Roast Game" deed): Weasel +5% food; Rabbit +10/5; Boar +15/5; Sheep +20/5; Goat +30/5; Deer +40/10; Elk +65/10 (food/water). A burn leaves you charred Burnt Meat.',
+      'Tidied up the old orphaned "Snared Game" that had no source — game now comes from hunting.',
+    ],
+  },
+  {
+    date: 'July 20, 2026',
     time: '10:15 PM MST',
     title: 'In Lock-Step',
     changes: [

@@ -166,6 +166,7 @@ export const actions = {
   sellItem: (id: string) => run({ type: 'sellItem', id }),
   buyItem: (id: string) => run({ type: 'buyItem', id }),
   buyCarry: (kind: 'pocket' | 'pouch' | 'container') => run({ type: 'buyCarry', kind }),
+  buyGear: (kind: 'waterskin' | 'warm_clothes' | 'bow') => run({ type: 'buyGear', kind }),
   dismissMerchant: () => run({ type: 'dismissMerchant' }),
   beginNewLife: () => run({ type: 'beginNewLife' }),
   buyUnlock: (id: string) => run({ type: 'buyUnlock', id }),

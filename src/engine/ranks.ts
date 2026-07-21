@@ -74,7 +74,7 @@ export interface RankReq {
   items: ItemReq[];
 }
 
-const RESOURCE_CYCLE = ['firewood', 'fish', 'herbs', 'scrap', 'roots', 'game'];
+const RESOURCE_CYCLE = ['firewood', 'fish', 'herbs', 'scrap', 'roots', 'wooden_log'];
 
 function reqCoin(r: number): number {
   if (r <= 1) return 0;

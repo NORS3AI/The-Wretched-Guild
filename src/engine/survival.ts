@@ -75,7 +75,8 @@ export function tickSurvival(game: GameState, run: RunState): boolean {
   // day's immunity to the cold.
   const climate = climateNow(run);
   const hardy = run.learnings['hardy'] ? 0.6 : 1;
-  const warm = run.warmUntil > run.tick;
+  // warm woollens keep the cold out just like Seeking Warmth does
+  const warm = run.warmUntil > run.tick || run.warmClothes;
   if (climate === 'cold' && !warm) n.comfort = clampNeed(n.comfort - 0.28 * hardy);
   else if (climate === 'hot') n.comfort = clampNeed(n.comfort - 0.22 * hardy);
   else n.comfort = clampNeed(n.comfort + 0.2); // mild, or cold-but-warm

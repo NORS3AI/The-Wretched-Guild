@@ -62,6 +62,30 @@ function clamp100(v: number): number {
   return Math.max(0, Math.min(100, v));
 }
 
+/** Hunted game → the roast it becomes when cooked. */
+const GAME_ROAST: Record<string, string> = {
+  raw_weasel: 'roast_weasel',
+  raw_rabbit: 'roast_rabbit',
+  raw_boar: 'roast_boar',
+  raw_sheep: 'roast_sheep',
+  raw_goat: 'roast_goat',
+  raw_deer: 'roast_deer',
+  raw_elk: 'roast_elk',
+};
+
+/** The most valuable raw beast the player is carrying (roast the best first). */
+function bestRawGame(run: RunState): string | null {
+  let best: string | null = null;
+  let bestVal = -1;
+  for (const id of Object.keys(GAME_ROAST)) {
+    if (countItem(run, id) >= 1 && (ITEMS[id]?.value ?? 0) > bestVal) {
+      bestVal = ITEMS[id].value;
+      best = id;
+    }
+  }
+  return best;
+}
+
 export const DEEDS: DeedDef[] = [
   {
     id: 'eat',
@@ -224,6 +248,22 @@ export const DEEDS: DeedDef[] = [
         return;
       }
       doCook(run, ['potato', 'cooking_oil', 'slab_of_butter'], 'baked_potato', 'burnt_potato');
+    },
+  },
+  {
+    id: 'cook_game',
+    name: 'Roast Game',
+    blurb: 'Roast a beast you have hunted over a goblet of oil. Your Cooking skill decides how it comes out.',
+    timeTicks: 1,
+    reveal: (run) => bestRawGame(run) !== null,
+    available: (run) => bestRawGame(run) !== null && countItem(run, 'cooking_oil') >= 1,
+    effect: (_g, run) => {
+      const raw = bestRawGame(run);
+      if (!raw || countItem(run, 'cooking_oil') < 1) {
+        pushLog(run, 'You need a hunted beast and a goblet of oil to roast it.', 'bad');
+        return;
+      }
+      doCook(run, [raw, 'cooking_oil'], GAME_ROAST[raw], 'burnt_meat');
     },
   },
   {

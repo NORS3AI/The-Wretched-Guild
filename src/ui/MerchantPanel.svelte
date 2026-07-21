@@ -1,12 +1,13 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
-  import { carryOffers, canBuyCarry } from '../engine/merchant';
+  import { carryOffers, canBuyCarry, gearOffers, canBuyGear } from '../engine/merchant';
   import { inventoryCapacity } from '../engine/items';
   import { factionById } from '../engine/factions';
 
   const game = gameStore;
   $: run = $game.run;
   $: offers = carryOffers(run);
+  $: gear = gearOffers(run);
 </script>
 
 <div class="panel merchant">
@@ -42,6 +43,31 @@
                 </span>
               </div>
               <button class="btn primary buy" disabled={!buyable} onclick={() => actions.buyCarry(offer.kind)}>
+                Buy
+              </button>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <div class="gear-label">Gear</div>
+    <div class="offers">
+      {#each gear as offer}
+        {@const buyable = canBuyGear(run, offer)}
+        <div class="offer" class:maxed={offer.maxed}>
+          <div class="offer-main">
+            <div class="offer-name">{offer.name}</div>
+            <p class="offer-desc faint">{offer.desc}</p>
+          </div>
+          <div class="offer-buy">
+            {#if offer.maxed}
+              <span class="offer-max">{offer.kind === 'waterskin' ? 'At its largest.' : 'Owned.'}</span>
+            {:else}
+              <div class="req">
+                <span class="cost" class:short={run.coin < offer.cost}>{offer.cost}c</span>
+              </div>
+              <button class="btn primary buy" disabled={!buyable} onclick={() => actions.buyGear(offer.kind)}>
                 Buy
               </button>
             {/if}
@@ -91,6 +117,15 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+  .gear-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+    margin: 16px 0 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
   }
   .offer {
     display: flex;

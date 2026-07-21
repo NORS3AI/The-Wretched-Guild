@@ -93,6 +93,7 @@ export function newRun(meta: MetaState): RunState {
     factions: emptyStanding(),
     businesses: {},
     servants: {},
+    labourerTrades: [null, null, null],
     members: [],
     recruits: [],
     guildUnpaidTicks: 0,

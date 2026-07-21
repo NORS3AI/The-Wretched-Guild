@@ -10,6 +10,7 @@ import { ethicsBand, moralsBand } from './alignment';
 import { countItem, removeItem, addItem, hasRoom } from './items';
 import { bestRawGame, GAME_ROAST } from './deeds';
 import { BUSINESSES, ownedLevel, workCoinPerTick, type BusinessDef } from './businesses';
+import { activityById, tradeCoinPerTick } from './activities';
 import { pushLog } from './helpers';
 
 export interface ServantGroup {
@@ -101,7 +102,8 @@ export function advancedBusinesses(run: RunState): { def: BusinessDef; level: nu
     .sort((a, b) => b.def.baseCost - a.def.baseCost || b.level - a.level);
 }
 
-const LABOURER_TRADE_COIN = 3; // avg coin/tick per trade a labourer works
+/** How many Ply-Your-Trade tasks the rank-100 labourers work at once. */
+export const LABOURER_SLOTS = 3;
 
 /** Run the whole household for one tick: wages, chores, and the working staff. */
 export function processServants(game: GameState, run: RunState): void {
@@ -152,8 +154,17 @@ export function processServants(game: GameState, run: RunState): void {
     if (run.servants.foreman2 && top[1]) run.coin += workCoinPerTick(top[1].def, top[1].level) * mult;
   }
 
-  // Labourers ply three trades at once.
-  if (run.servants.labourers) run.coin += 3 * LABOURER_TRADE_COIN * mult;
+  // Labourers ply up to three trades of the player's own choosing, each earning
+  // that trade's expected coin/tick (only trades that are open to you right now).
+  if (run.servants.labourers) {
+    for (const id of run.labourerTrades ?? []) {
+      if (!id) continue;
+      const def = activityById(id);
+      if (!def || !def.coinRange) continue;
+      if (def.available && !def.available(run)) continue;
+      run.coin += tradeCoinPerTick(run, def) * mult;
+    }
+  }
 
   if (run.coin > run.peakCoin) run.peakCoin = run.coin;
 }

@@ -228,7 +228,8 @@ export type Command =
   | { type: 'devRankUp' }
   | { type: 'devResetRank' }
   | { type: 'hireServant'; id: string }
-  | { type: 'dismissServant'; id: string };
+  | { type: 'dismissServant'; id: string }
+  | { type: 'setLabourerTrade'; slot: number; id: string | null };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -346,6 +347,20 @@ export function dispatch(game: GameState, cmd: Command): void {
     case 'dismissServant': {
       if (!run.alive) break;
       dismissServant(run, cmd.id);
+      break;
+    }
+
+    case 'setLabourerTrade': {
+      if (!run.alive) break;
+      if (!Array.isArray(run.labourerTrades)) run.labourerTrades = [null, null, null];
+      if (cmd.slot < 0 || cmd.slot >= run.labourerTrades.length) break;
+      // a trade can only be worked in one slot — clear it from any other
+      if (cmd.id) {
+        for (let i = 0; i < run.labourerTrades.length; i++) {
+          if (i !== cmd.slot && run.labourerTrades[i] === cmd.id) run.labourerTrades[i] = null;
+        }
+      }
+      run.labourerTrades[cmd.slot] = cmd.id;
       break;
     }
 

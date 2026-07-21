@@ -31,25 +31,26 @@
   const ROW1_ORDER = ['drink', 'relieve', 'refill_well', 'bathe_well', 'wash_river'];
   const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'see_doctor'];
   const ROW3_ORDER = ['bake_potato', 'cook_game'];
-  const orderIndex = (order: string[], id: string): number => {
-    const i = order.indexOf(id);
-    return i < 0 ? 999 : i;
-  };
 
-  $: deedRows = DEEDS.filter((d) => !d.reveal || d.reveal(run)).map((d) => ({
+  // Every deed is ALWAYS shown in its row; a deed simply greys out (disabled)
+  // when there is no action to take — its reveal condition unmet, its cost
+  // unaffordable, or the stocks holding you.
+  $: allDeeds = DEEDS.map((d) => ({
     def: d,
     enabled:
       run.stocksUntil === null &&
+      (!d.reveal || d.reveal(run)) &&
       (!d.available || d.available(run)) &&
       !(d.cost && run.coin < d.cost),
   }));
-  const inRow = (order: string[], rows: typeof deedRows) =>
-    rows
-      .filter((r) => order.includes(r.def.id))
-      .sort((a, b) => orderIndex(order, a.def.id) - orderIndex(order, b.def.id));
-  $: row1 = inRow(ROW1_ORDER, deedRows);
-  $: row2 = inRow(ROW2_ORDER, deedRows);
-  $: row3 = inRow(ROW3_ORDER, deedRows);
+  const inRow = (order: string[], rows: typeof allDeeds) =>
+    order.flatMap((id) => {
+      const r = rows.find((x) => x.def.id === id);
+      return r ? [r] : [];
+    });
+  $: row1 = inRow(ROW1_ORDER, allDeeds);
+  $: row2 = inRow(ROW2_ORDER, allDeeds);
+  $: row3 = inRow(ROW3_ORDER, allDeeds);
 </script>
 
 <div class="panel">
@@ -102,36 +103,32 @@
         </button>
       {/each}
     </div>
-    {#if row2.length > 0}
-      <div class="deeds second">
-        {#each row2 as row (row.def.id)}
-          <button
-            class="btn deed"
-            disabled={!row.enabled}
-            title={row.def.blurb}
-            onclick={() => actions.doDeed(row.def.id)}
-          >
-            {row.def.name}
-            {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
-          </button>
-        {/each}
-      </div>
-    {/if}
-    {#if row3.length > 0}
-      <div class="deeds second">
-        {#each row3 as row (row.def.id)}
-          <button
-            class="btn deed"
-            disabled={!row.enabled}
-            title={row.def.blurb}
-            onclick={() => actions.doDeed(row.def.id)}
-          >
-            {row.def.name}
-            {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
-          </button>
-        {/each}
-      </div>
-    {/if}
+    <div class="deeds second">
+      {#each row2 as row (row.def.id)}
+        <button
+          class="btn deed"
+          disabled={!row.enabled}
+          title={row.def.blurb}
+          onclick={() => actions.doDeed(row.def.id)}
+        >
+          {row.def.name}
+          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+        </button>
+      {/each}
+    </div>
+    <div class="deeds second">
+      {#each row3 as row (row.def.id)}
+        <button
+          class="btn deed"
+          disabled={!row.enabled}
+          title={row.def.blurb}
+          onclick={() => actions.doDeed(row.def.id)}
+        >
+          {row.def.name}
+          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+        </button>
+      {/each}
+    </div>
 
     <!-- larder: six slots just for food, so ingredients never crowd out cooking -->
     <div class="section-label">

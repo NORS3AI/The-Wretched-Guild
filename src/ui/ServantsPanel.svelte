@@ -6,7 +6,9 @@
     servantWord,
     servantMultiplier,
     totalServantWage,
+    LABOURER_SLOTS,
   } from '../engine/servants';
+  import { LABOUR_TRADES, tradeCoinPerTick } from '../engine/activities';
   import { formatMoney } from '../engine/money';
 
   const game = gameStore;
@@ -15,8 +17,17 @@
   $: word = servantWord(run);
   $: mult = servantMultiplier(run);
   $: wageBill = totalServantWage(run);
+  $: labourersHired = !!run.servants?.labourers;
+  $: labourerTrades = run.labourerTrades ?? [];
+  const slots = Array.from({ length: LABOURER_SLOTS }, (_, i) => i);
+  const tradeById = (id: string) => LABOUR_TRADES.find((t) => t.id === id);
 
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function onPickTrade(slot: number, e: Event) {
+    const val = (e.target as HTMLSelectElement).value;
+    actions.setLabourerTrade(slot, val === '' ? null : val);
+  }
 </script>
 
 <div class="panel">
@@ -59,6 +70,32 @@
         </div>
       {/each}
     </div>
+
+    {#if labourersHired}
+      <div class="labourers">
+        <div class="section-label">Trade Labourers — set them to work</div>
+        <p class="la-hint faint">
+          Choose up to {LABOURER_SLOTS} Ply-Your-Trade tasks for your labourers to work. Each earns
+          that trade's coin every tick{#if mult > 1}, and your bound {word} work it ×{mult.toFixed(1)} as hard{/if}.
+        </p>
+        {#each slots as slot}
+          {@const chosen = labourerTrades[slot] ?? ''}
+          {@const def = chosen ? tradeById(chosen) : null}
+          <div class="la-row">
+            <span class="la-num faint">{slot + 1}.</span>
+            <select class="la-select" onchange={(e) => onPickTrade(slot, e)}>
+              <option value="" selected={chosen === ''}>— Idle —</option>
+              {#each LABOUR_TRADES as t}
+                <option value={t.id} selected={chosen === t.id}>{t.name} ({t.earns})</option>
+              {/each}
+            </select>
+            <span class="la-income">
+              {#if def}+{formatMoney(tradeCoinPerTick(run, def) * mult)}/tick{:else}—{/if}
+            </span>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -159,5 +196,51 @@
   .hire {
     padding: 5px 14px;
     font-size: 0.8rem;
+  }
+  .labourers {
+    margin-top: 16px;
+  }
+  .section-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+    margin: 0 0 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  .la-hint {
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin: 0 0 10px;
+  }
+  .la-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .la-num {
+    width: 16px;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+  .la-select {
+    flex: 1;
+    background: #0f0b07;
+    color: var(--ink);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-family: inherit;
+    font-size: 0.82rem;
+  }
+  .la-income {
+    font-size: 0.76rem;
+    color: var(--green);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    min-width: 66px;
+    text-align: right;
   }
 </style>

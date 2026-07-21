@@ -57,6 +57,9 @@ export interface ActivityDef {
   /** the copper a cycle pays, shown as a tag (e.g. "3–5c"). Omit for activities
    *  that yield goods or nothing rather than coin. */
   earns?: string;
+  /** the numeric copper a cycle pays [lo, hi] — set for the coin-earning trades a
+   *  rank-100 labourer can be assigned to work. Omit for goods/nothing trades. */
+  coinRange?: [number, number];
   /** whether this trade is open to the player right now (coin thresholds, gear).
    *  Omitted → always available. */
   available?: (run: RunState) => boolean;
@@ -73,6 +76,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 6,
     trains: 'charm',
     earns: '≈1c',
+    coinRange: [1, 1],
     available: (run) => run.coin < 40 && !ownsAnyBusiness(run), // 40 copper (or an enterprise) puts begging behind you
     complete(run) {
       gainStanding(run, 'commons', 0.15);
@@ -104,6 +108,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 8,
     trains: 'brawn',
     earns: '3–5c',
+    coinRange: [3, 5],
     available: (run) => run.coin >= 40,
     complete(run) {
       labourEarn(run);
@@ -118,6 +123,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 9, // 15% longer than felling timber
     trains: 'brawn',
     earns: '7–10c',
+    coinRange: [7, 10],
     available: (run) => run.coin >= 1000, // opens at 1 shilling
     complete(run) {
       labourEarn(run, 7, 10);
@@ -133,6 +139,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 10, // 15% longer than the coal mines
     trains: 'brawn',
     earns: '12–17c',
+    coinRange: [12, 17],
     available: (run) => run.coin >= 2000, // opens at 2 shillings
     complete(run) {
       labourEarn(run, 12, 17);
@@ -148,6 +155,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 5,
     trains: 'stealth',
     earns: '2–9c',
+    coinRange: [2, 9],
     complete(run) {
       trainAttr(run, 'stealth');
       // caught? scales with heat, but every point of Stealth cuts the odds by 3%
@@ -199,6 +207,7 @@ export const ACTIVITIES: ActivityDef[] = [
     ticks: 7,
     trains: 'piety',
     earns: '3–7c',
+    coinRange: [3, 7],
     complete(run) {
       // the chapel doors are barred outside its hours (6 am – 9 pm)
       if (!churchOpen(run)) {
@@ -417,4 +426,19 @@ export function activityById(id: string): ActivityDef | undefined {
     WORK_ACTIVITIES.find((a) => a.id === id) ??
     CRAFT_ACTIVITIES.find((a) => a.id === id)
   );
+}
+
+// ── Labourers (rank 100 servants) work trades of the player's choosing ─────────
+
+/** The coin-earning Ply-Your-Trade tasks a rank-100 labourer can be set to. */
+export const LABOUR_TRADES: ActivityDef[] = ACTIVITIES.filter((a) => a.coinRange);
+
+/** Expected copper/tick a labourer earns working a trade: the trade's average
+ *  pay, scaled by rank (the same 7–10%/rank the player enjoys, averaged), spread
+ *  across the cycle's ticks. */
+export function tradeCoinPerTick(run: RunState, def: ActivityDef): number {
+  if (!def.coinRange) return 0;
+  const avg = (def.coinRange[0] + def.coinRange[1]) / 2;
+  const rankMult = 1 + Math.max(0, run.rank - 1) * 0.085; // avg of the 7–10%/rank
+  return (avg * rankMult) / def.ticks;
 }

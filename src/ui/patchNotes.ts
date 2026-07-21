@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '10:50 PM MST',
+    title: 'Labourers You Command',
+    changes: [
+      'Rank-100 Trade Labourers can now be SET to work: in the Household, assign them up to three Ply-Your-Trade tasks (Beg, Fell Timber, the Coal Mines, the Fields, Pick Pockets, Serve at the Chapel). Each labourer earns that trade\'s coin every tick — and if your bearing binds them as slaves or disciples, they work it ×2.2 as hard. A trade can only be worked in one slot at a time.',
+      'Tend to Yourself now always shows all three rows of deeds; a deed simply greys out when there\'s no action to take (rather than vanishing).',
+      'The Sworn of your Wretched Guild are always listed by skill, highest first — whether or not they\'re set to a duty.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '10:15 PM MST',
     title: 'Foremen Tend Your Finest',
     changes: [

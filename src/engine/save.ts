@@ -217,6 +217,12 @@ function migrate(data: unknown): GameState {
     if (typeof r.craftingUnlocked !== 'boolean') r.craftingUnlocked = false;
     g.version = 20;
   }
+  // v20 → v21: rank-100 labourers work three trades the player chooses.
+  if (g.version < 21) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (!Array.isArray(r.labourerTrades)) r.labourerTrades = [null, null, null];
+    g.version = 21;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

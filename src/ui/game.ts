@@ -185,6 +185,7 @@ export const actions = {
   dismissMember: (id: string) => run({ type: 'dismissMember', id }),
   hireServant: (id: string) => run({ type: 'hireServant', id }),
   dismissServant: (id: string) => run({ type: 'dismissServant', id }),
+  setLabourerTrade: (slot: number, id: string | null) => run({ type: 'setLabourerTrade', slot, id }),
   assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
   rerollRecruits: () => run({ type: 'rerollRecruits' }),
   doDeed: (id: string) => run({ type: 'doDeed', id }),

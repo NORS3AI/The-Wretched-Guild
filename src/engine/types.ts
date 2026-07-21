@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -142,6 +142,9 @@ export interface RunState {
   businesses: Record<string, number>;
   /** hired household servant groups by id → hired (§14, rank 50+) */
   servants: Record<string, boolean>;
+  /** the three Ply-Your-Trade tasks the rank-100 labourers work, by activity id
+   *  (null = an empty slot). The player chooses these in the Household. */
+  labourerTrades: (string | null)[];
   /** the Guild roster and the current pool of candidates (§12) */
   members: Member[];
   recruits: Member[];

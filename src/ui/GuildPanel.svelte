@@ -27,6 +27,9 @@
   }
   $: grossIncome = run.members.reduce((s, m) => s + memberIncome(m), 0);
   $: netIncome = grossIncome - totalUpkeep(run);
+  // the Sworn are always shown ranked by skill, highest first — whether or not
+  // they are set to a duty.
+  $: sortedMembers = [...run.members].sort((a, b) => b.skill - a.skill);
 
   // signed money, since a net loss must read as a minus, not "0c"
   function signedMoney(n: number): string {
@@ -97,7 +100,7 @@
         <p class="faint empty">No wretches sworn yet. Take on a candidate above.</p>
       {:else}
         <div class="roster">
-          {#each run.members as m (m.id)}
+          {#each sortedMembers as m (m.id)}
             <div class="member">
               <div class="m-head">
                 <span class="m-name">{m.name}</span>

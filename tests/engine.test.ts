@@ -1657,5 +1657,31 @@ console.log('The Wretched Guild — engine tests\n');
   );
 }
 
+// 56) Rank-100 labourers work the trades the PLAYER assigns, earning each one's
+//     coin/tick; a trade can't be worked in two slots at once.
+{
+  const { tradeCoinPerTick, activityById } = await import('../src/engine/activities');
+  const { processServants } = await import('../src/engine/servants');
+  const g = newGame();
+  g.run.rank = 100;
+  g.run.coin = 1_000_000; // plenty, so every trade is open
+  g.run.alignment = { ethics: -50, morals: -50 }; // Chaotic-Evil → free slaves, ×2.2, no wage
+
+  dispatch(g, { type: 'hireServant', id: 'labourers' });
+  assert(g.run.servants.labourers, 'labourers are taken on at rank 100');
+  dispatch(g, { type: 'setLabourerTrade', slot: 0, id: 'till_fields' });
+  dispatch(g, { type: 'setLabourerTrade', slot: 1, id: 'pickpocket' });
+  assert(g.run.labourerTrades[0] === 'till_fields' && g.run.labourerTrades[1] === 'pickpocket', 'the player assigns labourer trades');
+  // assigning the same trade to another slot clears the earlier one
+  dispatch(g, { type: 'setLabourerTrade', slot: 2, id: 'till_fields' });
+  assert(g.run.labourerTrades[0] === null && g.run.labourerTrades[2] === 'till_fields', 'a trade cannot be worked in two slots at once');
+
+  // one tick of household work earns the two assigned trades' coin/tick, ×2.2
+  const expected = (tradeCoinPerTick(g.run, activityById('pickpocket')!) + tradeCoinPerTick(g.run, activityById('till_fields')!)) * 2.2;
+  const before = g.run.coin;
+  processServants(g, g.run);
+  assert(Math.abs(g.run.coin - before - expected) < 1e-6, `labourers earn their assigned trades' coin (${(g.run.coin - before).toFixed(2)} ≈ ${expected.toFixed(2)})`);
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

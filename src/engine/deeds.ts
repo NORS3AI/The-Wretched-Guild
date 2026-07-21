@@ -7,9 +7,9 @@ import type { GameState, RunState } from './types';
 import { nextFloat, nextInt, chance } from './rng';
 import { pushLog, trainAttr } from './helpers';
 import { damage, heal, maxHp, climateNow } from './survival';
-import { ITEMS, itemDef, addItem, removeItem, countItem } from './items';
+import { ITEMS, itemDef, addItem, removeItem, countItem, guardShielded } from './items';
 import { has, randomUnlearned } from './learnings';
-import { gainSkill, cookRoll } from './skills';
+import { gainSkill, cookRoll, type CookResult } from './skills';
 import { TICKS_PER_DAY } from './timeconst';
 
 /** Shared cooking: roll against Cooking skill. A success yields the good dish
@@ -21,12 +21,12 @@ export function hasCookingOil(run: RunState): boolean {
   return (run.oilBuffMs ?? 0) > 0 || countItem(run, 'cooking_oil') >= 1;
 }
 
-function doCook(run: RunState, ingredients: string[], cookedId: string, burntId: string): void {
+function doCook(run: RunState, ingredients: string[], cookedId: string, burntId: string): CookResult {
   const res = cookRoll(run, 'cooking');
   if (res === 'failed') {
     // couldn't manage it — the ingredients are spared for another attempt.
     pushLog(run, 'You cannot get the cooking right at all — at least the ingredients are spared for another try.', 'plain');
-    return;
+    return res;
   }
   // the Chalice buff provides the oil, so no physical Goblet is spent while it lasts
   const oilBuffed = (run.oilBuffMs ?? 0) > 0;
@@ -54,6 +54,7 @@ function doCook(run: RunState, ingredients: string[], cookedId: string, burntId:
       'plain',
     );
   }
+  return res;
 }
 
 export interface DeedDef {
@@ -139,6 +140,23 @@ export const DEEDS: DeedDef[] = [
     },
   },
   {
+    id: 'fill_bucket',
+    name: 'Fill a Bucket at the Well',
+    blurb: 'Draw water into an empty bucket at the well — ready for the farmer\'s board.',
+    timeTicks: 1,
+    // only when you hold an empty bucket to fill
+    reveal: (run) => countItem(run, 'bucket') >= 1,
+    available: (run) => countItem(run, 'bucket') >= 1,
+    effect: (_g, run) => {
+      if (!removeItem(run, 'bucket', 1)) {
+        pushLog(run, 'You have no empty bucket to fill.', 'bad');
+        return;
+      }
+      addItem(run, 'bucket_water', 1);
+      pushLog(run, 'You draw the bucket brimful of clean well-water.', 'good');
+    },
+  },
+  {
     id: 'bathe_well',
     name: 'Bathe at the Well',
     blurb: 'Wash the filth off — but the townsfolk despise a beggar fouling their well. Most attempts end in a chase.',
@@ -157,7 +175,11 @@ export const DEEDS: DeedDef[] = [
         pushLog(run, 'A guard bellows and charges — you snatch up your rags and outrun him through the alleys.', 'bad');
         return;
       }
-      // caught → one day in the stocks
+      // caught → one day in the stocks (unless the Weatherman turns the guard)
+      if (guardShielded(run)) {
+        pushLog(run, 'The guard collars you fouling the well — but your great shield throws him off, and you bolt.', 'good');
+        return;
+      }
       run.stocksUntil = run.tick + TICKS_PER_DAY;
       run.activity = null;
       pushLog(run, 'The guard collars you fouling the well and drags you to the stocks for a day.', 'bad');
@@ -178,6 +200,12 @@ export const DEEDS: DeedDef[] = [
       run.attrs.wits = Math.max(1, run.attrs.wits - 0.4);
       run.attrs.charm = Math.max(1, run.attrs.charm - 0.4);
       pushLog(run, 'You make the long walk to the river, wash body and clothes, and drink deep. Hard on the feet, good for the frame.', 'good');
+      // any empty bucket you carry is filled at the river's edge on the way past
+      const buckets = countItem(run, 'bucket');
+      if (buckets > 0 && removeItem(run, 'bucket', buckets)) {
+        addItem(run, 'bucket_water', buckets);
+        pushLog(run, buckets === 1 ? 'You fill your bucket at the river.' : `You fill your ${buckets} buckets at the river.`, 'good');
+      }
       // sometimes the riverbank offers herbs
       if (chance(run, 0.3) && addItem(run, 'herbs', 1)) {
         pushLog(run, 'You gather healing herbs from the bank.', 'good');
@@ -237,17 +265,31 @@ export const DEEDS: DeedDef[] = [
   {
     id: 'cook_game',
     name: 'Roast Game',
-    blurb: 'Roast a beast you have hunted over a goblet of oil. Your Cooking skill decides how it comes out.',
+    blurb: 'Roast a beast you have hunted on a spit over an open fire — no oil needed. Your Cooking skill decides how it comes out, and the beast yields a skin or a ruined hide.',
     timeTicks: 1,
     reveal: (run) => bestRawGame(run) !== null,
-    available: (run) => bestRawGame(run) !== null && hasCookingOil(run),
+    // roasted on a spit over a fire — unlike frying or baking, this needs no oil
+    available: (run) => bestRawGame(run) !== null,
     effect: (_g, run) => {
       const raw = bestRawGame(run);
-      if (!raw || !hasCookingOil(run)) {
-        pushLog(run, 'You need a hunted beast and a goblet of oil to roast it.', 'bad');
+      if (!raw) {
+        pushLog(run, 'You have no hunted beast to roast.', 'bad');
         return;
       }
-      doCook(run, [raw, 'cooking_oil'], GAME_ROAST[raw], 'burnt_meat');
+      const res = doCook(run, [raw], GAME_ROAST[raw], 'burnt_meat');
+      // the beast is skinned in the roasting — a clean skin for the tanner (30%),
+      // or a hide ruined by the fire, fit only to be sold (60%). Only when the
+      // beast was actually put to the fire (a failed cook spares it untouched).
+      if (res !== 'failed') {
+        const r = nextFloat(run);
+        if (r < 0.3) {
+          addItem(run, 'animal_skin', 1);
+          pushLog(run, 'You skin the beast cleanly — a good hide for the tanner.', 'good');
+        } else if (r < 0.9) {
+          addItem(run, 'ruined_hide', 1);
+          pushLog(run, 'The hide is scorched in the roasting — ruined, but a pedlar will give a copper or two.', 'plain');
+        }
+      }
     },
   },
   {

@@ -49,6 +49,15 @@ export function driftBearing(run: RunState, ethicsDir: number, moralsDir: number
   shiftAlignment(run, ethicsDir === 0 ? 0 : ethicsDir * mag(), moralsDir === 0 ? 0 : moralsDir * mag());
 }
 
+/** Honest, ordinary work (Hard Labour and the Commons trades) has no moral or
+ *  political colour — it pulls the bearing back toward True Neutral on BOTH axes,
+ *  never past zero. Grind these and you drift to the centre and hold there. */
+export function neutralize(run: RunState, mag: number): void {
+  const toward0 = (v: number): number => (v > 0 ? Math.max(0, v - mag) : v < 0 ? Math.min(0, v + mag) : 0);
+  run.alignment.ethics = toward0(run.alignment.ethics);
+  run.alignment.morals = toward0(run.alignment.morals);
+}
+
 /** A deliberate RPG-choice's bearing nudge — the slow burn (§6, design fork). A
  *  single murder is bad, evil, chaotic — but it moves you only a little. Each
  *  non-zero axis shifts a random 0.1–0.4 in the chosen direction, so your

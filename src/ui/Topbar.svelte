@@ -35,10 +35,14 @@
     return (v + 100) / 2;
   }
 
-  // The wealth ladder (copper → diamond), tagged with what the purse has reached,
-  // shown top-down from the loftiest coin to the humble copper.
-  $: ladder = wealthLadder($game.run.coin).slice().reverse();
-  $: nextGoal = ladder.filter((r) => !r.reached).at(-1)?.name ?? null;
+  // The wealth ladder, shown top-down from the loftiest coin to the humble copper.
+  // The lofty gem denominations (amethyst → diamond) aren't in play yet, so they
+  // are hidden; and the ladder lists ONLY what the purse has actually reached plus
+  // the single next goal above it — no greyed-out rungs.
+  const HIDDEN_DENOMS = new Set(['amethyst', 'topaz', 'emerald', 'ruby', 'sapphire', 'diamond']);
+  $: fullLadder = wealthLadder($game.run.coin).slice().reverse().filter((r) => !HIDDEN_DENOMS.has(r.name));
+  $: nextGoal = fullLadder.filter((r) => !r.reached).at(-1)?.name ?? null;
+  $: ladder = fullLadder.filter((r) => r.reached || r.name === nextGoal);
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   function seasonOf(day: number): string {
@@ -89,8 +93,6 @@
                   <span class="have">{rung.have}{rung.short}</span>
                 {:else if rung.name === nextGoal}
                   <span class="goal">next goal</span>
-                {:else}
-                  <span class="locked">○</span>
                 {/if}
               </span>
             </div>
@@ -326,9 +328,6 @@
     font-size: 0.66rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-  }
-  .rung-status .locked {
-    color: var(--ink-faint);
   }
   .val.align {
     font-size: 0.98rem;

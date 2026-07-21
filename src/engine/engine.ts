@@ -12,7 +12,7 @@ import { die } from './death';
 import { bindLog, pushLog } from './helpers';
 import { nextFloat } from './rng';
 import { META_UNLOCKS, unlockCost } from './unlocks';
-import { canJoinShadow } from './alignment';
+import { canJoinShadow, neutralize } from './alignment';
 import { advancement, completeAdvance, devAdvance } from './ranks';
 import { processBusinesses, invest, BUSINESSES, ownedLevel } from './businesses';
 import { processGuild, ensureRecruits, hireRecruit, dismissMember, assignMemberJob, rerollRecruits } from './guild';
@@ -87,6 +87,9 @@ export function advanceTick(game: GameState): void {
       if (run.activity.progress >= need) {
         run.activity.progress = 0;
         def.complete(run);
+        // Honest, ordinary work — Hard Labour and the Commons trades — pulls the
+        // bearing back toward True Neutral on both axes, never past centre.
+        if (def.path === 'Hard Labour' || def.path === 'Commons') neutralize(run, 0.3);
         if (run.hp <= 0 && run.alive) {
           die(game, run, 'dead of your wounds');
           return;
@@ -142,6 +145,13 @@ export function advanceTick(game: GameState): void {
       run.encounter = { defId: ev.id, nodeId: ev.start, lastOutcomeText: ev.intro };
       run.eventCooldown = nextInt(run, EVENT_COOLDOWN_MIN, EVENT_COOLDOWN_MAX);
     }
+  }
+
+  // the Crafting bench opens the first time you hold coal and iron ore together
+  // (2 coal + 1 ore) — and stays open for the rest of the life once earned.
+  if (!run.craftingUnlocked && countItem(run, 'coal') >= 2 && countItem(run, 'iron_ore') >= 1) {
+    run.craftingUnlocked = true;
+    pushLog(run, 'Coal and iron ore in hand, you see how they might be smelted and worked. A Crafting bench opens to you — begin at the Lumberyard.', 'system');
   }
 
   if (run.coin > run.peakCoin) run.peakCoin = run.coin;

@@ -10,6 +10,7 @@
   import VendorPanel from './ui/VendorPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
+  import CraftingPanel from './ui/CraftingPanel.svelte';
   import ServantsPanel from './ui/ServantsPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
   import StocksPanel from './ui/StocksPanel.svelte';
@@ -34,6 +35,7 @@
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
   $: householdUnlocked = $game.run.rank >= 50; // servants open at rank 50
+  $: craftingUnlocked = $game.run.craftingUnlocked; // opens at 2 coal + 1 iron ore
 
   // The Events tab gathers everything that needs handling — encounters, the
   // stocks, and the wandering merchant. A red ! flags when any of them is waiting.
@@ -51,6 +53,7 @@
     { id: 'wretch' as SideTab, label: 'The Wretch', show: true, alert: false },
     { id: 'events' as SideTab, label: 'Events', show: true, alert: eventsAlert },
     { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true, alert: false },
+    { id: 'crafting' as SideTab, label: 'Crafting', show: craftingUnlocked, alert: false },
     { id: 'merchant' as SideTab, label: 'Merchant', show: true, alert: false },
     { id: 'needs' as SideTab, label: 'Body & Needs', show: true, alert: needsAlert },
     { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, alert: false },
@@ -122,6 +125,8 @@
       <SurvivalPanel />
     {:else if effectiveTab === 'enterprises'}
       <BusinessesPanel />
+    {:else if effectiveTab === 'crafting'}
+      <CraftingPanel />
     {:else if effectiveTab === 'wretched'}
       <GuildPanel />
     {:else if effectiveTab === 'household'}

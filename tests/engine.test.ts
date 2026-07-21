@@ -43,14 +43,18 @@ function ff(g: ReturnType<typeof newGame>, n: number): void {
 
 console.log('The Wretched Guild — engine tests\n');
 
-// 1) Idle labour accrues coin and nudges alignment toward Lawful.
+// 1) Idle labour accrues coin and pulls the bearing back toward True Neutral.
 {
   const g = newGame();
   g.run.coin = 40; // Fell Timber opens once you have 40 copper (begging is behind you)
+  g.run.alignment = { ethics: 40, morals: 40 }; // start off-centre
   dispatch(g, { type: 'setActivity', id: 'fell_timber' });
-  ff(g, 200);
+  ff(g, 400);
   assert(g.run.coin > 40, `idle labour earned coin (got ${g.run.coin})`);
-  assert(g.run.alignment.ethics > 0, `honest toil nudged toward Lawful (ethics ${g.run.alignment.ethics.toFixed(1)})`);
+  assert(
+    g.run.alignment.ethics < 40 && g.run.alignment.morals < 40,
+    `honest toil pulls the bearing toward True Neutral (${g.run.alignment.ethics.toFixed(1)}, ${g.run.alignment.morals.toFixed(1)})`,
+  );
 }
 
 // 2) A contract is offered; a murderous route shifts alignment toward Evil.
@@ -204,7 +208,12 @@ console.log('The Wretched Guild — engine tests\n');
 
   const rich = newGame();
   rich.run.coin = 5000;
-  assert(computeLegacy(rich.run) === 5, '5,000 copper yields 5 Legacy (1 per 1,000)');
+  // Legacy from coin is now a gentle per-denomination scale, not a flat 1/1000:
+  // the copper band caps at ~1 Legacy, so 5,000 copper yields 1 (not 5).
+  assert(computeLegacy(rich.run) === 1, '5,000 copper yields 1 Legacy (gentle per-denomination scale)');
+  const richer = newGame();
+  richer.run.coin = 2_000_000; // just past two silver
+  assert(computeLegacy(richer.run) === 2, '2,000,000 copper (past 2 silver) yields ~2 Legacy');
   const old = newGame();
   old.run.ageYears = 40; // 24 years past 16 → 12 Legacy
   assert(computeLegacy(old.run) === 12, '24 years past 16 yields 12 Legacy (1 per 2 years)');
@@ -499,16 +508,22 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.needs.comfort >= before - 0.01, `comfort does not drop from cold while warm (${before} -> ${g.run.needs.comfort})`);
 }
 
-// 15i) Pockets: two slots, each stacking up to 5 of one kind.
+// 15i) Pockets: a SINGLE stack per item, capped at 20; overflow is auto-sold,
+//      never spilled into a second cluttering stack.
 {
   const g = newGame();
   g.run.pockets = [null, null];
-  addItem(g.run, 'firewood', 5);
-  assert(countItem(g.run, 'firewood') === 5, 'a slot stacks up to 5');
-  addItem(g.run, 'firewood', 5); // fills the second slot
-  assert(countItem(g.run, 'firewood') === 10, 'a second slot holds another stack of 5');
-  const ok = addItem(g.run, 'firewood', 3); // no room — lost
-  assert(!ok && countItem(g.run, 'firewood') === 10, `overflow beyond two stacks of ${MAX_STACK} is lost`);
+  addItem(g.run, 'firewood', 20);
+  assert(countItem(g.run, 'firewood') === MAX_STACK, `a single stack holds up to ${MAX_STACK}`);
+  const oneSlot = g.run.pockets.filter((p) => p && p.item === 'firewood').length === 1;
+  assert(oneSlot, 'firewood occupies exactly one slot');
+  const coinBefore = g.run.coin;
+  addItem(g.run, 'firewood', 3); // over the cap — auto-sold, no second stack
+  assert(countItem(g.run, 'firewood') === MAX_STACK, 'no second stack forms past the cap');
+  assert(
+    g.run.coin === coinBefore + 3 * itemDef('firewood')!.value,
+    'the 3 overflow firewood are auto-sold for their worth',
+  );
 }
 
 // 15j) Firewood makes a campfire (fast warmth); frying a river fish with oil
@@ -601,16 +616,15 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.attrs.brawn <= 100, `brawn is capped at 100 (${g.run.attrs.brawn.toFixed(1)})`);
 }
 
-// 15l) Serving at the Chapel can raise Good (morals), not Lawful.
+// 15l) Serving at the Chapel raises Lawful (ethics), and never touches Good/Evil.
 {
   const g = newGame();
-  g.run.alignment.ethics = 50; // Lawful, so the Church admits us
+  g.run.alignment = { ethics: 10, morals: 0 }; // slightly Lawful, so the Church admits us
+  const morals0 = g.run.alignment.morals;
   dispatch(g, { type: 'setActivity', id: 'pray' });
-  const ethics0 = g.run.alignment.ethics;
   ff(g, 400); // serve for a good while
-  assert(g.run.alignment.morals > 0, `serving the Church raises Good over time (morals ${g.run.alignment.morals.toFixed(2)})`);
-  // it should NOT be pushing ethics upward the way the old version did
-  assert(g.run.alignment.ethics <= ethics0 + 0.5, 'serving no longer steadily raises Lawful');
+  assert(g.run.alignment.ethics > 20, `serving the Church raises Lawful over time (ethics ${g.run.alignment.ethics.toFixed(2)})`);
+  assert(Math.abs(g.run.alignment.morals - morals0) < 1, 'serving the Church leaves Good/Evil untouched');
 }
 
 // 16) Determinism — same seed + same commands reproduce identical state.
@@ -1059,34 +1073,40 @@ console.log('The Wretched Guild — engine tests\n');
   assert(got > 0, 'a level-1 market stall can drop a pastry while worked');
 }
 
-// 32) Food routes to the six-slot larder; ingredients (goods) stay in pockets;
-//     and cooking teaches on a burn, double on a success.
+// 32) Only EDIBLE food routes to the six-slot larder; raw ingredients (a fish,
+//     hunted game) wait in the pockets until cooked; and cooking teaches on a
+//     burn, double on a success.
 {
   const { slotsFor, LARDER_SLOTS, countItem } = await import('../src/engine/items');
   const g = newGame();
   g.run.larder = [null, null, null, null, null, null];
-  g.run.pockets = [null, null];
+  g.run.pockets = [null, null, null, null];
   assert(LARDER_SLOTS === 6, 'the larder has six slots');
 
-  addItem(g.run, 'bread', 1); // food → larder
+  addItem(g.run, 'bread', 1); // edible food → larder
   addItem(g.run, 'cooking_oil', 1); // goods → pockets
-  addItem(g.run, 'fish', 1); // raw fish (a food ingredient) → larder
-  assert(g.run.larder.some((p) => p && p.item === 'bread'), 'food goes to the larder');
-  assert(g.run.larder.some((p) => p && p.item === 'fish'), 'raw fish (to be cooked) goes to the larder too');
+  addItem(g.run, 'fish', 1); // raw fish (not edible until cooked) → pockets
+  addItem(g.run, 'raw_boar', 1); // raw hunted game → pockets
+  assert(g.run.larder.some((p) => p && p.item === 'bread'), 'edible food goes to the larder');
+  assert(g.run.pockets.some((p) => p && p.item === 'fish'), 'raw fish waits in the pockets until cooked');
+  assert(g.run.pockets.some((p) => p && p.item === 'raw_boar'), 'raw hunted game waits in the pockets too');
   assert(g.run.pockets.some((p) => p && p.item === 'cooking_oil'), 'ingredients like oil stay in the pockets');
-  assert(slotsFor(g.run, 'bread') === g.run.larder && slotsFor(g.run, 'firewood') === g.run.pockets, 'slotsFor routes food to larder, goods to pockets');
+  assert(slotsFor(g.run, 'bread') === g.run.larder && slotsFor(g.run, 'firewood') === g.run.pockets, 'slotsFor routes edible food to larder, goods to pockets');
   assert(countItem(g.run, 'bread') === 1, 'countItem sees the larder');
 
-  // a full purse of ingredients no longer blocks cooking: fish (larder) + oil (pockets)
-  g.run.pockets = [{ item: 'firewood', qty: 5 }, { item: 'cooking_oil', qty: 1 }]; // pockets full of goods
-  addItem(g.run, 'fish', 1);
+  // cooking a raw fish (pockets) with oil (pockets): the fried fish lands, edible,
+  // in the larder, and the attempt teaches Cooking.
+  g.run.larder = [null, null, null, null, null, null];
+  g.run.pockets = [{ item: 'cooking_oil', qty: 1 }, { item: 'fish', qty: 1 }, null, null];
   g.run.skills['cooking'] = 90; // at 90: 90% cooked / 10% burnt / 0% fail — always teaches
   const before = g.run.skills['cooking'];
   dispatch(g, { type: 'doDeed', id: 'cook_fish' });
-  // a burn teaches +1, a success teaches +2 — either way the skill rises
   const gained = g.run.skills['cooking'] - before;
   assert(gained === 1 || gained === 2, `cooking teaches (+1 on a burn, +2 on a success): got +${gained}`);
-  assert(g.run.pockets.some((p) => p && p.item === 'firewood'), 'a full purse of goods no longer blocks cooking');
+  assert(
+    g.run.larder.some((p) => p && (p.item === 'cooked_fish' || p.item === 'burnt_fish')),
+    'the fried fish (edible) lands in the larder',
+  );
 }
 
 // 33) Laying Low cools your Guild members' Heat (2 per cycle), and time now
@@ -1432,6 +1452,146 @@ console.log('The Wretched Guild — engine tests\n');
   assert(incomeOf(m, assassin, 100) > incomeOf(m, assassin, 50), 'a duty pays more at a higher rank');
   const night = jobById('night')!;
   assert(night.baseIncome > assassin.baseIncome, 'more intensive duties pay far more (Woman of the Night > Assassination)');
+}
+
+// ── Crafting, equipment, buckets, hunting spoils, and the alignment fix ────────
+
+// 46) Crafting opens on 2 coal + 1 iron ore; benches gate on 20% of the prior
+//     skill; a craft consumes stock, yields a ware, and trains the bench skill.
+{
+  const { craftingUnlocked, benchUnlocked, canCraft, recipeById, BENCH_UNLOCK_SKILL } = await import('../src/engine/crafting');
+  const { skillLevel } = await import('../src/engine/skills');
+
+  const g = newGame();
+  assert(!craftingUnlocked(g.run), 'Crafting is shut before any coal or ore');
+  addItem(g.run, 'coal', 2);
+  addItem(g.run, 'iron_ore', 1);
+  advance(g); // the latch fires on a tick
+  assert(craftingUnlocked(g.run), 'Crafting opens once you hold 2 coal + 1 iron ore');
+
+  assert(benchUnlocked(g.run, 'lumberyard'), 'the Lumberyard is open from the start');
+  assert(!benchUnlocked(g.run, 'smithing'), 'Smithing is shut until Lumberyard hits 20%');
+  g.run.skills['lumberyard'] = BENCH_UNLOCK_SKILL;
+  assert(benchUnlocked(g.run, 'smithing'), 'Smithing opens at Lumberyard 20%');
+  g.run.skills['smithing'] = BENCH_UNLOCK_SKILL;
+  assert(benchUnlocked(g.run, 'farming'), 'Farming opens at Smithing 20%');
+  g.run.skills['farming'] = BENCH_UNLOCK_SKILL;
+  assert(benchUnlocked(g.run, 'leatherworking'), 'Leatherworking opens at Farming 20%');
+
+  // craft Oak Boards: 5 oak logs → 2 boards, and Lumberyard skill rises
+  const g2 = newGame();
+  g2.run.craftingUnlocked = true;
+  g2.run.pockets = [null, null, null, null, null, null];
+  addItem(g2.run, 'wooden_log', 5);
+  const board = recipeById('craft_oak_board')!;
+  assert(canCraft(g2.run, board), 'with 5 oak logs you can craft boards');
+  const lumBefore = skillLevel(g2.run, 'lumberyard');
+  dispatch(g2, { type: 'setActivity', id: 'craft_oak_board' });
+  ff(g2, board.ticks);
+  assert(countItem(g2.run, 'oak_board') === 2, 'a craft yields 2 oak boards');
+  assert(countItem(g2.run, 'wooden_log') === 0, 'a craft consumes the 5 logs');
+  assert(skillLevel(g2.run, 'lumberyard') > lumBefore, 'crafting trains the Lumberyard skill');
+
+  // reagents are worth no coin; a ruined hide sells for 3c
+  assert(
+    itemDef('oak_board')!.value === 0 && itemDef('iron_bar')!.value === 0 && itemDef('grain_pouch')!.value === 0 && itemDef('animal_skin')!.value === 0,
+    'crafting reagents are worth no coin',
+  );
+  assert(itemDef('ruined_hide')!.value === 3, 'a ruined hide sells for 3c');
+}
+
+// 47) Roasting hunted game needs no oil, and skins the beast (a skin or a hide).
+{
+  const { bestRawGame } = await import('../src/engine/deeds');
+  const g = newGame();
+  g.run.pockets = new Array(8).fill(null);
+  g.run.larder = new Array(6).fill(null);
+  addItem(g.run, 'raw_boar', 10);
+  g.run.skills['cooking'] = 100; // always cooks → every beast is put to the fire
+  assert(countItem(g.run, 'cooking_oil') === 0, 'no oil anywhere');
+  for (let i = 0; i < 10; i++) {
+    if (bestRawGame(g.run)) dispatch(g, { type: 'doDeed', id: 'cook_game' });
+  }
+  assert(countItem(g.run, 'raw_boar') === 0, 'all boars roast without any oil');
+  const skins = countItem(g.run, 'animal_skin') + countItem(g.run, 'ruined_hide');
+  assert(skins >= 5, `roasting beasts yields skins/hides (got ${skins} from 10)`);
+}
+
+// 48) Buckets: filled at the well; the farmer mills grain from seed + water, and
+//     the empty bucket is handed back.
+{
+  const { recipeById, canCraft } = await import('../src/engine/crafting');
+  const g = newGame();
+  g.run.pockets = new Array(6).fill(null);
+  addItem(g.run, 'bucket', 1);
+  dispatch(g, { type: 'doDeed', id: 'fill_bucket' });
+  assert(countItem(g.run, 'bucket') === 0 && countItem(g.run, 'bucket_water') === 1, 'filling a bucket at the well makes a bucket of water');
+
+  g.run.craftingUnlocked = true;
+  g.run.skills['lumberyard'] = 20; g.run.skills['smithing'] = 20; // open Farming
+  addItem(g.run, 'wheat_seeds', 5);
+  const grain = recipeById('craft_grain_pouch')!;
+  assert(canCraft(g.run, grain), 'with seeds and a bucket of water you can mill grain');
+  dispatch(g, { type: 'setActivity', id: 'craft_grain_pouch' });
+  ff(g, grain.ticks);
+  assert(countItem(g.run, 'grain_pouch') === 1, 'milling yields a pouch of grain');
+  assert(countItem(g.run, 'bucket') === 1 && countItem(g.run, 'bucket_water') === 0, 'the empty bucket is handed back');
+}
+
+// 49) Scavenging is a discovered skill, trained by Scavenge for Salvage.
+{
+  const { isDiscovered } = await import('../src/engine/skills');
+  const g = newGame();
+  assert(!isDiscovered(g.run, 'scavenging'), 'Scavenging is undiscovered at first');
+  dispatch(g, { type: 'setActivity', id: 'scavenge' });
+  for (let n = 0; n < 400 && !isDiscovered(g.run, 'scavenging'); n++) ff(g, 1);
+  assert(isDiscovered(g.run, 'scavenging'), 'plying Scavenge for Salvage discovers the Scavenging skill');
+}
+
+// 50) Equipment helpers: the Iron Spike and the Weatherman.
+{
+  const { hasIronSpike, hasWeatherman } = await import('../src/engine/items');
+  const g = newGame();
+  g.run.pockets = new Array(4).fill(null);
+  assert(!hasIronSpike(g.run) && !hasWeatherman(g.run), 'no equipment carried at first');
+  addItem(g.run, 'iron_spike', 1);
+  addItem(g.run, 'weatherman', 1);
+  assert(hasIronSpike(g.run) && hasWeatherman(g.run), 'carrying the Spike and Weatherman flips their effects on');
+}
+
+// 51) Bearing by activity: Pick Pockets → Chaotic (ethics only); Serve at the
+//     Chapel → Lawful (ethics only); Hard Labour / Commons → toward True Neutral.
+{
+  // Pick Pockets drives you Chaotic without touching Good/Evil
+  const g = newGame();
+  g.run.attrs.stealth = 80; // almost never caught
+  dispatch(g, { type: 'setActivity', id: 'pickpocket' });
+  for (let n = 0; n < 800; n++) {
+    g.run.heat = 0; // keep the watch off, so it never reaches the stocks
+    g.run.pickpocketStrikes = 0;
+    g.run.hp = 20;
+    ff(g, 1);
+  }
+  assert(g.run.alignment.ethics < -33, `sustained pickpocketing turns you Chaotic (ethics ${g.run.alignment.ethics.toFixed(0)})`);
+  assert(Math.abs(g.run.alignment.morals) < 8, `pickpocketing leaves Good/Evil untouched (morals ${g.run.alignment.morals.toFixed(0)})`);
+
+  // Serve at the Chapel turns you Lawful without touching Good/Evil
+  const c = newGame();
+  c.run.alignment = { ethics: 0, morals: 0 };
+  dispatch(c, { type: 'setActivity', id: 'pray' });
+  for (let n = 0; n < 700; n++) ff(c, 1);
+  assert(c.run.alignment.ethics > 20, `serving at the chapel turns you Lawful (ethics ${c.run.alignment.ethics.toFixed(0)})`);
+  assert(Math.abs(c.run.alignment.morals) < 8, `chapel service leaves Good/Evil untouched (morals ${c.run.alignment.morals.toFixed(0)})`);
+
+  // Commons / Hard Labour pull the bearing back toward True Neutral
+  const n0 = newGame();
+  n0.run.alignment = { ethics: 30, morals: -30 };
+  dispatch(n0, { type: 'setActivity', id: 'forage' });
+  for (let n = 0; n < 900; n++) ff(n0, 1);
+  assert(
+    Math.abs(n0.run.alignment.ethics) < 5 && Math.abs(n0.run.alignment.morals) < 5,
+    `Commons work neutralises the bearing (${n0.run.alignment.ethics.toFixed(0)}, ${n0.run.alignment.morals.toFixed(0)})`,
+  );
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

@@ -76,12 +76,16 @@ export function canHireServant(run: RunState, group: ServantGroup): boolean {
 export function hireServant(run: RunState, id: string): boolean {
   const g = servantById(id);
   if (!g || run.rank < g.reqRank || isServantHired(run, id)) return false;
+  // older saves can reach here with servants never initialised — guard so hiring
+  // your first servant can never crash the game.
+  if (!run.servants) run.servants = {};
   run.servants[id] = true;
   return true;
 }
 
 export function dismissServant(run: RunState, id: string): boolean {
-  if (!run.servants?.[id]) return false;
+  if (!run.servants) run.servants = {};
+  if (!run.servants[id]) return false;
   run.servants[id] = false;
   return true;
 }

@@ -2,6 +2,8 @@
 // waterskin. Gathering fills the pockets; eating and selling empty them.
 
 import type { ItemStack, RunState } from './types';
+import { pushLog } from './helpers';
+import { chance } from './rng';
 
 export interface ItemDef {
   id: string;
@@ -49,7 +51,7 @@ export const ITEMS: Record<string, ItemDef> = {
   cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish or bake a potato.' },
   slab_of_butter: { id: 'slab_of_butter', name: 'Slab of Butter', kind: 'goods', value: 3, buy: 6, blurb: 'Churned fresh. Needed to bake a potato.' },
   // hard-labour spoils
-  wooden_log: { id: 'wooden_log', name: 'Wooden Log', kind: 'goods', value: 3, blurb: 'Felled and split. Good timber.' },
+  wooden_log: { id: 'wooden_log', name: 'Oak Log', kind: 'goods', value: 3, blurb: 'Felled and split. Good oak timber for the lumberyard.' },
   coal: { id: 'coal', name: 'Coal', kind: 'goods', value: 3, blurb: 'Black rock that burns hot. Hewn from the seam.' },
   iron_ore: { id: 'iron_ore', name: 'Iron Ore', kind: 'goods', value: 1, blurb: 'Raw ore, streaked with rust. Worth a copper.' },
   wheat_seeds: { id: 'wheat_seeds', name: 'Wheat Seeds', kind: 'goods', value: 2, blurb: 'A handful of seed-corn from the tilled field.' },
@@ -63,7 +65,61 @@ export const ITEMS: Record<string, ItemDef> = {
   fried_fish: { id: 'fried_fish', name: 'Fried Fish', kind: 'food', food: 40, water: 35, value: 11, blurb: 'Hot from the fryer, crisp and dripping.' },
   chicken_curry: { id: 'chicken_curry', name: 'Chicken Curry', kind: 'food', food: 55, water: 20, value: 15, blurb: 'A spiced eastern dish — a feast for a beggar.' },
   health_potion: { id: 'health_potion', name: 'Health Potion', kind: 'food', heal: 4, value: 20, blurb: 'A ruby draught that knits flesh — restores a whole heart.' },
+
+  // ── Crafting reagents (worth no coin — their value is what you make of them) ──
+  oak_board: { id: 'oak_board', name: 'Oak Board', kind: 'goods', value: 0, blurb: 'Sawn and planed at the lumberyard. Stock for finer joinery.' },
+  iron_bar: { id: 'iron_bar', name: 'Iron Bar', kind: 'goods', value: 0, blurb: 'Smelted from ore and coal at the forge. The smith\'s raw stock.' },
+  grain_pouch: { id: 'grain_pouch', name: 'Pouch of Grain', kind: 'goods', value: 0, blurb: 'Threshed grain, bagged and ready for the baker\'s board.' },
+  animal_skin: { id: 'animal_skin', name: 'Animal Skin', kind: 'goods', value: 0, blurb: 'A clean hide off a roasted beast. Tanned into leather.' },
+  leather: { id: 'leather', name: 'Leather', kind: 'goods', value: 0, blurb: 'Tanned and supple. The leatherworker\'s stock.' },
+  bucket_water: { id: 'bucket_water', name: 'Bucket of Water', kind: 'goods', value: 0, blurb: 'A brimming bucket, drawn from the well or the river.' },
+  ruined_hide: { id: 'ruined_hide', name: 'Ruined Hide', kind: 'goods', value: 3, blurb: 'A hide torn ragged in the roasting — fit only to be sold for a copper or three.' },
+
+  // ── Lumberyard wares ──
+  wooden_chair: { id: 'wooden_chair', name: 'Wooden Chair', kind: 'goods', value: 10, blurb: 'A sturdy joined chair. Someone will pay for a seat.' },
+  wooden_table: { id: 'wooden_table', name: 'Wooden Table', kind: 'goods', value: 14, blurb: 'A broad oak table, planed smooth.' },
+  wooden_bed: { id: 'wooden_bed', name: 'Wooden Bed', kind: 'goods', value: 18, blurb: 'A framed bedstead — a rare comfort in these parts.' },
+  wooden_bookcase: { id: 'wooden_bookcase', name: 'Wooden Bookcase', kind: 'goods', value: 24, blurb: 'Shelves for a gentleman\'s library.' },
+  wooden_chest: { id: 'wooden_chest', name: 'Wooden Chest', kind: 'goods', value: 33, blurb: 'A banded oak chest, worth a good deal.' },
+
+  // ── Smithing wares ──
+  nails: { id: 'nails', name: 'Iron Nails', kind: 'goods', value: 3, blurb: 'A fistful of hand-forged nails.' },
+  hammer: { id: 'hammer', name: 'Hammer', kind: 'goods', value: 10, blurb: 'An iron-headed hammer on an oak haft.' },
+  hoe: { id: 'hoe', name: 'Hoe', kind: 'goods', value: 20, blurb: 'A field-hand\'s hoe.' },
+  spade: { id: 'spade', name: 'Spade', kind: 'goods', value: 20, blurb: 'A digging spade, edge honed.' },
+  pickaxe: { id: 'pickaxe', name: 'Pickaxe', kind: 'goods', value: 20, blurb: 'A miner\'s pick, ground to a point.' },
+  felling_axe: { id: 'felling_axe', name: 'Felling Axe', kind: 'goods', value: 40, blurb: 'A great two-handed axe for the woodsman.' },
+  bucket: { id: 'bucket', name: 'Bucket', kind: 'goods', value: 66, blurb: 'A riveted iron pail. Fill it at the well or the river.' },
+  iron_rivets: { id: 'iron_rivets', name: 'Iron Rivets', kind: 'goods', value: 100, blurb: 'A keg of stout rivets — the shipwright\'s and armourer\'s need.' },
+  iron_spike: { id: 'iron_spike', name: 'The Iron Spike', kind: 'goods', value: 140, blurb: 'A cruel forged dagger. While you carry it, your Stealth and your luck at cutting purses both sharpen (+10%).' },
+  weatherman: { id: 'weatherman', name: 'The Weatherman', kind: 'goods', value: 200, blurb: 'A great riveted shield. While you carry it, there is a fair chance (50%) the guard\'s hand slips off you when they would drag you away.' },
+
+  // ── Farming board (baked goods, eaten straight from the pouch) ──
+  scone: { id: 'scone', name: 'Scone', kind: 'food', food: 5, value: 4, blurb: 'A plain little scone.' },
+  banana_loaf: { id: 'banana_loaf', name: 'Banana Nut Loaf', kind: 'food', food: 10, value: 8, blurb: 'Sweet, dense, and nutty.' },
+  shepherds_pie: { id: 'shepherds_pie', name: 'Shepherds Pie', kind: 'food', food: 20, value: 14, blurb: 'Meat and mash under a golden crust.' },
+  grandmaster_cake: { id: 'grandmaster_cake', name: "Grand Master's Cake", kind: 'food', food: 30, water: 5, value: 22, blurb: 'A towering, moist cake fit for the Guild\'s master.' },
+  french_toast: { id: 'french_toast', name: 'French Toast', kind: 'food', food: 40, water: 10, value: 34, blurb: 'Griddled in butter, rich and filling.' },
+  leek_pie: { id: 'leek_pie', name: "Winters' Leek Pie", kind: 'food', food: 55, water: 20, value: 50, blurb: 'A great steaming leek pie, oiled and buttered — a feast against the winter.' },
+
+  // ── Leatherworking wares ──
+  leather_pouch: { id: 'leather_pouch', name: 'Leather Pouch', kind: 'goods', value: 40, blurb: 'A finely stitched belt-pouch.' },
+  leather_boots: { id: 'leather_boots', name: 'Leather Boots', kind: 'goods', value: 60, blurb: 'Tall, water-shed boots. A rare luxury for the feet.' },
+  leather_satchel_good: { id: 'leather_satchel_good', name: 'Tooled Satchel', kind: 'goods', value: 90, blurb: 'A broad tooled-leather satchel — the mark of a made man.' },
 };
+
+/** Does carrying this item grant a passive effect (equipment)? */
+export function hasIronSpike(run: RunState): boolean {
+  return countItem(run, 'iron_spike') >= 1;
+}
+export function hasWeatherman(run: RunState): boolean {
+  return countItem(run, 'weatherman') >= 1;
+}
+/** The Weatherman shield turns the guard's hand: while carried, a 50% chance to
+ *  slip any seizure that would drag you to the stocks. */
+export function guardShielded(run: RunState): boolean {
+  return hasWeatherman(run) && chance(run, 0.5);
+}
 
 /** Items the town vendor stocks for sale (during shop hours). */
 export const VENDOR_STOCK = ['cooking_oil', 'slab_of_butter'];
@@ -73,8 +129,10 @@ export function isEdible(def: ItemDef): boolean {
   return !!(def.food || def.water || def.heal);
 }
 
-/** A slot holds a stack of at most this many of one item. */
-export const MAX_STACK = 5;
+/** A slot holds a stack of at most this many of one item. Every item is capped
+ *  at a SINGLE stack of this size — the pockets and larder never clutter with a
+ *  second stack of the same thing; anything over the cap is auto-sold instead. */
+export const MAX_STACK = 20;
 
 /** The larder — a dedicated six-slot store just for food, kept apart from the
  *  pockets so a purse full of ingredients never leaves you unable to cook. */
@@ -84,11 +142,16 @@ export function itemDef(id: string): ItemDef | undefined {
   return ITEMS[id];
 }
 
-/** Does this item belong in the food larder (rather than the pockets)? Food and
- *  herbs — including raw catch you mean to cook — go to the larder. */
+/** Does this item belong in the food larder (rather than the pockets)? Only food
+ *  you can actually EAT lives in the larder. Raw catch and raw ingredients — a
+ *  hunted beast, a river fish, a potato — are not edible until cooked, so they
+ *  wait in the pockets and only their cooked form goes to the larder. Herbs
+ *  (edible and healing) belong in the larder too. */
 export function isLarderItem(id: string): boolean {
   const def = itemDef(id);
-  return !!def && (def.kind === 'food' || def.kind === 'herb');
+  if (!def) return false;
+  if (def.kind === 'herb') return true;
+  return def.kind === 'food' && isEdible(def);
 }
 
 /** The slot-array an item lives in: the larder for food, the pockets otherwise. */
@@ -109,29 +172,43 @@ export function countItem(run: RunState, id: string): number {
   return countIn(run.pockets, id) + countIn(run.larder, id);
 }
 
-/** Add items, filling existing stacks (to MAX_STACK) then empty slots, in the
- *  item's home store (larder for food, pockets otherwise). Returns true only if
- *  ALL fit; overflow is lost. */
+/** Add items to the item's home store (larder for food, pockets otherwise).
+ *  Every item is held as ONE stack of at most MAX_STACK; the first stack found is
+ *  topped up, or a single empty slot is claimed. Anything that would spill past
+ *  the cap (or that finds no slot at all) is AUTO-SOLD at the item's value rather
+ *  than cluttering the inventory with a second stack — so this never fails.
+ *  Always returns true (the goods are always absorbed, stored or sold). */
 export function addItem(run: RunState, id: string, qty = 1): boolean {
   const slots = slotsFor(run, id);
   let left = qty;
-  for (const slot of slots) {
-    if (left <= 0) break;
-    if (slot && slot.item === id && slot.qty < MAX_STACK) {
-      const room = MAX_STACK - slot.qty;
-      const add = Math.min(room, left);
-      slot.qty += add;
-      left -= add;
+  // top up the single existing stack of this item, if there is one
+  const existing = slots.find((s) => s && s.item === id) as ItemStack | undefined;
+  if (existing) {
+    const add = Math.min(MAX_STACK - existing.qty, left);
+    existing.qty += add;
+    left -= add;
+  } else {
+    // no stack yet — claim one empty slot for it
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i] === null) {
+        const add = Math.min(MAX_STACK, left);
+        slots[i] = { item: id, qty: add };
+        left -= add;
+        break;
+      }
     }
   }
-  for (let i = 0; i < slots.length && left > 0; i++) {
-    if (slots[i] === null) {
-      const add = Math.min(MAX_STACK, left);
-      slots[i] = { item: id, qty: add };
-      left -= add;
+  // whatever is left has nowhere to go without a second stack — sell it off
+  if (left > 0) {
+    const def = ITEMS[id];
+    const val = def?.value ?? 0;
+    if (val > 0) {
+      run.coin += val * left;
+      if (run.coin > run.peakCoin) run.peakCoin = run.coin;
+      pushLog(run, `Your ${def.name.toLowerCase()} is capped at ${MAX_STACK}; ${left} more sell for ${val * left} copper.`, 'coin');
     }
   }
-  return left <= 0;
+  return true;
 }
 
 function drainFrom(arr: (ItemStack | null)[] | undefined, id: string, left: number): number {

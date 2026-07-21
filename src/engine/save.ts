@@ -211,6 +211,12 @@ function migrate(data: unknown): GameState {
     if (typeof r.pickpocketStrikes !== 'number') r.pickpocketStrikes = 0;
     g.version = 19;
   }
+  // v19 → v20: the Crafting tab (lumberyard, smithing, farming, leatherworking).
+  if (g.version < 20) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (typeof r.craftingUnlocked !== 'boolean') r.craftingUnlocked = false;
+    g.version = 20;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

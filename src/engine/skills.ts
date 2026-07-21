@@ -16,8 +16,14 @@ export const SKILLS: SkillDef[] = [
   { id: 'fishing', name: 'Fishing', blurb: 'Pulling fish from the water. Rises by 1 for every two fish landed.' },
   { id: 'hunting', name: 'Hunting', blurb: 'Stalking game with a bow. The keener your eye, the rarer the quarry.' },
   { id: 'foraging', name: 'Foraging', blurb: 'Finding roots and herbs in the wild. Higher skill, more finds.' },
+  { id: 'scavenging', name: 'Scavenging', blurb: 'Picking salvage from middens and ruins. Higher skill, more finds.' },
   { id: 'firemaking', name: 'Firemaking', blurb: 'Coaxing a campfire from firewood.' },
   { id: 'cooking', name: 'Cooking', blurb: 'Frying raw catch into a meal. Your skill % is the chance it comes out right; the rest burns or fails.' },
+  // ── Crafting skills (§ the Crafting tab). Trained by crafting at each bench. ──
+  { id: 'lumberyard', name: 'Lumberyard', blurb: 'Sawing oak into boards and joining fine furniture.' },
+  { id: 'smithing', name: 'Smithing', blurb: 'Smelting iron and forging tools, fittings, and arms.' },
+  { id: 'farming', name: 'Farming', blurb: 'Threshing grain and baking it into bread and pies.' },
+  { id: 'leatherworking', name: 'Leatherworking', blurb: 'Tanning hides and stitching leather goods.' },
 ];
 
 export const SKILL_MAX = 100;

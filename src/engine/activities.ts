@@ -5,7 +5,8 @@ import type { AttrKey, RunState } from './types';
 import { nextInt, nextFloat, chance } from './rng';
 import { pushLog, trainAttr, raiseAttr, gainStanding } from './helpers';
 import { maxHp } from './survival';
-import { addItem, ITEMS, MAX_POUCHES, syncCapacity } from './items';
+import { addItem, ITEMS, MAX_POUCHES, syncCapacity, hasIronSpike, guardShielded } from './items';
+import { CRAFT_ACTIVITIES } from './crafting';
 import { ownedLevel, ownsAnyBusiness, workMultiplier, WORK_TICKS, BUSINESSES, type BusinessDef } from './businesses';
 import { TICKS_PER_DAY } from './timeconst';
 import { churchOpen, illicitPrime } from './time';
@@ -28,7 +29,9 @@ function labourEarn(run: RunState, lo = 3, hi = 5): void {
   const coin = nextInt(run, lo, hi);
   run.coin += coin;
   gainStanding(run, 'commons', 0.5);
-  driftBearing(run, 1, 0); // honest toil nudges you toward Lawful
+  // Honest toil has no moral or political colour — the pull back toward True
+  // Neutral is applied centrally for every Hard Labour / Commons cycle (see
+  // advanceTick), so nothing is nudged toward Lawful here.
   if (chance(run, 0.1)) raiseAttr(run, 'brawn', 0.1, 0.4); // 10% → +0.1–0.4 Brawn
   pushLog(run, `A day's hard labour earns you ${coin} copper.`, 'coin');
 }
@@ -72,8 +75,8 @@ export const ACTIVITIES: ActivityDef[] = [
       } else if (roll < 0.98) {
         pushLog(run, 'You are cursed at and given nothing.', 'plain');
       } else {
-        // 2% caught — then a scramble to get away
-        if (chance(run, 0.45)) {
+        // 2% caught — then a scramble to get away (or the Weatherman turns them)
+        if (chance(run, 0.45) || guardShielded(run)) {
           pushLog(run, 'A bailiff lunges for you — you twist free and vanish into the crowd!', 'bad');
         } else {
           run.stocksUntil = run.tick + TICKS_PER_DAY; // one day
@@ -138,19 +141,28 @@ export const ACTIVITIES: ActivityDef[] = [
     complete(run) {
       trainAttr(run, 'stealth');
       // caught? scales with heat, mitigated by stealth — and the dead of night
-      // (2–5 am) halves the risk, when honest folk and the watch are abed.
-      let caughtP = Math.max(0.05, 0.18 + run.heat / 400 - run.attrs.stealth / 120);
+      // (2–5 am) halves the risk, when honest folk and the watch are abed. The
+      // Iron Spike dagger sharpens the hand: +10% Stealth in the reckoning and a
+      // flat −10% chance of being caught (a +10% success rate).
+      const spike = hasIronSpike(run);
+      const effStealth = run.attrs.stealth + (spike ? 10 : 0);
+      let caughtP = Math.max(0.05, 0.18 + run.heat / 400 - effStealth / 120);
+      if (spike) caughtP = Math.max(0.03, caughtP - 0.1);
       if (illicitPrime(run)) caughtP *= 0.5;
       if (chance(run, caughtP)) {
         run.heat = Math.min(100, run.heat + nextInt(run, 4, 8));
         run.hp = Math.max(0, run.hp - 1); // a beating — engine checks for death
         run.pickpocketStrikes = (run.pickpocketStrikes ?? 0) + 1;
-        // caught seven times over, the watch finally hauls you to the stocks
-        if (run.pickpocketStrikes >= 7) {
+        // caught seven times over, the watch finally hauls you to the stocks —
+        // unless the Weatherman shield turns the guard's hand (50%).
+        if (run.pickpocketStrikes >= 7 && !guardShielded(run)) {
           run.pickpocketStrikes = 0;
           run.stocksUntil = run.tick + TICKS_PER_DAY;
           run.activity = null;
           pushLog(run, 'Caught cutting purses once too often, the watch drags you to the stocks for a day.', 'bad');
+        } else if (run.pickpocketStrikes >= 7) {
+          run.pickpocketStrikes = 0;
+          pushLog(run, 'The watch lunges to haul you off — but the great shield on your back turns them, and you slip away.', 'good');
         } else {
           pushLog(run, `A mark seizes your wrist — you wrench free, bruised and marked (${run.pickpocketStrikes}/7 before the stocks).`, 'bad');
         }
@@ -183,10 +195,9 @@ export const ACTIVITIES: ActivityDef[] = [
       trainAttr(run, 'piety');
       const gained = gainStanding(run, 'church', 0.5);
       if (gained > 0) {
-        // tending the poor sometimes moves you toward Good (not Lawful)
-        if (chance(run, 0.3)) {
-          shiftAlignment(run, 0, 0.2 + nextFloat(run) * 0.2);
-        }
+        // service to the Church is service to Order — it pulls the bearing toward
+        // Lawful (ethics), and never touches Good/Evil.
+        shiftAlignment(run, 0.2 + nextFloat(run) * 0.2, 0);
         const alms = nextInt(run, 3, 7);
         run.coin += alms;
         pushLog(run, `You serve at the chapel; the priest presses ${alms} copper of alms into your hand and marks your devotion.`, 'coin');
@@ -243,7 +254,7 @@ export const ACTIVITIES: ActivityDef[] = [
   },
   {
     id: 'hunt',
-    name: 'Hunt with Bow',
+    name: 'Hunting',
     path: 'Commons',
     blurb: 'Stalk game in the wood with your bow. Rarer beasts are worth far more — roast them with oil to eat, or sell them whole.',
     ticks: 8,
@@ -279,12 +290,15 @@ export const ACTIVITIES: ActivityDef[] = [
     id: 'scavenge',
     name: 'Scavenge for Salvage',
     path: 'Commons',
-    blurb: 'Pick through middens and ruins for anything worth a coin.',
+    blurb: 'Pick through middens and ruins for anything worth a coin. A keener scavenger\'s eye finds more.',
     ticks: 6,
     trains: 'brawn',
     complete(run) {
       trainAttr(run, 'brawn', 0.12);
-      if (chance(run, 0.6)) {
+      // a trained Scavenging eye turns up salvage more often (60% → ~90%)
+      const findChance = 0.6 + (skillLevel(run, 'scavenging') / 100) * 0.3;
+      if (chance(run, findChance)) {
+        gainSkill(run, 'scavenging', 0.5); // a good find teaches the eye
         const id = chance(run, 0.5) ? 'scrap' : 'firewood';
         if (addItem(run, id, 1)) pushLog(run, `You salvage a ${ITEMS[id].name.toLowerCase()}.`, 'good');
         else {
@@ -292,6 +306,7 @@ export const ACTIVITIES: ActivityDef[] = [
           pushLog(run, `Pockets full — you sell your find for ${ITEMS[id].value} copper.`, 'coin');
         }
       } else {
+        gainSkill(run, 'scavenging', 0.1); // even a fruitless dig teaches a little
         pushLog(run, 'You dig through refuse and find only filth.', 'plain');
       }
     },
@@ -384,5 +399,9 @@ function marketStallDrops(run: RunState, lvl: number): void {
 export const WORK_ACTIVITIES: ActivityDef[] = BUSINESSES.map(makeWorkActivity);
 
 export function activityById(id: string): ActivityDef | undefined {
-  return ACTIVITIES.find((a) => a.id === id) ?? WORK_ACTIVITIES.find((a) => a.id === id);
+  return (
+    ACTIVITIES.find((a) => a.id === id) ??
+    WORK_ACTIVITIES.find((a) => a.id === id) ??
+    CRAFT_ACTIVITIES.find((a) => a.id === id)
+  );
 }

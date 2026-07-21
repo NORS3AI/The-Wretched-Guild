@@ -3,10 +3,40 @@
 import type { GameState, RunState } from './types';
 import { pushLog } from './helpers';
 
+/** Legacy from the coin a life amassed. A gentle, denomination-scaled schedule so
+ *  wealth no longer floods Legacy the moment you pass a silver: each thousand-fold
+ *  band converts at "1 Legacy per 1,000 of that denomination" —
+ *    1,000 copper → 1, 1,000 shillings → +1, 1,000 silver → +1, … up through gold,
+ *  then platinum at the far top gives 1 Legacy per 5,000. (Denominations above
+ *  platinum aren't in play yet.) Each band thus adds at most ~1 Legacy, so coin is
+ *  a slow logarithmic bonus rather than the whole of a life's Legacy. */
+const LEGACY_BANDS: { lo: number; perLegacy: number }[] = [
+  { lo: 0, perLegacy: 1e3 }, // copper band:   1 Legacy / 1,000 copper
+  { lo: 1e3, perLegacy: 1e6 }, // shilling band: 1 Legacy / 1,000 shillings
+  { lo: 1e6, perLegacy: 1e9 }, // silver band:   1 Legacy / 1,000 silver
+  { lo: 1e9, perLegacy: 1e12 }, // crown band:    1 Legacy / 1,000 crowns
+  { lo: 1e12, perLegacy: 1e15 }, // triton band:   1 Legacy / 1,000 tritons
+  { lo: 1e15, perLegacy: 1e18 }, // gold band:     1 Legacy / 1,000 gold
+  { lo: 1e18, perLegacy: 5e21 }, // platinum+:     1 Legacy / 5,000 platinum
+];
+
+export function legacyFromCoin(coin: number): number {
+  const amt = Math.max(0, Math.floor(coin));
+  let legacy = 0;
+  for (let i = 0; i < LEGACY_BANDS.length; i++) {
+    const lo = LEGACY_BANDS[i].lo;
+    if (amt <= lo) break;
+    const hi = i + 1 < LEGACY_BANDS.length ? LEGACY_BANDS[i + 1].lo : Infinity;
+    const inBand = Math.min(amt, hi) - lo; // copper falling in this band
+    legacy += inBand / LEGACY_BANDS[i].perLegacy;
+  }
+  return Math.floor(legacy);
+}
+
 /** Legacy earned by a life: reward wealth, longevity, and how high you climbed
  *  the ladder. */
 export function computeLegacy(run: RunState): number {
-  const fromCoin = Math.floor(run.coin / 1000); // 1 Legacy per 1,000 copper held
+  const fromCoin = legacyFromCoin(run.coin);
   const fromAge = Math.floor(Math.max(0, run.ageYears - 16) / 2); // 1 per 2 years past 16
   const fromRank = run.rank - 1; // 1 per rank above Beggar
   return fromCoin + fromAge + fromRank;

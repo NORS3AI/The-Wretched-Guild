@@ -37,6 +37,24 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '6:30 PM MST',
+    title: 'The Crafting Bench',
+    changes: [
+      'A new Crafting tab opens the first time you hold 2 coal and 1 iron ore. It gathers four specialised benches, each unlocking the next: the Lumberyard is open from the start; Smithing opens at Lumberyard 20%, Farming at Smithing 20%, and Leatherworking at Farming 20%.',
+      'Lumberyard: saw Oak Logs (renamed from Wooden Logs) into Oak Boards, then join boards into chairs, tables, beds, bookcases, and chests.',
+      'Smithing: smelt coal and ore into Iron Bars, then forge nails, a hammer, hoe/spade/pickaxe, a felling axe, a bucket, iron rivets, and two treasures — the Iron Spike (a dagger that sharpens your Stealth and cutpurse\'s luck by 10% while carried) and the Weatherman (a great shield that turns the guard\'s hand half the time they would drag you to the stocks).',
+      'Farming: fill a bucket at the well (or automatically at the river), mill wheat seeds and water into grain, and bake it into scones, loaves, pies, cakes, French toast, and Winters\' Leek Pie.',
+      'Leatherworking: tan animal skins into leather and stitch pouches, boots, and a tooled satchel. (A starter set — more to come.)',
+      'Hunting (renamed from Hunt with Bow) now roasts game over an open fire with no oil needed — and the beast yields a clean Animal Skin (30%, a tanner\'s reagent) or a Ruined Hide (60%, sells for 3c). This also fixes Roast Game doing nothing when you had no oil.',
+      'Inventory reworked: every item now stacks to a single pile of 20, and anything over the cap is auto-sold for its worth instead of cluttering a second slot. Raw catch and ingredients (game, fish, potatoes) now wait in your Pockets until cooked; only edible food sits in the Larder.',
+      'Bearings, retuned: Hard Labour and the Commons trades pull you back toward True Neutral; Serving at the Chapel turns you Lawful; Pick Pockets turns you Chaotic — each without touching the other axis. Grinding honest work no longer locks you into an alignment you didn\'t choose.',
+      'Scavenging is now a proper skill, trained by Scavenge for Salvage — a keener eye finds more.',
+      'Legacy from coin is gentler and denomination-scaled (about 1 per 1,000 of each denomination), so wealth no longer floods your Legacy past a silver. The Purse now shows only what you hold and your next goal, and hides the far-off gem coins for now.',
+      'Fixed a crash when hiring your first servant on some saves.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '3:00 PM MST',
     title: 'The Guild Reforged',
     changes: [

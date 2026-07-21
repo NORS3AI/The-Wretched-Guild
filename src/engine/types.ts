@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -107,6 +107,9 @@ export interface RunState {
   weatherproof: boolean;
   /** a hunting bow bought from the merchant — unlocks the Hunter trade */
   hasBow: boolean;
+  /** the Crafting tab has been opened (latched true the first time the player
+   *  holds 2 coal + 1 iron ore — it never closes again once earned) */
+  craftingUnlocked: boolean;
   /** dev "Chalice of Infinite Oil" buff — real-time ms remaining during which
    *  cooking needs no physical Goblet of Oil */
   oilBuffMs: number;

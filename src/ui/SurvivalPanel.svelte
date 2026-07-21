@@ -25,17 +25,31 @@
     return '';
   }
 
-  // Reactive so the list re-derives when the weather, inventory, or illness
-  // changes (all live on `run`). A deed with a `reveal` predicate stays hidden
-  // until it applies — Seek Warmth only when cold, Cook a Fish only once you
-  // hold a fish, See a Doctor only when sick, and so on.
+  // Tend to Yourself is two rows. Row one holds the everyday deeds that are
+  // ALWAYS on show (they carry no `reveal`). Row two holds the situational ones,
+  // shown only when the game permits — a fire when cold, cooking once you hold a
+  // catch, a doctor only when sick, and so on (they carry a `reveal`).
+  const ROW1_ORDER = ['drink', 'relieve', 'refill_well', 'bathe_well', 'wash_river'];
+  const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'cook_food', 'bake_potato', 'fill_bucket', 'see_doctor'];
+  const orderIndex = (order: string[], id: string): number => {
+    const i = order.indexOf(id);
+    return i < 0 ? 999 : i;
+  };
+
   $: deedRows = DEEDS.filter((d) => !d.reveal || d.reveal(run)).map((d) => ({
     def: d,
+    label: d.label ? d.label(run) : d.name,
     enabled:
       run.stocksUntil === null &&
       (!d.available || d.available(run)) &&
       !(d.cost && run.coin < d.cost),
   }));
+  $: alwaysRows = deedRows
+    .filter((r) => !r.def.reveal)
+    .sort((a, b) => orderIndex(ROW1_ORDER, a.def.id) - orderIndex(ROW1_ORDER, b.def.id));
+  $: conditionalRows = deedRows
+    .filter((r) => r.def.reveal)
+    .sort((a, b) => orderIndex(ROW2_ORDER, a.def.id) - orderIndex(ROW2_ORDER, b.def.id));
 </script>
 
 <div class="panel">
@@ -73,21 +87,36 @@
       {/each}
     </div>
 
-    <!-- deeds -->
+    <!-- deeds: row one always shown, row two only when the game permits -->
     <div class="section-label">Tend to Yourself</div>
     <div class="deeds">
-      {#each deedRows as row (row.def.id)}
+      {#each alwaysRows as row (row.def.id)}
         <button
           class="btn deed"
           disabled={!row.enabled}
           title={row.def.blurb}
           onclick={() => actions.doDeed(row.def.id)}
         >
-          {row.def.name}
+          {row.label}
           {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
         </button>
       {/each}
     </div>
+    {#if conditionalRows.length > 0}
+      <div class="deeds second">
+        {#each conditionalRows as row (row.def.id)}
+          <button
+            class="btn deed"
+            disabled={!row.enabled}
+            title={row.def.blurb}
+            onclick={() => actions.doDeed(row.def.id)}
+          >
+            {row.label}
+            {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
 
     <!-- larder: six slots just for food, so ingredients never crowd out cooking -->
     <div class="section-label">
@@ -366,8 +395,13 @@
     flex-wrap: wrap;
     gap: 6px;
     align-content: flex-start;
-    /* reserve two rows so deeds appearing/disappearing never jostle the layout */
-    min-height: 64px;
+    /* reserve a row's height so the always-shown deeds never jostle the layout */
+    min-height: 30px;
+  }
+  .deeds.second {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
   }
   .deed {
     font-size: 0.8rem;

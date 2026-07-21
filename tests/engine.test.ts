@@ -548,7 +548,7 @@ console.log('The Wretched Guild — engine tests\n');
   for (let n = 0; n < 200 && g.run.skills['cooking'] <= cookStart; n++) {
     if (countItem(g.run, 'fish') < 1) addItem(g.run, 'fish', 1);
     if (countItem(g.run, 'cooking_oil') < 1) addItem(g.run, 'cooking_oil', 1);
-    dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+    dispatch(g, { type: 'doDeed', id: 'cook_food' });
     if (countItem(g.run, 'cooked_fish') + countItem(g.run, 'burnt_fish') > 0) everProduced = true;
     // clear any produced dish so there is always room to cook again
     for (let i = 0; i < g.run.pockets.length; i++) {
@@ -916,9 +916,9 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.illness = 'none';
 
   // Cook a Fish is hidden with no fish, revealed once you hold one
-  assert(byId('cook_fish').reveal!(g.run) === false, 'Cook a River Fish is hidden without a fish');
+  assert(byId('cook_food').reveal!(g.run) === false, 'Cook a River Fish is hidden without a fish');
   addItem(g.run, 'fish', 1);
-  assert(byId('cook_fish').reveal!(g.run) === true, 'Cook a River Fish appears once you hold a fish');
+  assert(byId('cook_food').reveal!(g.run) === true, 'Cook a River Fish appears once you hold a fish');
 
   // Bake a Potato likewise
   assert(byId('bake_potato').reveal!(g.run) === false, 'Bake a Potato is hidden without a potato');
@@ -1100,7 +1100,7 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.pockets = [{ item: 'cooking_oil', qty: 1 }, { item: 'fish', qty: 1 }, null, null];
   g.run.skills['cooking'] = 90; // at 90: 90% cooked / 10% burnt / 0% fail — always teaches
   const before = g.run.skills['cooking'];
-  dispatch(g, { type: 'doDeed', id: 'cook_fish' });
+  dispatch(g, { type: 'doDeed', id: 'cook_food' });
   const gained = g.run.skills['cooking'] - before;
   assert(gained === 1 || gained === 2, `cooking teaches (+1 on a burn, +2 on a success): got +${gained}`);
   assert(
@@ -1189,12 +1189,12 @@ console.log('The Wretched Guild — engine tests\n');
   assert(itemDef('raw_elk')!.value === 300 && itemDef('raw_weasel')!.value === 11, 'Elk is worth 300c, Weasel 11c');
   assert(itemDef('roast_elk')!.food === 65 && itemDef('roast_weasel')!.food === 5, 'roast Elk heals 65% food, roast Weasel 5%');
 
-  // roast a beast with oil
-  g.run.larder = [{ item: 'raw_rabbit', qty: 1 }, null, null, null, null, null];
-  g.run.pockets = [{ item: 'cooking_oil', qty: 1 }, null];
+  // roast a beast on the spit (no oil needed)
+  g.run.larder = [null, null, null, null, null, null];
+  g.run.pockets = [{ item: 'raw_rabbit', qty: 1 }, null, null, null];
   g.run.skills['cooking'] = 100; // guarantee success
-  dispatch(g, { type: 'doDeed', id: 'cook_game' });
-  assert(countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0, 'a rabbit is roasted with oil into food');
+  dispatch(g, { type: 'doDeed', id: 'cook_food' });
+  assert(countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0, 'a rabbit is roasted into food');
 }
 
 // 35) The All-Weather Hat (1 shilling) wards off BOTH heat and cold.
@@ -1301,7 +1301,7 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.pockets = [null, null]; // NO cooking oil at all
   g.run.skills['cooking'] = 100; // guarantee a success
   assert(hasCookingOil(g.run), 'the Chalice supplies cooking oil while buffed');
-  dispatch(g, { type: 'doDeed', id: 'cook_game' });
+  dispatch(g, { type: 'doDeed', id: 'cook_food' });
   assert(
     countItem(g.run, 'roast_rabbit') === 1 && countItem(g.run, 'raw_rabbit') === 0,
     'buffed cooking roasts the beast with no Goblet of Oil in the pockets',
@@ -1510,7 +1510,7 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.skills['cooking'] = 100; // always cooks → every beast is put to the fire
   assert(countItem(g.run, 'cooking_oil') === 0, 'no oil anywhere');
   for (let i = 0; i < 10; i++) {
-    if (bestRawGame(g.run)) dispatch(g, { type: 'doDeed', id: 'cook_game' });
+    if (bestRawGame(g.run)) dispatch(g, { type: 'doDeed', id: 'cook_food' });
   }
   assert(countItem(g.run, 'raw_boar') === 0, 'all boars roast without any oil');
   const skins = countItem(g.run, 'animal_skin') + countItem(g.run, 'ruined_hide');

@@ -59,6 +59,9 @@ function doCook(run: RunState, ingredients: string[], cookedId: string, burntId:
 export interface DeedDef {
   id: string;
   name: string;
+  /** an optional context-dependent label shown instead of `name` (e.g. the one
+   *  cooking deed reads "Roast Meat" with game in hand, "Cook a Fish" otherwise). */
+  label?: (run: RunState) => string;
   blurb: string;
   timeTicks: number; // in-game time the deed consumes
   cost?: number; // copper cost
@@ -231,18 +234,40 @@ export const DEEDS: DeedDef[] = [
     },
   },
   {
-    id: 'cook_fish',
-    name: 'Cook a River Fish',
-    blurb: 'Fry a raw river fish in a goblet of cooking oil. It may come out golden, burn, or refuse to cook at all.',
+    // one cooking deed for both catches: roast a hunted beast on a spit (no oil
+    // needed), or fry a river fish in a goblet of oil — whichever you carry. Game
+    // is roasted first; the label reads "Roast Meat" or "Cook a Fish" to suit.
+    id: 'cook_food',
+    name: 'Cook a Fish',
+    label: (run) => (bestRawGame(run) !== null ? 'Roast Meat' : 'Cook a Fish'),
+    blurb: 'Roast a hunted beast on a spit (no oil needed), or fry a river fish in a goblet of oil. Your Cooking skill decides how it comes out; a roasted beast also yields a skin or a ruined hide.',
     timeTicks: 1,
-    reveal: (run) => countItem(run, 'fish') >= 1,
-    available: (run) => countItem(run, 'fish') >= 1 && hasCookingOil(run),
+    reveal: (run) => bestRawGame(run) !== null || countItem(run, 'fish') >= 1,
+    available: (run) => bestRawGame(run) !== null || (countItem(run, 'fish') >= 1 && hasCookingOil(run)),
     effect: (_g, run) => {
-      if (countItem(run, 'fish') < 1 || !hasCookingOil(run)) {
-        pushLog(run, 'You need a raw river fish and a goblet of cooking oil to fry it.', 'bad');
+      // roast game first — it needs no oil — else fry a fish (which does)
+      const raw = bestRawGame(run);
+      if (raw) {
+        const res = doCook(run, [raw], GAME_ROAST[raw], 'burnt_meat');
+        // the beast is skinned in the roasting: a clean skin for the tanner (30%),
+        // or a hide ruined by the fire (60%) — only when it was truly put to the fire.
+        if (res !== 'failed') {
+          const r = nextFloat(run);
+          if (r < 0.3) {
+            addItem(run, 'animal_skin', 1);
+            pushLog(run, 'You skin the beast cleanly — a good hide for the tanner.', 'good');
+          } else if (r < 0.9) {
+            addItem(run, 'ruined_hide', 1);
+            pushLog(run, 'The hide is scorched in the roasting — ruined, but a pedlar will give a copper or two.', 'plain');
+          }
+        }
         return;
       }
-      doCook(run, ['fish', 'cooking_oil'], 'cooked_fish', 'burnt_fish');
+      if (countItem(run, 'fish') >= 1 && hasCookingOil(run)) {
+        doCook(run, ['fish', 'cooking_oil'], 'cooked_fish', 'burnt_fish');
+        return;
+      }
+      pushLog(run, 'You have nothing to cook — a raw river fish (and oil), or a hunted beast.', 'bad');
     },
   },
   {
@@ -259,36 +284,6 @@ export const DEEDS: DeedDef[] = [
         return;
       }
       doCook(run, ['potato', 'cooking_oil', 'slab_of_butter'], 'baked_potato', 'burnt_potato');
-    },
-  },
-  {
-    id: 'cook_game',
-    name: 'Roast Game',
-    blurb: 'Roast a beast you have hunted on a spit over an open fire — no oil needed. Your Cooking skill decides how it comes out, and the beast yields a skin or a ruined hide.',
-    timeTicks: 1,
-    reveal: (run) => bestRawGame(run) !== null,
-    // roasted on a spit over a fire — unlike frying or baking, this needs no oil
-    available: (run) => bestRawGame(run) !== null,
-    effect: (_g, run) => {
-      const raw = bestRawGame(run);
-      if (!raw) {
-        pushLog(run, 'You have no hunted beast to roast.', 'bad');
-        return;
-      }
-      const res = doCook(run, [raw], GAME_ROAST[raw], 'burnt_meat');
-      // the beast is skinned in the roasting — a clean skin for the tanner (30%),
-      // or a hide ruined by the fire, fit only to be sold (60%). Only when the
-      // beast was actually put to the fire (a failed cook spares it untouched).
-      if (res !== 'failed') {
-        const r = nextFloat(run);
-        if (r < 0.3) {
-          addItem(run, 'animal_skin', 1);
-          pushLog(run, 'You skin the beast cleanly — a good hide for the tanner.', 'good');
-        } else if (r < 0.9) {
-          addItem(run, 'ruined_hide', 1);
-          pushLog(run, 'The hide is scorched in the roasting — ruined, but a pedlar will give a copper or two.', 'plain');
-        }
-      }
     },
   },
   {

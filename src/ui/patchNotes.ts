@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '8:00 PM MST',
+    title: 'Two Rows of Deeds',
+    changes: [
+      'Tend to Yourself is now laid out in two rows. The first — Drink, Relieve Yourself, Refill at the Well, Bathe at the Well, Wash-up at the River — is always on show. The second — Make a Campfire, Seek Warmth, Seek Shade, cooking, and the rest — appears only when the moment calls for it.',
+      'Cooking is now a single deed: it roasts a hunted beast on a spit (no oil) or fries a river fish in oil — whichever you carry — and reads "Roast Meat" or "Cook a Fish" to suit. No more separate buttons.',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '7:15 PM MST',
     title: 'Tidying the Deeds',
     changes: [

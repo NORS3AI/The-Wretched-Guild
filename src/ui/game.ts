@@ -23,7 +23,7 @@ export const legacyOpen = writable(false);
 
 // Which panel fills the main column (Ply Your Trade by default, or one of the
 // tabbed panels). Purely a view concern, so it lives outside the save.
-export type SideTab = 'trade' | 'needs' | 'enterprises' | 'wretched' | 'reputation';
+export type SideTab = 'trade' | 'merchant' | 'needs' | 'enterprises' | 'wretched' | 'reputation';
 export const activeTab = writable<SideTab>('trade');
 // The topbar's Bearing button toggles a small popover with the alignment axes.
 export const bearingOpen = writable(false);

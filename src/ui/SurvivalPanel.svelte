@@ -107,6 +107,8 @@
             <div class="slot-actions">
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {:else if def.kind === 'food'}
+                <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
               {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
@@ -143,6 +145,8 @@
             <div class="slot-actions">
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
+              {:else if def.kind === 'food'}
+                <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
               {/if}
               <button class="mini sell" title="Sell to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {def.value}c
@@ -331,6 +335,12 @@
   }
   .mini.eat {
     color: var(--green);
+  }
+  .cook-note {
+    flex: 1;
+    align-self: center;
+    font-size: 0.68rem;
+    font-style: italic;
   }
   .mini.eat:hover {
     border-color: var(--green);

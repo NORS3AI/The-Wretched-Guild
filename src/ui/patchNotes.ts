@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '2:45 PM MST',
+    title: 'The Merchant Tab',
+    changes: [
+      'The wandering merchant now has its own tab. While the merchant is in town, a glowing "Merchant" tab appears up top — tap it to browse and buy their wares. When the merchant moves on, the tab is gone until they return.',
+      'Every edible food still shows a green "Eat" button (and taps to eat). Raw catch — weasel, rabbit, boar, deer, elk, raw fish, a raw potato — now reads "cook first", to make plain it must be roasted or cooked (under Tend to Yourself) before it can be eaten. That is why raw game shows no Eat button.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '2:00 PM MST',
     title: 'A Clear Eat Button',
     changes: [

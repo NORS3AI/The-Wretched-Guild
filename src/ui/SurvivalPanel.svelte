@@ -2,15 +2,13 @@
   import { gameStore, actions } from './game';
   import { DEEDS } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
-  import { itemDef, isEdible, VENDOR_STOCK } from '../engine/items';
-  import { shopOpen } from '../engine/time';
+  import { itemDef, isEdible } from '../engine/items';
 
   const game = gameStore;
   $: run = $game.run;
   $: climate = climateNow(run);
   $: usedSlots = run.pockets.filter(Boolean).length;
   $: larderUsed = run.larder.filter(Boolean).length;
-  $: vendorOpen = shopOpen(run);
 
   const needRows = [
     { key: 'food', label: 'Food', low: 'Starving' },
@@ -157,27 +155,6 @@
           {/if}
         </div>
       {/each}
-    </div>
-
-    <!-- town vendor: buy staples like cooking oil (open 8am–5pm) -->
-    <div class="vendor">
-      {#if vendorOpen}
-        {#each VENDOR_STOCK as id}
-          {@const def = itemDef(id)}
-          {#if def && def.buy != null}
-            <button
-              class="mini buy"
-              disabled={run.coin < def.buy}
-              title={def.blurb}
-              onclick={() => actions.buyItem(id)}
-            >
-              Buy {def.name} · {def.buy}c
-            </button>
-          {/if}
-        {/each}
-      {:else}
-        <span class="faint shut">The town vendor is shut — open 8am to 5pm.</span>
-      {/if}
     </div>
   </div>
 </div>
@@ -354,21 +331,6 @@
     letter-spacing: 0.04em;
     float: right;
     text-transform: none;
-  }
-  .vendor {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .mini.buy {
-    flex: 0 1 auto;
-    color: var(--gold);
-    padding: 4px 9px;
-  }
-  .vendor .shut {
-    font-size: 0.76rem;
-    font-style: italic;
   }
   .slot-qty {
     color: var(--gold);

@@ -12,10 +12,12 @@ export function hourOfDay(run: RunState): number {
   return Math.floor(ms / HOUR_LENGTH_MS) % 24;
 }
 
-/** The town vendor / market — open 8 am to 5 pm. */
+/** The town vendor / market — open 8 am to 6 pm. */
+export const SHOP_OPEN_HOUR = 8;
+export const SHOP_CLOSE_HOUR = 18;
 export function shopOpen(run: RunState): boolean {
   const h = hourOfDay(run);
-  return h >= 8 && h < 17;
+  return h >= SHOP_OPEN_HOUR && h < SHOP_CLOSE_HOUR;
 }
 
 /** The church — open 6 am to 9 pm. */

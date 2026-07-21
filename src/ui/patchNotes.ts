@@ -37,6 +37,17 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '3:45 PM MST',
+    title: 'The Town Merchant',
+    changes: [
+      'The Merchant tab is now the town shop — the local merchant who sells the Goblet of Oil and Slab of Butter. The tab is always there; when the shop is shut it shows a "We\'re Closed" sign telling you it reopens at 8:00 AM.',
+      'The town merchant now keeps hours of 8:00 AM to 6:00 PM (was 8 to 5).',
+      'Removed the oil/butter stall and the shop-hours line from Body & Needs — that trade now lives on the Merchant tab.',
+      'The travelling pack-merchant (packs, pouches, beasts of burden, gear) once again appears inside Ply Your Trade when they pass through town, separate from the town shop.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '3:10 PM MST',
     title: 'Three Trades Across',
     changes: [

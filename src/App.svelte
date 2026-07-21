@@ -6,6 +6,7 @@
   import ProgressPanel from './ui/ProgressPanel.svelte';
   import ActivitiesPanel from './ui/ActivitiesPanel.svelte';
   import MerchantPanel from './ui/MerchantPanel.svelte';
+  import VendorPanel from './ui/VendorPanel.svelte';
   import BusinessesPanel from './ui/BusinessesPanel.svelte';
   import GuildPanel from './ui/GuildPanel.svelte';
   import EncounterView from './ui/EncounterView.svelte';
@@ -30,14 +31,15 @@
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
 
-  // The Merchant tab only exists while the wandering merchant is in town.
+  // The Merchant tab is the town shop — always present; it shows a "closed" sign
+  // outside its 8am–6pm hours rather than disappearing.
   $: tabs = [
-    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true, flag: false },
-    { id: 'merchant' as SideTab, label: 'Merchant', show: $game.run.merchantHere, flag: true },
-    { id: 'needs' as SideTab, label: 'Body & Needs', show: true, flag: false },
-    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked, flag: false },
-    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked, flag: false },
-    { id: 'reputation' as SideTab, label: 'Reputation', show: true, flag: false },
+    { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true },
+    { id: 'merchant' as SideTab, label: 'Merchant', show: true },
+    { id: 'needs' as SideTab, label: 'Body & Needs', show: true },
+    { id: 'enterprises' as SideTab, label: 'Enterprises', show: enterprisesUnlocked },
+    { id: 'wretched' as SideTab, label: 'Wretched', show: guildUnlocked },
+    { id: 'reputation' as SideTab, label: 'Reputation', show: true },
   ].filter((t) => t.show);
 
   // If the active tab has since become unavailable (e.g. a new life resets rank),
@@ -61,7 +63,6 @@
     <button
       class="tab"
       class:active={effectiveTab === tab.id}
-      class:flag={tab.flag}
       role="tab"
       aria-selected={effectiveTab === tab.id}
       onclick={() => activeTab.set(tab.id)}
@@ -78,7 +79,7 @@
 
   <section class="center col tabpanel">
     {#if effectiveTab === 'merchant'}
-      <MerchantPanel />
+      <VendorPanel />
     {:else if effectiveTab === 'needs'}
       <SurvivalPanel />
     {:else if effectiveTab === 'enterprises'}
@@ -92,6 +93,9 @@
     {:else if $game.run.encounter}
       <EncounterView />
     {:else}
+      {#if $game.run.merchantHere}
+        <MerchantPanel />
+      {/if}
       <ActivitiesPanel />
     {/if}
   </section>
@@ -224,21 +228,6 @@
     border-color: var(--gold);
     color: var(--gold-bright);
     background: rgba(201, 162, 39, 0.1);
-  }
-  /* the Merchant tab, present only while the merchant is in town, draws the eye */
-  .tab.flag:not(.active) {
-    border-color: var(--gold);
-    color: var(--gold);
-    animation: tabflag 1.6s ease-in-out infinite;
-  }
-  @keyframes tabflag {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(201, 162, 39, 0);
-    }
-    50% {
-      box-shadow: 0 0 7px 1px rgba(201, 162, 39, 0.45);
-    }
   }
   .tabpanel {
     min-width: 0;

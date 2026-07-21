@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 21, 2026',
+    time: '6:45 PM MST',
+    title: 'The Wretch Takes a Tab',
+    changes: [
+      'The Wretch (your Attributes and Skills) is now its own tab — the first one — instead of sitting fixed to the side. The main column now shows one tab at a time, with the Chronicle beneath as always.',
+    ],
+  },
+  {
+    date: 'July 21, 2026',
     time: '6:15 PM MST',
     title: 'A Still Chronicle',
     changes: [

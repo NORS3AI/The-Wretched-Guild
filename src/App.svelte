@@ -31,9 +31,10 @@
   $: enterprisesUnlocked = $game.run.coin >= ENTERPRISE_MIN_COIN || ownsAnyBusiness($game.run);
   $: guildUnlocked = $game.run.rank >= GUILD_MIN_RANK;
 
-  // The Merchant tab is the town shop — always present; it shows a "closed" sign
-  // outside its 8am–6pm hours rather than disappearing.
+  // The Wretch (attributes & skills) leads as its own tab. The Merchant tab is the
+  // town shop — always present; it shows a "closed" sign outside 8am–6pm hours.
   $: tabs = [
+    { id: 'wretch' as SideTab, label: 'The Wretch', show: true },
     { id: 'trade' as SideTab, label: 'Ply Your Trade', show: true },
     { id: 'merchant' as SideTab, label: 'Merchant', show: true },
     { id: 'needs' as SideTab, label: 'Body & Needs', show: true },
@@ -43,8 +44,8 @@
   ].filter((t) => t.show);
 
   // If the active tab has since become unavailable (e.g. a new life resets rank),
-  // fall back to the always-present Ply Your Trade view.
-  $: effectiveTab = tabs.some((t) => t.id === $activeTab) ? $activeTab : 'trade';
+  // fall back to the always-present The Wretch view.
+  $: effectiveTab = tabs.some((t) => t.id === $activeTab) ? $activeTab : 'wretch';
 </script>
 
 <button class="version-badge" title="Chronicle of Changes" onclick={() => patchOpen.set(true)}>
@@ -73,12 +74,10 @@
 </div>
 
 <main class="layout">
-  <aside class="col leftcol">
-    <CharacterPanel />
-  </aside>
-
   <section class="center col tabpanel">
-    {#if effectiveTab === 'merchant'}
+    {#if effectiveTab === 'wretch'}
+      <CharacterPanel />
+    {:else if effectiveTab === 'merchant'}
       <VendorPanel />
     {:else if effectiveTab === 'needs'}
       <SurvivalPanel />
@@ -162,15 +161,14 @@
     font-style: italic;
     font-size: 0.95rem;
   }
-  /* Two columns — a fixed-width column for The Wretch and its tabbed panels,
-     and a wide column for Ply Your Trade — with the Chronicle stretched across
-     the full width beneath, like a long console. */
+  /* A single main column carrying the active tab, with the Chronicle stretched
+     across the full width beneath it, like a long console. */
   .layout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      'left center'
-      'log log';
+      'center'
+      'log';
     gap: 16px;
     margin-top: 16px;
     align-items: start;
@@ -178,9 +176,6 @@
   /* every column must be allowed to shrink, or wide content overflows the page */
   .layout > * {
     min-width: 0;
-  }
-  .leftcol {
-    grid-area: left;
   }
   .center {
     grid-area: center;
@@ -231,15 +226,5 @@
   }
   .tabpanel {
     min-width: 0;
-  }
-  /* Phones and iPad portrait: a single stacked column. */
-  @media (max-width: 780px) {
-    .layout {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        'left'
-        'center'
-        'log';
-    }
   }
 </style>

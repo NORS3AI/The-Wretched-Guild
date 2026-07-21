@@ -160,10 +160,10 @@ const trial: EncounterDef = {
           },
         },
         {
-          label: 'Simply buy your way in with a lavish bribe (500 coin).',
-          tag: '[500 coin]',
+          label: 'Simply buy your way in with a lavish bribe (500 copper).',
+          tag: '[500 copper]',
           gate: (r) => r.coin >= 500,
-          gateHint: 'Requires 500 coin',
+          gateHint: 'Requires 500 copper',
           resolve: (_g, run) => {
             run.coin -= 500;
             return rise(run, 'rite_trial', 'Gold, as ever, speaks the plainest tongue in England. The doors open. You rise, purse lighter, station higher.');
@@ -216,10 +216,10 @@ const gambit: EncounterDef = {
           },
         },
         {
-          label: 'Pour a fortune into buying titles outright (8000 coin).',
-          tag: '[8000 coin]',
+          label: 'Pour a fortune into buying titles outright (8 shillings).',
+          tag: '[8 shillings]',
           gate: (r) => r.coin >= 8000,
-          gateHint: 'Requires 8000 coin',
+          gateHint: 'Requires 8 shillings',
           resolve: (_g, run) => {
             run.coin -= 8000;
             return rise(run, 'rite_gambit', 'A staggering sum changes hands, and with it, a charter of standing. You rise, having bought what others bled for.');
@@ -272,10 +272,10 @@ const ascent: EncounterDef = {
           },
         },
         {
-          label: 'Command a fortune vast enough to buy the realm\'s ear (60000 coin).',
-          tag: '[60000 coin]',
+          label: 'Command a fortune vast enough to buy the realm\'s ear (60 shillings).',
+          tag: '[60 shillings]',
           gate: (r) => r.coin >= 60000,
-          gateHint: 'Requires 60000 coin',
+          gateHint: 'Requires 60 shillings',
           resolve: (_g, run) => {
             run.coin -= 60000;
             return rise(run, 'rite_ascent', 'Wealth beyond the dreams of your gutter-born self buys a seat that kings must reckon with. You rise, an Elite of the realm.');

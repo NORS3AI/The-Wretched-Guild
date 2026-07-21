@@ -37,6 +37,16 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 22, 2026',
+    time: '11:30 AM MST',
+    title: 'Rites Read in Denominations',
+    changes: [
+      'Fixed the money wording in every Rite of Passage: the "buy your way up" options now read 500 copper, 8 shillings, and 60 shillings instead of "500/8000/60000 coin".',
+      'The Guild\'s "Post word for others" reroll cost now shows in denominations too.',
+      'Fixed a spelling: the rank "Serjeant" is now "Sergeant".',
+    ],
+  },
+  {
+    date: 'July 22, 2026',
     time: '11:00 AM MST',
     title: 'Coin Reads in Denominations',
     changes: [

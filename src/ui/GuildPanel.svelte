@@ -12,6 +12,7 @@
     REROLL_COST,
   } from '../engine/guild';
   import { alignmentName } from '../engine/alignment';
+  import { formatMoney } from '../engine/money';
 
   const game = gameStore;
   $: run = $game.run;
@@ -109,7 +110,7 @@
         disabled={run.coin < REROLL_COST}
         onclick={() => actions.rerollRecruits()}
       >
-        Post word for others ({REROLL_COST} coin)
+        Post word for others ({formatMoney(REROLL_COST)})
       </button>
     {/if}
   </div>

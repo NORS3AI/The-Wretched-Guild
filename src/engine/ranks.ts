@@ -22,7 +22,7 @@ const RANK_NAMES: string[] = [
   'Tradesman', 'Pedlar', 'Chapman', 'Shopkeeper', 'Merchant', // 26–30
   'Vintner', 'Draper', 'Mercer', 'Goldsmith', 'Burgess', // 31–35
   'Freeman', 'Alderman', 'Guildsman', 'Guild Warden', 'Guild Master', // 36–40
-  'Bailiff', 'Reeve', 'Constable', 'Beadle', 'Serjeant', // 41–45
+  'Bailiff', 'Reeve', 'Constable', 'Beadle', 'Sergeant', // 41–45
   "Sheriff's Man", 'Under-Sheriff', 'Sheriff', 'Coroner', 'Justice of the Peace', // 46–50
   'Esquire', 'Squire', 'Man-at-Arms', 'Household Knight', 'Knight', // 51–55
   'Knight Bachelor', 'Knight Banneret', 'Lord of the Manor', 'Castellan', 'Baronet', // 56–60

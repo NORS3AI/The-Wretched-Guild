@@ -3,19 +3,23 @@
 
   const game = gameStore;
 
-  // Filter the log by the message settings (coin / idle-flavour lines).
-  $: entries = $game.log.filter((e) => {
-    if (e.kind === 'coin' && $game.settings?.coinMessages === false) return false;
-    if (e.kind === 'plain' && $game.settings?.idleMessages === false) return false;
-    return true;
-  });
+  // Filter the log by the message settings (coin / idle-flavour lines), then show
+  // only the newest ten, newest FIRST (top to bottom).
+  $: entries = $game.log
+    .filter((e) => {
+      if (e.kind === 'coin' && $game.settings?.coinMessages === false) return false;
+      if (e.kind === 'plain' && $game.settings?.idleMessages === false) return false;
+      return true;
+    })
+    .slice(-10)
+    .reverse();
 
 </script>
 
 <div class="panel log-panel">
   <div class="panel-title">
-    Chronicle
-    <button class="clear" title="Clear the Chronicle" disabled={entries.length === 0} onclick={() => actions.clearLog()}>
+    Chronicler
+    <button class="clear" title="Clear the Chronicler" disabled={entries.length === 0} onclick={() => actions.clearLog()}>
       Clear
     </button>
   </div>
@@ -33,7 +37,7 @@
   .log-panel {
     display: flex;
     flex-direction: column;
-    height: 520px;
+    height: 300px;
   }
   .log-panel .panel-title {
     display: flex;
@@ -65,10 +69,10 @@
     padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* newest entries pinned to the bottom */
+    justify-content: flex-start; /* newest entries pinned to the top */
     gap: 7px;
     flex: 1;
-    overflow: hidden; /* no scrolling — older lines simply fall off the top */
+    overflow: hidden; /* no scrolling — older lines simply fall off the bottom */
   }
   .entry {
     display: flex;

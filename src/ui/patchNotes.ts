@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '1:20 AM MST',
+    title: 'The Chronicler, Newest First',
+    changes: [
+      'Renamed the Chronicle to the Chronicler, flipped it so the newest line shows at the TOP, capped it to the ten most recent messages, and trimmed its height.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '12:55 AM MST',
     title: 'Craft 1 or Craft All',
     changes: [

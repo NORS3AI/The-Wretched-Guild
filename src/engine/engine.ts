@@ -401,9 +401,22 @@ export function dispatch(game: GameState, cmd: Command): void {
     case 'toggleWorn': {
       if (!run.alive) break;
       const def = itemDef(cmd.id);
-      if (!def?.wearable || countItem(run, cmd.id) < 1) break; // must own a wearable to wear it
+      if (!def?.wearable) break;
       if (!run.worn) run.worn = {};
-      run.worn[cmd.id] = !run.worn[cmd.id];
+      if (run.worn[cmd.id]) {
+        // take it off — it returns from your body to the pockets (needs room)
+        if (!hasRoom(run, cmd.id)) {
+          pushLog(run, `You have no room to stow the ${def.name.toLowerCase()} — clear a pocket first.`, 'plain');
+          break;
+        }
+        run.worn[cmd.id] = false;
+        addItem(run, cmd.id, 1);
+      } else {
+        // put it on — it leaves the pockets and rides on your body
+        if (countItem(run, cmd.id) < 1) break; // must own it to wear it
+        removeItem(run, cmd.id, 1);
+        run.worn[cmd.id] = true;
+      }
       break;
     }
 

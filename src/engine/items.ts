@@ -107,9 +107,10 @@ export const ITEMS: Record<string, ItemDef> = {
   leek_pie: { id: 'leek_pie', name: "Winters' Leek Pie", kind: 'food', food: 55, water: 20, value: 50, blurb: 'A great steaming leek pie, oiled and buttered — a feast against the winter.' },
 };
 
-/** Is a wearable special item both owned AND currently worn? */
+/** Is a wearable special item currently worn? (A worn item lives on the body, not
+ *  in the pockets — see the toggleWorn command — so the flag alone tells the tale.) */
 export function isWorn(run: RunState, id: string): boolean {
-  return countItem(run, id) >= 1 && !!run.worn?.[id];
+  return !!run.worn?.[id];
 }
 /** These special items grant their abilities only while WORN, not merely carried. */
 export function hasIronSpike(run: RunState): boolean {

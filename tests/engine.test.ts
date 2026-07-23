@@ -1830,12 +1830,17 @@ console.log('The Wretched Guild — engine tests\n');
   const g = newGame();
   g.run.pockets = new Array(6).fill(null);
   addItem(g.run, 'iron_spike', 1);
+  const coinBefore = g.run.coin;
+  addItem(g.run, 'iron_spike', 2); // over the pocket cap of 1 → both auto-sold
+  assert(countItem(g.run, 'iron_spike') === 1, 'only one Iron Spike is kept in the pockets');
+  assert(g.run.coin === coinBefore + 2 * itemDef('iron_spike')!.value, 'the extra Iron Spikes are sold');
+  // wearing it turns on its effect AND moves it out of the pockets onto the body
   dispatch(g, { type: 'toggleWorn', id: 'iron_spike' });
   assert(hasIronSpike(g.run), 'the worn Iron Spike\'s effect is live');
-  const coinBefore = g.run.coin;
-  addItem(g.run, 'iron_spike', 2); // two more → both auto-sold
-  assert(countItem(g.run, 'iron_spike') === 1, 'only one Iron Spike is kept');
-  assert(g.run.coin === coinBefore + 2 * itemDef('iron_spike')!.value, 'the extra Iron Spikes are sold');
+  assert(countItem(g.run, 'iron_spike') === 0, 'a worn Iron Spike is no longer in the pockets');
+  // taking it off returns it to the pockets
+  dispatch(g, { type: 'toggleWorn', id: 'iron_spike' });
+  assert(!hasIronSpike(g.run) && countItem(g.run, 'iron_spike') === 1, 'taking it off returns it to the pockets');
 }
 
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);

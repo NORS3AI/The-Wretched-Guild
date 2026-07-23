@@ -247,6 +247,19 @@ function migrate(data: unknown): GameState {
     if (!r.worn || typeof r.worn !== 'object') r.worn = {};
     g.version = 24;
   }
+  // v24 → v25: worn items now live on the body, not the pockets — pull any out.
+  if (g.version < 25) {
+    const r = g.run as unknown as Record<string, unknown>;
+    const worn = (r.worn ?? {}) as Record<string, boolean>;
+    const pockets = r.pockets as ({ item: string } | null)[] | undefined;
+    if (Array.isArray(pockets)) {
+      for (let i = 0; i < pockets.length; i++) {
+        const slot = pockets[i];
+        if (slot && worn[slot.item]) pockets[i] = null;
+      }
+    }
+    g.version = 25;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

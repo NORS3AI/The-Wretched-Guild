@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '3:40 AM MST',
+    title: 'Worn Gear Off the Belt',
+    changes: [
+      'A worn item now leaves your Pockets & Pedlar entirely and sits in its own Worn section on the body — freeing the pocket slot it used to take. Tap Wear to equip (it moves to Worn), and Take off to return it to your pockets.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '3:15 AM MST',
     title: 'Deeper Reagent Stacks; Simpler Grain',
     changes: [

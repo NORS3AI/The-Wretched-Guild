@@ -10,6 +10,8 @@
   $: climate = climateNow(run);
   $: usedSlots = run.pockets.filter(Boolean).length;
   $: larderUsed = run.larder.filter(Boolean).length;
+  // worn special items live on the body, apart from the pockets
+  $: wornItems = Object.keys(run.worn ?? {}).filter((id) => run.worn[id]);
 
   const needRows = [
     { key: 'food', label: 'Food', low: 'Starving' },
@@ -153,14 +155,7 @@
             {/if}
             <div class="slot-actions">
               {#if def.wearable}
-                <button
-                  class="mini wear"
-                  class:worn={run.worn?.[slot.item]}
-                  title={run.worn?.[slot.item] ? 'Worn — its ability is active. Tap to take it off.' : 'Wear it to apply its ability'}
-                  onclick={() => actions.toggleWorn(slot.item)}
-                >
-                  {run.worn?.[slot.item] ? 'Worn ✓' : 'Wear'}
-                </button>
+                <button class="mini wear" title="Wear it to apply its ability" onclick={() => actions.toggleWorn(slot.item)}>Wear</button>
               {/if}
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
@@ -182,6 +177,27 @@
         </div>
       {/each}
     </div>
+
+    <!-- worn: special items on the body, apart from the pockets -->
+    {#if wornItems.length > 0}
+      <div class="section-label">Worn</div>
+      <div class="pockets">
+        {#each wornItems as id (id)}
+          {@const wdef = itemDef(id)}
+          {#if wdef}
+            <div class="slot worn-slot">
+              <div class="slot-top">
+                <span class="slot-name" title={wdef.blurb}>{wdef.name}</span>
+                <span class="worn-badge" title="Its ability is active">✓ worn</span>
+              </div>
+              <div class="slot-actions">
+                <button class="mini wear worn" title="Take it off — returns to your pockets" onclick={() => actions.toggleWorn(id)}>Take off</button>
+              </div>
+            </div>
+          {/if}
+        {/each}
+      </div>
+    {/if}
 
     <!-- pockets & vendor -->
     <div class="section-label">
@@ -206,14 +222,7 @@
             {/if}
             <div class="slot-actions">
               {#if def.wearable}
-                <button
-                  class="mini wear"
-                  class:worn={run.worn?.[slot.item]}
-                  title={run.worn?.[slot.item] ? 'Worn — its ability is active. Tap to take it off.' : 'Wear it to apply its ability'}
-                  onclick={() => actions.toggleWorn(slot.item)}
-                >
-                  {run.worn?.[slot.item] ? 'Worn ✓' : 'Wear'}
-                </button>
+                <button class="mini wear" title="Wear it to apply its ability" onclick={() => actions.toggleWorn(slot.item)}>Wear</button>
               {/if}
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
@@ -419,6 +428,14 @@
     color: var(--green);
     border-color: var(--green);
     background: rgba(120, 160, 70, 0.12);
+  }
+  .worn-slot {
+    border-color: var(--green);
+  }
+  .worn-badge {
+    font-size: 0.68rem;
+    color: var(--green);
+    white-space: nowrap;
   }
   .slots {
     font-size: 0.62rem;

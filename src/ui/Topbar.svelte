@@ -36,11 +36,12 @@
   }
 
   // The wealth ladder, shown top-down from the loftiest coin to the humble copper.
-  // The lofty gem denominations (amethyst → diamond) aren't in play yet, so they
-  // are hidden; and the ladder lists ONLY what the purse has actually reached plus
-  // the single next goal above it — no greyed-out rungs.
-  const HIDDEN_DENOMS = new Set(['amethyst', 'topaz', 'emerald', 'ruby', 'sapphire', 'diamond']);
-  $: fullLadder = wealthLadder($game.run.coin).slice().reverse().filter((r) => !HIDDEN_DENOMS.has(r.name));
+  // It lists ONLY what the purse has actually reached plus the single next goal
+  // above it — no greyed-out rungs. Because only the next goal is ever shown, the
+  // lofty gem denominations (amethyst → diamond) reveal themselves ONE AT A TIME:
+  // amethyst first appears as the next goal only once platinum has been reached,
+  // then topaz once amethyst is reached, and so on up to the diamond.
+  $: fullLadder = wealthLadder($game.run.coin).slice().reverse();
   $: nextGoal = fullLadder.filter((r) => !r.reached).at(-1)?.name ?? null;
   $: ladder = fullLadder.filter((r) => r.reached || r.name === nextGoal);
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '4:30 AM MST',
+    title: 'The Gems Return',
+    changes: [
+      'The gem coins are back in the Purse, revealed one at a time: once you reach platinum, amethyst appears as your next goal; reach amethyst and topaz appears; and so on up through emerald, ruby, sapphire, and the diamond.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '4:05 AM MST',
     title: 'Cook From the Item',
     changes: [

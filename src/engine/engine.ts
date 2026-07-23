@@ -248,7 +248,8 @@ export type Command =
   | { type: 'hireServant'; id: string }
   | { type: 'dismissServant'; id: string }
   | { type: 'setLabourerTrade'; slot: number; id: string | null }
-  | { type: 'setForemanEnterprise'; foremanId: string; businessId: string | null };
+  | { type: 'setForemanEnterprise'; foremanId: string; businessId: string | null }
+  | { type: 'toggleWorn'; id: string };
 
 export function dispatch(game: GameState, cmd: Command): void {
   bindLog(game);
@@ -394,6 +395,15 @@ export function dispatch(game: GameState, cmd: Command): void {
         }
       }
       run.labourerTrades[cmd.slot] = cmd.id;
+      break;
+    }
+
+    case 'toggleWorn': {
+      if (!run.alive) break;
+      const def = itemDef(cmd.id);
+      if (!def?.wearable || countItem(run, cmd.id) < 1) break; // must own a wearable to wear it
+      if (!run.worn) run.worn = {};
+      run.worn[cmd.id] = !run.worn[cmd.id];
       break;
     }
 

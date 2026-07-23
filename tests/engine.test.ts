@@ -1556,15 +1556,25 @@ console.log('The Wretched Guild — engine tests\n');
   assert(isDiscovered(g.run, 'scavenging'), 'plying Scavenge for Salvage discovers the Scavenging skill');
 }
 
-// 50) Equipment helpers: the Iron Spike and the Weatherman.
+// 50) Equipment: the Iron Spike and the Weatherman apply their abilities only
+//     while WORN, not merely carried.
 {
   const { hasIronSpike, hasWeatherman } = await import('../src/engine/items');
   const g = newGame();
   g.run.pockets = new Array(4).fill(null);
-  assert(!hasIronSpike(g.run) && !hasWeatherman(g.run), 'no equipment carried at first');
+  assert(!hasIronSpike(g.run) && !hasWeatherman(g.run), 'no equipment worn at first');
   addItem(g.run, 'iron_spike', 1);
   addItem(g.run, 'weatherman', 1);
-  assert(hasIronSpike(g.run) && hasWeatherman(g.run), 'carrying the Spike and Weatherman flips their effects on');
+  assert(!hasIronSpike(g.run) && !hasWeatherman(g.run), 'carried but not worn — no effect yet');
+  dispatch(g, { type: 'toggleWorn', id: 'iron_spike' });
+  dispatch(g, { type: 'toggleWorn', id: 'weatherman' });
+  assert(hasIronSpike(g.run) && hasWeatherman(g.run), 'worn — their effects turn on');
+  dispatch(g, { type: 'toggleWorn', id: 'iron_spike' });
+  assert(!hasIronSpike(g.run) && hasWeatherman(g.run), 'taking the Spike off turns only its effect off');
+  // you cannot wear what you do not own
+  const g2 = newGame();
+  dispatch(g2, { type: 'toggleWorn', id: 'iron_spike' });
+  assert(!hasIronSpike(g2.run), 'you cannot wear an Iron Spike you do not have');
 }
 
 // 51) Bearing by activity: Pick Pockets → Chaotic (ethics only); Serve at the
@@ -1821,7 +1831,8 @@ console.log('The Wretched Guild — engine tests\n');
   const g = newGame();
   g.run.pockets = new Array(6).fill(null);
   addItem(g.run, 'iron_spike', 1);
-  assert(hasIronSpike(g.run), 'the one Iron Spike is equipped (its effect is live)');
+  dispatch(g, { type: 'toggleWorn', id: 'iron_spike' });
+  assert(hasIronSpike(g.run), 'the worn Iron Spike\'s effect is live');
   const coinBefore = g.run.coin;
   addItem(g.run, 'iron_spike', 2); // two more → both auto-sold
   assert(countItem(g.run, 'iron_spike') === 1, 'only one Iron Spike is kept');

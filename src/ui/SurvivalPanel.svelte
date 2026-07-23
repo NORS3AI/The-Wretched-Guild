@@ -152,6 +152,16 @@
               </div>
             {/if}
             <div class="slot-actions">
+              {#if def.wearable}
+                <button
+                  class="mini wear"
+                  class:worn={run.worn?.[slot.item]}
+                  title={run.worn?.[slot.item] ? 'Worn — its ability is active. Tap to take it off.' : 'Wear it to apply its ability'}
+                  onclick={() => actions.toggleWorn(slot.item)}
+                >
+                  {run.worn?.[slot.item] ? 'Worn ✓' : 'Wear'}
+                </button>
+              {/if}
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
               {:else if def.kind === 'food'}
@@ -195,6 +205,16 @@
               </div>
             {/if}
             <div class="slot-actions">
+              {#if def.wearable}
+                <button
+                  class="mini wear"
+                  class:worn={run.worn?.[slot.item]}
+                  title={run.worn?.[slot.item] ? 'Worn — its ability is active. Tap to take it off.' : 'Wear it to apply its ability'}
+                  onclick={() => actions.toggleWorn(slot.item)}
+                >
+                  {run.worn?.[slot.item] ? 'Worn ✓' : 'Wear'}
+                </button>
+              {/if}
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
               {:else if def.kind === 'food'}
@@ -387,6 +407,18 @@
   }
   .mini.sell {
     color: var(--gold);
+  }
+  .mini.wear {
+    color: var(--ink);
+  }
+  .mini.wear:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+  .mini.wear.worn {
+    color: var(--green);
+    border-color: var(--green);
+    background: rgba(120, 160, 70, 0.12);
   }
   .slots {
     font-size: 0.62rem;

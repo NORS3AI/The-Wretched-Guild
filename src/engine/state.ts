@@ -65,6 +65,7 @@ export function newRun(meta: MetaState): RunState {
     hasBow: false,
     craftingUnlocked: false,
     oilBuffMs: 0,
+    worn: {},
     pockets: [null, null],
     // the six-slot food larder — a wretch starts with a crust of bread
     larder: [{ item: 'bread', qty: 1 }, null, null, null, null, null],

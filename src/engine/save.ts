@@ -241,6 +241,12 @@ function migrate(data: unknown): GameState {
     }
     g.version = 23;
   }
+  // v23 → v24: wearable special items (Iron Spike, Weatherman) are worn to apply.
+  if (g.version < 24) {
+    const r = g.run as unknown as Record<string, unknown>;
+    if (!r.worn || typeof r.worn !== 'object') r.worn = {};
+    g.version = 24;
+  }
   g.version = SAVE_VERSION;
   return g;
 }

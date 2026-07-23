@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '2:55 AM MST',
+    title: 'Wear Your Arms',
+    changes: [
+      'The Iron Spike and the Weatherman are now WORN to take effect — carrying one no longer grants its ability. Tap Wear on the item (in Body & Needs, Pockets) to equip it; its bonus is live only while worn, and tapping again takes it off.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '2:30 AM MST',
     title: 'Sell All, Any Stack',
     changes: [

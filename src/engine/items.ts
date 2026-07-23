@@ -22,6 +22,8 @@ export interface ItemDef {
   /** override the single-stack cap for this item (default MAX_STACK). Bulk raw
    *  materials stack deeper so a load of ore or logs doesn't clutter the pockets. */
   maxStack?: number;
+  /** a special item that must be WORN (equipped) for its abilities to apply. */
+  wearable?: boolean;
   blurb: string;
 }
 
@@ -93,8 +95,8 @@ export const ITEMS: Record<string, ItemDef> = {
   felling_axe: { id: 'felling_axe', name: 'Felling Axe', kind: 'goods', value: 40, blurb: 'A great two-handed axe for the woodsman.' },
   bucket: { id: 'bucket', name: 'Bucket', kind: 'goods', value: 66, blurb: 'A riveted iron pail. Fill it at the well or the river.' },
   iron_rivets: { id: 'iron_rivets', name: 'Iron Rivets', kind: 'goods', value: 100, blurb: 'A keg of stout rivets — the shipwright\'s and armourer\'s need.' },
-  iron_spike: { id: 'iron_spike', name: 'The Iron Spike', kind: 'goods', value: 140, maxStack: 1, blurb: 'A cruel forged dagger. One is all you can wield — the rest are sold. While you carry it, your Stealth and your luck at cutting purses both sharpen (+10%).' },
-  weatherman: { id: 'weatherman', name: 'The Weatherman', kind: 'goods', value: 200, maxStack: 1, blurb: 'A great riveted shield. One is all you can bear — the rest are sold. While you carry it, there is a fair chance (50%) the guard\'s hand slips off you when they would drag you away.' },
+  iron_spike: { id: 'iron_spike', name: 'The Iron Spike', kind: 'goods', value: 140, maxStack: 1, wearable: true, blurb: 'A cruel forged dagger. One is all you can wield — the rest are sold. WEAR it, and your Stealth and your luck at cutting purses both sharpen (+10%).' },
+  weatherman: { id: 'weatherman', name: 'The Weatherman', kind: 'goods', value: 200, maxStack: 1, wearable: true, blurb: 'A great riveted shield. One is all you can bear — the rest are sold. WEAR it, and there is a fair chance (50%) the guard\'s hand slips off you when they would drag you away.' },
 
   // ── Farming board (baked goods, eaten straight from the pouch) ──
   scone: { id: 'scone', name: 'Scone', kind: 'food', food: 5, value: 4, blurb: 'A plain little scone.' },
@@ -105,12 +107,16 @@ export const ITEMS: Record<string, ItemDef> = {
   leek_pie: { id: 'leek_pie', name: "Winters' Leek Pie", kind: 'food', food: 55, water: 20, value: 50, blurb: 'A great steaming leek pie, oiled and buttered — a feast against the winter.' },
 };
 
-/** Does carrying this item grant a passive effect (equipment)? */
+/** Is a wearable special item both owned AND currently worn? */
+export function isWorn(run: RunState, id: string): boolean {
+  return countItem(run, id) >= 1 && !!run.worn?.[id];
+}
+/** These special items grant their abilities only while WORN, not merely carried. */
 export function hasIronSpike(run: RunState): boolean {
-  return countItem(run, 'iron_spike') >= 1;
+  return isWorn(run, 'iron_spike');
 }
 export function hasWeatherman(run: RunState): boolean {
-  return countItem(run, 'weatherman') >= 1;
+  return isWorn(run, 'weatherman');
 }
 /** The Weatherman shield turns the guard's hand: while carried, a 50% chance to
  *  slip any seizure that would drag you to the stocks. */

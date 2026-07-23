@@ -4,7 +4,7 @@
 
 import type { FactionId } from './factions';
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 /** Alignment axes, each clamped to [-100, 100].
  *  ethics: +100 Lawful … -100 Chaotic
@@ -116,6 +116,9 @@ export interface RunState {
   /** dev "Chalice of Infinite Oil" buff — real-time ms remaining during which
    *  cooking needs no physical Goblet of Oil */
   oilBuffMs: number;
+  /** wearable special items currently WORN (by item id) — only while worn do
+   *  their special abilities apply (the Iron Spike, the Weatherman). */
+  worn: Record<string, boolean>;
   pockets: (ItemStack | null)[];
   /** the food larder — six slots reserved for food, apart from the pockets */
   larder: (ItemStack | null)[];

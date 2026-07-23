@@ -189,6 +189,7 @@ export const actions = {
   setLabourerTrade: (slot: number, id: string | null) => run({ type: 'setLabourerTrade', slot, id }),
   setForemanEnterprise: (foremanId: string, businessId: string | null) =>
     run({ type: 'setForemanEnterprise', foremanId, businessId }),
+  toggleWorn: (id: string) => run({ type: 'toggleWorn', id }),
   assignMember: (memberId: string, jobId: string | null) => run({ type: 'assignMember', memberId, jobId }),
   rerollRecruits: () => run({ type: 'rerollRecruits' }),
   doDeed: (id: string) => run({ type: 'doDeed', id }),

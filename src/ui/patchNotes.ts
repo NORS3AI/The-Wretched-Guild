@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '2:30 AM MST',
+    title: 'Sell All, Any Stack',
+    changes: [
+      'Every item now shows a "Sell all" button whenever you hold more than one — no need to fill a whole stack first.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '2:10 AM MST',
     title: 'One Spike, One Shield',
     changes: [

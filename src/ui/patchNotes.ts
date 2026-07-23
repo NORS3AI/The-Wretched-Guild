@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '4:50 AM MST',
+    title: 'Prodigies Ringed in Green',
+    changes: [
+      'In The Wretched Guild, a wretch or candidate whose skill tops 1230 now has that number ringed in green — so a true prodigy is easy to spot at a glance.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '4:30 AM MST',
     title: 'The Gems Return',
     changes: [

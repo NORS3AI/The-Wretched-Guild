@@ -93,8 +93,8 @@ export const ITEMS: Record<string, ItemDef> = {
   felling_axe: { id: 'felling_axe', name: 'Felling Axe', kind: 'goods', value: 40, blurb: 'A great two-handed axe for the woodsman.' },
   bucket: { id: 'bucket', name: 'Bucket', kind: 'goods', value: 66, blurb: 'A riveted iron pail. Fill it at the well or the river.' },
   iron_rivets: { id: 'iron_rivets', name: 'Iron Rivets', kind: 'goods', value: 100, blurb: 'A keg of stout rivets — the shipwright\'s and armourer\'s need.' },
-  iron_spike: { id: 'iron_spike', name: 'The Iron Spike', kind: 'goods', value: 140, blurb: 'A cruel forged dagger. While you carry it, your Stealth and your luck at cutting purses both sharpen (+10%).' },
-  weatherman: { id: 'weatherman', name: 'The Weatherman', kind: 'goods', value: 200, blurb: 'A great riveted shield. While you carry it, there is a fair chance (50%) the guard\'s hand slips off you when they would drag you away.' },
+  iron_spike: { id: 'iron_spike', name: 'The Iron Spike', kind: 'goods', value: 140, maxStack: 1, blurb: 'A cruel forged dagger. One is all you can wield — the rest are sold. While you carry it, your Stealth and your luck at cutting purses both sharpen (+10%).' },
+  weatherman: { id: 'weatherman', name: 'The Weatherman', kind: 'goods', value: 200, maxStack: 1, blurb: 'A great riveted shield. One is all you can bear — the rest are sold. While you carry it, there is a fair chance (50%) the guard\'s hand slips off you when they would drag you away.' },
 
   // ── Farming board (baked goods, eaten straight from the pouch) ──
   scone: { id: 'scone', name: 'Scone', kind: 'food', food: 5, value: 4, blurb: 'A plain little scone.' },

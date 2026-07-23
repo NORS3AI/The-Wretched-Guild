@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '2:10 AM MST',
+    title: 'One Spike, One Shield',
+    changes: [
+      'The Iron Spike and the Weatherman are now one-of equipment: you keep and wield a single one, and any further ones you forge are sold at once rather than piling up.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '1:45 AM MST',
     title: 'Deeper Stacks for Raw Stock',
     changes: [

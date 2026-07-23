@@ -1814,5 +1814,19 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.coin === coinBefore + 5 * itemDef('coal')!.value, 'coal past 100 is auto-sold');
 }
 
+// 63) The Iron Spike and the Weatherman are one-of equipment — extras are sold.
+{
+  const { stackCap, hasIronSpike } = await import('../src/engine/items');
+  assert(stackCap('iron_spike') === 1 && stackCap('weatherman') === 1, 'the Spike and the Weatherman cap at one');
+  const g = newGame();
+  g.run.pockets = new Array(6).fill(null);
+  addItem(g.run, 'iron_spike', 1);
+  assert(hasIronSpike(g.run), 'the one Iron Spike is equipped (its effect is live)');
+  const coinBefore = g.run.coin;
+  addItem(g.run, 'iron_spike', 2); // two more → both auto-sold
+  assert(countItem(g.run, 'iron_spike') === 1, 'only one Iron Spike is kept');
+  assert(g.run.coin === coinBefore + 2 * itemDef('iron_spike')!.value, 'the extra Iron Spikes are sold');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

@@ -72,7 +72,7 @@
           <div class="recruit">
             <div class="r-info">
               <span class="r-name">{r.name}</span>
-              <span class="r-meta faint">{r.archetype} · {alignmentName(r.alignment)} · skill <span class="skl" class:prodigy={r.skill > 1230}>{r.skill}</span></span>
+              <span class="r-meta faint">{r.archetype} · {alignmentName(r.alignment)} · skill <span class="skl" class:prodigy={r.skill > 1230} class:prodigy-gold={r.skill > 1250}>{r.skill}</span></span>
             </div>
             <button
               class="btn"
@@ -107,7 +107,7 @@
                 <button class="dismiss" title="Cast out" onclick={() => actions.dismissMember(m.id)}>✕</button>
               </div>
               <div class="m-meta faint">
-                {m.archetype} · {alignmentName(m.alignment)} · skill <span class="skl" class:prodigy={m.skill > 1230}>{m.skill.toFixed(0)}</span>
+                {m.archetype} · {alignmentName(m.alignment)} · skill <span class="skl" class:prodigy={m.skill > 1230} class:prodigy-gold={m.skill > 1250}>{m.skill.toFixed(0)}</span>
                 {#if m.heat > 0}· <span class="m-heat">heat {Math.round(m.heat)}</span>{/if}
               </div>
               <div class="m-controls">
@@ -196,13 +196,17 @@
     font-size: 0.72rem;
     margin: 2px 0 7px;
   }
-  /* a rare prodigy's skill (over 1230) is ringed in green */
+  /* a rare prodigy's skill (over 1230) is ringed in green; over 1250, in gold */
   .skl.prodigy {
     color: var(--green);
     border: 1px solid var(--green);
     border-radius: 3px;
     padding: 0 4px;
     font-weight: 600;
+  }
+  .skl.prodigy-gold {
+    color: var(--gold-bright);
+    border-color: var(--gold);
   }
   .m-heat {
     color: var(--blood);

@@ -38,9 +38,9 @@ const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
     time: '4:50 AM MST',
-    title: 'Prodigies Ringed in Green',
+    title: 'Prodigies Ringed in Green — and Gold',
     changes: [
-      'In The Wretched Guild, a wretch or candidate whose skill tops 1230 now has that number ringed in green — so a true prodigy is easy to spot at a glance.',
+      'In The Wretched Guild, a wretch or candidate whose skill tops 1230 has that number ringed in green; top 1250 and it turns gold — so the truest prodigies are easy to spot at a glance.',
     ],
   },
   {

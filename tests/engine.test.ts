@@ -1525,8 +1525,7 @@ console.log('The Wretched Guild — engine tests\n');
   assert(skins >= 5, `roasting beasts yields skins/hides (got ${skins} from 10)`);
 }
 
-// 48) Buckets: filled at the well; the farmer mills grain from seed + water, and
-//     the empty bucket is handed back.
+// 48) Buckets fill at the well; milling grain now needs only wheat seeds.
 {
   const { recipeById, canCraft } = await import('../src/engine/crafting');
   const g = newGame();
@@ -1539,11 +1538,11 @@ console.log('The Wretched Guild — engine tests\n');
   g.run.skills['lumberyard'] = 20; g.run.skills['smithing'] = 20; // open Farming
   addItem(g.run, 'wheat_seeds', 5);
   const grain = recipeById('craft_grain_pouch')!;
-  assert(canCraft(g.run, grain), 'with seeds and a bucket of water you can mill grain');
+  assert(canCraft(g.run, grain), 'five wheat seeds alone mill a pouch of grain');
   dispatch(g, { type: 'setCraftActivity', id: 'craft_grain_pouch' });
   ff(g, grain.ticks);
   assert(countItem(g.run, 'grain_pouch') === 1, 'milling yields a pouch of grain');
-  assert(countItem(g.run, 'bucket') === 1 && countItem(g.run, 'bucket_water') === 0, 'the empty bucket is handed back');
+  assert(countItem(g.run, 'wheat_seeds') === 0, 'milling consumes only the five seeds');
 }
 
 // 49) Scavenging is a discovered skill, trained by Scavenge for Salvage.

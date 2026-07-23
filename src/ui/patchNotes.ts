@@ -37,6 +37,15 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '3:15 AM MST',
+    title: 'Deeper Reagent Stacks; Simpler Grain',
+    changes: [
+      'Oak Boards, Iron Bars, and Pouches of Grain now stack 500 to a slot.',
+      'Milling a Pouch of Grain no longer needs a Bucket of Water — five wheat seeds alone will do — and no bucket is handed back.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '2:55 AM MST',
     title: 'Wear Your Arms',
     changes: [

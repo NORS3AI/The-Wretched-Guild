@@ -72,9 +72,9 @@ export const ITEMS: Record<string, ItemDef> = {
   health_potion: { id: 'health_potion', name: 'Health Potion', kind: 'food', heal: 4, value: 20, blurb: 'A ruby draught that knits flesh — restores a whole heart.' },
 
   // ── Crafting reagents (worth no coin — their value is what you make of them) ──
-  oak_board: { id: 'oak_board', name: 'Oak Board', kind: 'goods', value: 0, blurb: 'Sawn and planed at the lumberyard. Stock for finer joinery.' },
-  iron_bar: { id: 'iron_bar', name: 'Iron Bar', kind: 'goods', value: 0, blurb: 'Smelted from ore and coal at the forge. The smith\'s raw stock.' },
-  grain_pouch: { id: 'grain_pouch', name: 'Pouch of Grain', kind: 'goods', value: 0, blurb: 'Threshed grain, bagged and ready for the baker\'s board.' },
+  oak_board: { id: 'oak_board', name: 'Oak Board', kind: 'goods', value: 0, maxStack: 500, blurb: 'Sawn and planed at the lumberyard. Stock for finer joinery.' },
+  iron_bar: { id: 'iron_bar', name: 'Iron Bar', kind: 'goods', value: 0, maxStack: 500, blurb: 'Smelted from ore and coal at the forge. The smith\'s raw stock.' },
+  grain_pouch: { id: 'grain_pouch', name: 'Pouch of Grain', kind: 'goods', value: 0, maxStack: 500, blurb: 'Threshed grain, bagged and ready for the baker\'s board.' },
   animal_skin: { id: 'animal_skin', name: 'Animal Skin', kind: 'goods', value: 0, blurb: 'A clean hide off a roasted beast. Kept back for the leatherworker\'s bench.' },
   bucket_water: { id: 'bucket_water', name: 'Bucket of Water', kind: 'goods', value: 0, blurb: 'A brimming bucket, drawn from the well or the river.' },
   ruined_hide: { id: 'ruined_hide', name: 'Ruined Hide', kind: 'goods', value: 3, blurb: 'A hide torn ragged in the roasting — fit only to be sold for a copper or three.' },

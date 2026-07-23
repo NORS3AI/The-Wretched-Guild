@@ -65,7 +65,7 @@ export const RECIPES: CraftRecipe[] = [
   { id: 'craft_weatherman', skill: 'smithing', name: 'The Weatherman', inputs: [{ item: 'iron_bar', qty: 10 }], output: { item: 'weatherman', qty: 1 }, ticks: 17, gain: 3.5, blurb: 'Forge a great shield. Carried, the guard\'s hand slips off you half the time they would haul you away.' },
 
   // Farming ────────────────────────────────────────────────────────────────
-  { id: 'craft_grain_pouch', skill: 'farming', name: 'Pouch of Grain', inputs: [{ item: 'wheat_seeds', qty: 5 }, { item: 'bucket_water', qty: 1 }], output: { item: 'grain_pouch', qty: 1 }, returns: { item: 'bucket', qty: 1 }, ticks: 6, gain: 1.5, blurb: 'Sow and thresh five seeds, watered from a bucket — the empty bucket is yours again.' },
+  { id: 'craft_grain_pouch', skill: 'farming', name: 'Pouch of Grain', inputs: [{ item: 'wheat_seeds', qty: 5 }], output: { item: 'grain_pouch', qty: 1 }, ticks: 6, gain: 1.5, blurb: 'Sow and thresh five wheat seeds into a pouch of grain.' },
   { id: 'craft_scone', skill: 'farming', name: 'Scone', inputs: [{ item: 'grain_pouch', qty: 1 }], output: { item: 'scone', qty: 1 }, ticks: 4, gain: 1, blurb: 'Bake a plain scone.' },
   { id: 'craft_banana_loaf', skill: 'farming', name: 'Banana Nut Loaf', inputs: [{ item: 'grain_pouch', qty: 2 }], output: { item: 'banana_loaf', qty: 1 }, ticks: 5, gain: 1.2, blurb: 'Bake a sweet, nutty loaf.' },
   { id: 'craft_shepherds_pie', skill: 'farming', name: 'Shepherds Pie', inputs: [{ item: 'grain_pouch', qty: 3 }], output: { item: 'shepherds_pie', qty: 1 }, ticks: 6, gain: 1.4, blurb: 'Bake a hearty shepherds pie.' },

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { gameStore, actions } from './game';
-  import { DEEDS } from '../engine/deeds';
+  import { DEEDS, deedById } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
   import { itemDef, isEdible, countItem } from '../engine/items';
   import { formatMoney } from '../engine/money';
@@ -30,9 +30,10 @@
   // Tend to Yourself is laid out in three rows. Row one holds the everyday deeds
   // always on show; rows two and three hold the situational ones, shown only when
   // the game permits (each deed appears only when its own `reveal` is met).
+  // Bake a Potato and Roast Meat no longer live here — they're cooked straight
+  // from the raw item's slot below (see the cook button in Larder/Pockets).
   const ROW1_ORDER = ['drink', 'relieve', 'refill_well', 'bathe_well', 'wash_river'];
   const ROW2_ORDER = ['make_campfire', 'seek_warmth', 'seek_shade', 'see_doctor'];
-  const ROW3_ORDER = ['bake_potato', 'cook_game'];
 
   // Every deed is ALWAYS shown in its row; a deed simply greys out (disabled)
   // when there is no action to take — its reveal condition unmet, its cost
@@ -52,7 +53,6 @@
     });
   $: row1 = inRow(ROW1_ORDER, allDeeds);
   $: row2 = inRow(ROW2_ORDER, allDeeds);
-  $: row3 = inRow(ROW3_ORDER, allDeeds);
 </script>
 
 <div class="panel">
@@ -118,19 +118,6 @@
         </button>
       {/each}
     </div>
-    <div class="deeds second">
-      {#each row3 as row (row.def.id)}
-        <button
-          class="btn deed"
-          disabled={!row.enabled}
-          title={row.def.blurb}
-          onclick={() => actions.doDeed(row.def.id)}
-        >
-          {row.def.name}
-          {#if row.def.timeTicks > 0}<span class="time">· {row.def.timeTicks}h</span>{/if}
-        </button>
-      {/each}
-    </div>
 
     <!-- larder: six slots just for food, so ingredients never crowd out cooking -->
     <div class="section-label">
@@ -160,7 +147,12 @@
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
               {:else if def.kind === 'food'}
-                <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
+                {@const cookId = slot.item === 'potato' ? 'bake_potato' : 'cook_game'}
+                {@const cd = deedById(cookId)}
+                {@const canCook = !!cd && (!cd.available || cd.available(run))}
+                <button class="mini cook" disabled={!canCook} title={cd?.blurb} onclick={() => actions.doDeed(cookId)}>
+                  {cd?.name ?? 'Cook'}
+                </button>
               {/if}
               <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {formatMoney(def.value)}
@@ -227,7 +219,12 @@
               {#if isEdible(def)}
                 <button class="mini eat" title="Eat this" onclick={() => actions.eatItem(slot.item)}>Eat</button>
               {:else if def.kind === 'food'}
-                <span class="cook-note faint" title="Roast or cook it under Tend to Yourself before it is fit to eat">cook first</span>
+                {@const cookId = slot.item === 'potato' ? 'bake_potato' : 'cook_game'}
+                {@const cd = deedById(cookId)}
+                {@const canCook = !!cd && (!cd.available || cd.available(run))}
+                <button class="mini cook" disabled={!canCook} title={cd?.blurb} onclick={() => actions.doDeed(cookId)}>
+                  {cd?.name ?? 'Cook'}
+                </button>
               {/if}
               <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {formatMoney(def.value)}
@@ -397,18 +394,23 @@
     font-size: 0.72rem;
     font-family: inherit;
   }
-  .mini:hover {
+  .mini:hover:not(:disabled) {
     border-color: var(--gold);
     color: var(--gold-bright);
+  }
+  .mini:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
   .mini.eat {
     color: var(--green);
   }
-  .cook-note {
-    flex: 1;
-    align-self: center;
-    font-size: 0.68rem;
-    font-style: italic;
+  .mini.cook {
+    color: var(--gold);
+  }
+  .mini.cook:hover:not(:disabled) {
+    border-color: var(--gold);
+    color: var(--gold-bright);
   }
   .mini.eat:hover {
     border-color: var(--green);

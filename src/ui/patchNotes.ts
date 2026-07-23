@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '4:05 AM MST',
+    title: 'Cook From the Item',
+    changes: [
+      'Bake a Potato and Roast Meat moved out of Tend to Yourself and onto the raw item itself: where a raw potato, fish, or beast once read "cook first", it now shows a Bake a Potato / Roast Meat button you tap to cook it right there.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '3:40 AM MST',
     title: 'Worn Gear Off the Belt',
     changes: [

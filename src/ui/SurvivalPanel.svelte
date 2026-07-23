@@ -2,7 +2,7 @@
   import { gameStore, actions } from './game';
   import { DEEDS } from '../engine/deeds';
   import { climateNow } from '../engine/survival';
-  import { itemDef, isEdible, countItem, MAX_STACK } from '../engine/items';
+  import { itemDef, isEdible, countItem, stackCap } from '../engine/items';
   import { formatMoney } from '../engine/money';
 
   const game = gameStore;
@@ -160,7 +160,7 @@
               <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {formatMoney(def.value)}
               </button>
-              {#if slot.qty >= MAX_STACK}
+              {#if slot.qty >= stackCap(slot.item)}
                 <button class="mini sell" title="Sell the whole stack to the pedlar" onclick={() => actions.sellAllItem(slot.item)}>
                   Sell all {formatMoney(def.value * countItem(run, slot.item))}
                 </button>
@@ -203,7 +203,7 @@
               <button class="mini sell" title="Sell one to the pedlar" onclick={() => actions.sellItem(slot.item)}>
                 Sell {formatMoney(def.value)}
               </button>
-              {#if slot.qty >= MAX_STACK}
+              {#if slot.qty >= stackCap(slot.item)}
                 <button class="mini sell" title="Sell the whole stack to the pedlar" onclick={() => actions.sellAllItem(slot.item)}>
                   Sell all {formatMoney(def.value * countItem(run, slot.item))}
                 </button>

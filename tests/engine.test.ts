@@ -1792,5 +1792,27 @@ console.log('The Wretched Guild — engine tests\n');
   assert(g.run.craftActivity === null, 'Craft All stops once the stock is gone');
 }
 
+// 62) Bulk raw materials (coal, ore, logs, seeds, potatoes) stack to 100, not 20.
+{
+  const { stackCap } = await import('../src/engine/items');
+  assert(
+    stackCap('coal') === 100 && stackCap('iron_ore') === 100 && stackCap('wooden_log') === 100 && stackCap('wheat_seeds') === 100 && stackCap('potato') === 100,
+    'bulk raw materials cap at 100',
+  );
+  assert(stackCap('firewood') === 20, 'ordinary goods still cap at the default 20');
+
+  const g = newGame();
+  g.run.pockets = new Array(4).fill(null);
+  addItem(g.run, 'coal', 100);
+  assert(
+    countItem(g.run, 'coal') === 100 && g.run.pockets.filter((p) => p && p.item === 'coal').length === 1,
+    '100 coal fill a single stack',
+  );
+  const coinBefore = g.run.coin;
+  addItem(g.run, 'coal', 5); // over 100 → auto-sold, no second stack
+  assert(countItem(g.run, 'coal') === 100, 'coal never exceeds one stack of 100');
+  assert(g.run.coin === coinBefore + 5 * itemDef('coal')!.value, 'coal past 100 is auto-sold');
+}
+
 console.log(failures === 0 ? '\n=== ALL ENGINE TESTS PASSED ===' : `\n=== ${failures} FAILURE(S) ===`);
 process.exit(failures === 0 ? 0 : 1);

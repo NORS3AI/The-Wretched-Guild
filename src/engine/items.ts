@@ -19,6 +19,9 @@ export interface ItemDef {
   value: number;
   /** if sold by the town vendor, the price to buy one */
   buy?: number;
+  /** override the single-stack cap for this item (default MAX_STACK). Bulk raw
+   *  materials stack deeper so a load of ore or logs doesn't clutter the pockets. */
+  maxStack?: number;
   blurb: string;
 }
 
@@ -50,13 +53,13 @@ export const ITEMS: Record<string, ItemDef> = {
   scrap: { id: 'scrap', name: 'Salvaged Scrap', kind: 'goods', value: 7, blurb: 'Bent nails, rags, a cracked buckle — worth a copper to someone.' },
   cooking_oil: { id: 'cooking_oil', name: 'Goblet of Cooking Oil', kind: 'goods', value: 6, buy: 12, blurb: 'Pressed oil for the pan. Needed to fry a fish or bake a potato.' },
   slab_of_butter: { id: 'slab_of_butter', name: 'Slab of Butter', kind: 'goods', value: 3, buy: 6, blurb: 'Churned fresh. Needed to bake a potato.' },
-  // hard-labour spoils
-  wooden_log: { id: 'wooden_log', name: 'Oak Log', kind: 'goods', value: 3, blurb: 'Felled and split. Good oak timber for the lumberyard.' },
-  coal: { id: 'coal', name: 'Coal', kind: 'goods', value: 3, blurb: 'Black rock that burns hot. Hewn from the seam.' },
-  iron_ore: { id: 'iron_ore', name: 'Iron Ore', kind: 'goods', value: 1, blurb: 'Raw ore, streaked with rust. Worth a copper.' },
-  wheat_seeds: { id: 'wheat_seeds', name: 'Wheat Seeds', kind: 'goods', value: 2, blurb: 'A handful of seed-corn from the tilled field.' },
+  // hard-labour spoils — bulk raw materials stack deep (100 to a stack)
+  wooden_log: { id: 'wooden_log', name: 'Oak Log', kind: 'goods', value: 3, maxStack: 100, blurb: 'Felled and split. Good oak timber for the lumberyard.' },
+  coal: { id: 'coal', name: 'Coal', kind: 'goods', value: 3, maxStack: 100, blurb: 'Black rock that burns hot. Hewn from the seam.' },
+  iron_ore: { id: 'iron_ore', name: 'Iron Ore', kind: 'goods', value: 1, maxStack: 100, blurb: 'Raw ore, streaked with rust. Worth a copper.' },
+  wheat_seeds: { id: 'wheat_seeds', name: 'Wheat Seeds', kind: 'goods', value: 2, maxStack: 100, blurb: 'A handful of seed-corn from the tilled field.' },
   // potatoes: raw is an ingredient; bake it for a meal
-  potato: { id: 'potato', name: 'Potato', kind: 'food', value: 1, blurb: 'Earthy and raw. Bake it with oil and butter to make it food.' },
+  potato: { id: 'potato', name: 'Potato', kind: 'food', value: 1, maxStack: 100, blurb: 'Earthy and raw. Bake it with oil and butter to make it food.' },
   baked_potato: { id: 'baked_potato', name: 'Baked Potato', kind: 'food', food: 15, value: 8, blurb: 'Crisp-skinned and steaming, dressed in butter.' },
   burnt_potato: { id: 'burnt_potato', name: 'Burnt Potato', kind: 'goods', value: 0, blurb: 'A blackened lump of charcoal. Worthless.' },
   // market-stall wares (drop while working a stall)
@@ -125,8 +128,14 @@ export function isEdible(def: ItemDef): boolean {
 
 /** A slot holds a stack of at most this many of one item. Every item is capped
  *  at a SINGLE stack of this size — the pockets and larder never clutter with a
- *  second stack of the same thing; anything over the cap is auto-sold instead. */
+ *  second stack of the same thing; anything over the cap is auto-sold instead.
+ *  An item may raise its own cap via `maxStack` (see stackCap). */
 export const MAX_STACK = 20;
+
+/** The single-stack cap for a given item — its own `maxStack` if set, else MAX_STACK. */
+export function stackCap(id: string): number {
+  return ITEMS[id]?.maxStack ?? MAX_STACK;
+}
 
 /** The larder — a dedicated six-slot store just for food, kept apart from the
  *  pockets so a purse full of ingredients never leaves you unable to cook. */
@@ -174,18 +183,19 @@ export function countItem(run: RunState, id: string): number {
  *  Always returns true (the goods are always absorbed, stored or sold). */
 export function addItem(run: RunState, id: string, qty = 1): boolean {
   const slots = slotsFor(run, id);
+  const cap = stackCap(id);
   let left = qty;
   // top up the single existing stack of this item, if there is one
   const existing = slots.find((s) => s && s.item === id) as ItemStack | undefined;
   if (existing) {
-    const add = Math.min(MAX_STACK - existing.qty, left);
+    const add = Math.min(cap - existing.qty, left);
     existing.qty += add;
     left -= add;
   } else {
     // no stack yet — claim one empty slot for it
     for (let i = 0; i < slots.length; i++) {
       if (slots[i] === null) {
-        const add = Math.min(MAX_STACK, left);
+        const add = Math.min(cap, left);
         slots[i] = { item: id, qty: add };
         left -= add;
         break;
@@ -199,7 +209,7 @@ export function addItem(run: RunState, id: string, qty = 1): boolean {
     if (val > 0) {
       run.coin += val * left;
       if (run.coin > run.peakCoin) run.peakCoin = run.coin;
-      pushLog(run, `Your ${def.name.toLowerCase()} is capped at ${MAX_STACK}; ${left} more sell for ${val * left} copper.`, 'coin');
+      pushLog(run, `Your ${def.name.toLowerCase()} is capped at ${cap}; ${left} more sell for ${val * left} copper.`, 'coin');
     }
   }
   return true;
@@ -232,7 +242,8 @@ export function removeItem(run: RunState, id: string, qty = 1): boolean {
 
 export function hasRoom(run: RunState, id: string): boolean {
   const slots = slotsFor(run, id);
-  if (slots.some((p) => p && p.item === id && p.qty < MAX_STACK)) return true;
+  const cap = stackCap(id);
+  if (slots.some((p) => p && p.item === id && p.qty < cap)) return true;
   return slots.some((p) => p === null);
 }
 

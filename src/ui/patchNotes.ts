@@ -37,6 +37,14 @@ export function versionForOrdinal(n: number): string {
 const RAW: RawPatch[] = [
   {
     date: 'July 23, 2026',
+    time: '1:45 AM MST',
+    title: 'Deeper Stacks for Raw Stock',
+    changes: [
+      'Coal, Oak Logs, Iron Ore, Wheat Seeds, and Potatoes now stack 100 to a single slot (up from 20), so a good haul of raw materials no longer clutters your pockets. Everything else still stacks 20.',
+    ],
+  },
+  {
+    date: 'July 23, 2026',
     time: '1:20 AM MST',
     title: 'The Chronicler, Newest First',
     changes: [
